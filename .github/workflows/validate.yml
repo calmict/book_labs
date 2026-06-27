@@ -1,0 +1,53 @@
+name: validate
+
+# Validates exercise files (YAML lint + per-technology checks).
+# Placeholder structure: jobs are scaffolded but kept minimal until the first
+# real exercises land. Tools differ per manual, so each is enabled as its
+# folder gets populated.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  yaml-lint:
+    name: YAML lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Lint YAML (non-blocking until rules are tuned)
+        run: |
+          if git ls-files '*.yml' '*.yaml' | grep -q .; then
+            yamllint -d relaxed $(git ls-files '*.yml' '*.yaml') || true
+          else
+            echo "No YAML files yet — nothing to lint."
+          fi
+
+  # --- Per-technology jobs (enabled as exercises are added) ---
+  #
+  # kubernetes:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: kubeconform on kubernetes/**/solution
+  #       run: ...   # validate manifests against the K8s schema
+  #
+  # ansible:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: pip install ansible-lint && ansible-lint ansible/
+  #
+  # terraform:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: terraform fmt -check -recursive && terraform validate
+  #       # or: tofu validate
