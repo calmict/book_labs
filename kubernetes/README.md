@@ -29,6 +29,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 9 | Knock at the four gates (the API server, bare-handed) | Foundational | [ed1/cap09](ed1/cap09/) |
 | 10 | Write your own controller in twenty lines | Foundational | [ed1/cap10](ed1/cap10/) |
 | 11 | Steer the scheduler (then bypass it) | Foundational | [ed1/cap11](ed1/cap11/) |
+| 12 | The ship's doctor: probes, restarts and the self-resurrecting pod | Foundational | [ed1/cap12](ed1/cap12/) |
 
 ## Pull only this manual
 
