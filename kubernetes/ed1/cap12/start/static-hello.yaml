@@ -1,0 +1,11 @@
+# A static pod: no apply, no scheduler, no controller. Put this file in
+# the node's /etc/kubernetes/manifests and the kubelet does the rest.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello-static
+spec:
+  containers:
+    - name: hello
+      image: alpine:3
+      command: ["sleep", "infinity"]
