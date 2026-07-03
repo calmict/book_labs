@@ -26,6 +26,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 6 | Wire two network namespaces by hand (veth, a bridge and a ping) | Foundational | [ed1/cap06](ed1/cap06/) |
 | 7 | First contact: kill a Pod and watch who resurrects it | Foundational | [ed1/cap07](ed1/cap07/) |
 | 8 | Kill the leader: quorum and elections in etcd | Foundational | [ed1/cap08](ed1/cap08/) |
+| 9 | Knock at the four gates (the API server, bare-handed) | Foundational | [ed1/cap09](ed1/cap09/) |
 
 ## Pull only this manual
 
