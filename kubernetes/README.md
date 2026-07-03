@@ -30,6 +30,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 10 | Write your own controller in twenty lines | Foundational | [ed1/cap10](ed1/cap10/) |
 | 11 | Steer the scheduler (then bypass it) | Foundational | [ed1/cap11](ed1/cap11/) |
 | 12 | The ship's doctor: probes, restarts and the self-resurrecting pod | Foundational | [ed1/cap12](ed1/cap12/) |
+| 13 | The investigation: who touched my pod? | Intermediate | [ed1/cap13](ed1/cap13/) |
 
 ## Pull only this manual
 

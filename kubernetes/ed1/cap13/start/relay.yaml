@@ -1,0 +1,17 @@
+# One apply, one relay race. From this chapter on you write most of the
+# YAML yourself: complete the Deployment below.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: relay
+  labels:
+    app: relay
+spec:
+  # TODO: one replica
+  # TODO: a selector matching the label app: relay
+  template:
+    metadata:
+      # TODO: the label the selector expects
+    spec:
+      # TODO: one container named relay, image alpine:3,
+      # command sleep infinity
