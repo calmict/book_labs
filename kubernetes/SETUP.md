@@ -49,8 +49,10 @@ If the last command shows a node in Ready state, you can start any exercise.
 
 ## Troubleshooting
 
-**kube-proxy or coredns crash-looping with "too many open files"** — your
-host's inotify limits are at the conservative defaults some distros ship.
+**kube-proxy or coredns crash-looping with "too many open files", or
+multi-node cluster creation failing at the join step (an etcd learner that
+never starts)** — your host's inotify limits are at the conservative
+defaults some distros ship, and they run out fast with more than one node.
 Raise them and restart the cluster:
 
     sudo sysctl fs.inotify.max_user_instances=512 fs.inotify.max_user_watches=524288
