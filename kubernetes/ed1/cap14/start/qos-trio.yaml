@@ -1,0 +1,36 @@
+# Three sleeping pods, three castes: complete the resources so that the
+# apiserver deduces BestEffort, Burstable and Guaranteed.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: poor
+spec:
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]
+      # (no resources at all: this one stays poor on purpose)
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: middle
+spec:
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]
+      # TODO: requests LOWER than limits
+      # (e.g. requests cpu 50m / memory 32Mi, limits cpu 100m / memory 64Mi)
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: royal
+spec:
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]
+      # TODO: requests EQUAL to limits
+      # (e.g. both cpu 100m / memory 64Mi)
