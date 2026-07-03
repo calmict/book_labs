@@ -1,0 +1,68 @@
+# book_labs — .gitignore
+# Exercise repository: Kubernetes, Ansible, Terraform/OpenTofu.
+# start/ and solution/ (code and manifests) are committed. Local state,
+# build artifacts, secrets and OS noise are ignored.
+
+# --- Terraform / OpenTofu ---
+# State and working directories: NEVER commit.
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+# Variable files that may contain secrets.
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
+
+# --- Ansible ---
+*.retry
+# Vault and inventory files with sensitive data (if ever present in exercises).
+*vault*.yml
+!*vault*example*.yml
+
+# --- Kubernetes ---
+# Local kubeconfig files: never commit cluster credentials.
+kubeconfig
+*.kubeconfig
+kube.config
+
+# --- Generic secrets ---
+*.pem
+*.key
+*.crt
+.env
+.env.*
+!.env.example
+secrets.*
+*.secret
+
+# --- Operating system ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# --- Editors / IDEs ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.\#*
+\#*\#
+
+# --- Logs and temporary files ---
+*.log
+*.tmp
+tmp/
