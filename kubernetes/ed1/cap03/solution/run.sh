@@ -24,7 +24,7 @@ if [ "$(id -u)" -eq 0 ]; then
   CG=/sys/fs/cgroup/lab-cap03
   LOOP=""
   cleanup() {
-    [ -n "$LOOP" ] && kill "$LOOP" 2>/dev/null || true
+    if [ -n "$LOOP" ]; then kill "$LOOP" 2>/dev/null || true; fi
     if [ -d "$CG" ]; then
       while read -r p; do kill -9 "$p" 2>/dev/null || true; done < "$CG/cgroup.procs"
       sleep 1
