@@ -47,6 +47,17 @@ Tear down:
 
 If the last command shows a node in Ready state, you can start any exercise.
 
+## Troubleshooting
+
+**kube-proxy or coredns crash-looping with "too many open files"** — your
+host's inotify limits are at the conservative defaults some distros ship.
+Raise them and restart the cluster:
+
+    sudo sysctl fs.inotify.max_user_instances=512 fs.inotify.max_user_watches=524288
+
+To make it survive reboots, put the same two values in a file under
+/etc/sysctl.d/.
+
 ---
 
 *IT — Questa guida suggerisce un cluster locale gratuito e riproducibile. È un
