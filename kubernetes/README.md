@@ -25,6 +25,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 5 | Climb the runtime chain (and run a container with runc alone) | Foundational | [ed1/cap05](ed1/cap05/) |
 | 6 | Wire two network namespaces by hand (veth, a bridge and a ping) | Foundational | [ed1/cap06](ed1/cap06/) |
 | 7 | First contact: kill a Pod and watch who resurrects it | Foundational | [ed1/cap07](ed1/cap07/) |
+| 8 | Kill the leader: quorum and elections in etcd | Foundational | [ed1/cap08](ed1/cap08/) |
 
 ## Pull only this manual
 
