@@ -23,6 +23,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 3 | Limiting CPU and RAM by hand | Foundational | [ed1/cap03](ed1/cap03/) |
 | 4 | Dissect an image by hand (anatomy of a container) | Foundational | [ed1/cap04](ed1/cap04/) |
 | 5 | Climb the runtime chain (and run a container with runc alone) | Foundational | [ed1/cap05](ed1/cap05/) |
+| 6 | Wire two network namespaces by hand (veth, a bridge and a ping) | Foundational | [ed1/cap06](ed1/cap06/) |
 
 ## Pull only this manual
 
