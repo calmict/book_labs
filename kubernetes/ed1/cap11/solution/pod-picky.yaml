@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: picky
+spec:
+  # only nodes labelled disk=ssd survive the filter
+  nodeSelector:
+    disk: ssd
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]

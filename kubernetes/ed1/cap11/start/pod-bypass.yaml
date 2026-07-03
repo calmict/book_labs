@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bypass
+spec:
+  # TODO: assign the node yourself, so the scheduler is never consulted.
+  # Set nodeName to one of your workers (kubectl get nodes).
+  # nodeName: <which-node?>
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]

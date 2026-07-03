@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: picky
+spec:
+  # TODO: make this pod picky — add a nodeSelector requiring the label
+  # disk: ssd. No node has it yet: watch the filter reject them all.
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]
