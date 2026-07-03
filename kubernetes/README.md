@@ -22,6 +22,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 2 | A container by hand, without Docker | Foundational | [ed1/cap02](ed1/cap02/) |
 | 3 | Limiting CPU and RAM by hand | Foundational | [ed1/cap03](ed1/cap03/) |
 | 4 | Dissect an image by hand (anatomy of a container) | Foundational | [ed1/cap04](ed1/cap04/) |
+| 5 | Climb the runtime chain (and run a container with runc alone) | Foundational | [ed1/cap05](ed1/cap05/) |
 
 ## Pull only this manual
 
