@@ -19,6 +19,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | Chapter | Title | Level | Folder |
 |--------:|-------|:-----:|--------|
 | 1 | A container is just a process (see it for yourself) | Foundational | [ed1/cap01](ed1/cap01/) |
+| 2 | A container by hand, without Docker | Foundational | [ed1/cap02](ed1/cap02/) |
 
 ## Pull only this manual
 
