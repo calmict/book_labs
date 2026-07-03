@@ -21,6 +21,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 1 | A container is just a process (see it for yourself) | Foundational | [ed1/cap01](ed1/cap01/) |
 | 2 | A container by hand, without Docker | Foundational | [ed1/cap02](ed1/cap02/) |
 | 3 | Limiting CPU and RAM by hand | Foundational | [ed1/cap03](ed1/cap03/) |
+| 4 | Dissect an image by hand (anatomy of a container) | Foundational | [ed1/cap04](ed1/cap04/) |
 
 ## Pull only this manual
 
