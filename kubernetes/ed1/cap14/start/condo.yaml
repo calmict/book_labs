@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: condo
+spec:
+  volumes:
+    - name: www
+      emptyDir: {}
+  containers:
+    - name: web
+      image: busybox:stable
+      command: ["httpd", "-f", "-p", "8080", "-h", "/www"]
+      volumeMounts:
+        - name: www
+          mountPath: /www
+    # TODO: the second tenant — a container named writer (busybox:stable)
+    # running
+    #   sh -c 'while :; do date > /www/index.html; sleep 2; done'
+    # and mounting the same www volume on /www

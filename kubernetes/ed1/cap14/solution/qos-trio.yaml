@@ -1,0 +1,45 @@
+# Three sleeping pods, three castes: the apiserver deduces the QoS class
+# from the resources alone.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: poor
+spec:
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: middle
+spec:
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]
+      resources:
+        requests:
+          cpu: 50m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: royal
+spec:
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]
+      resources:
+        requests:
+          cpu: 100m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi

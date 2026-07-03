@@ -1,0 +1,23 @@
+# The glass condo: same building, transparent walls between processes.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: condo-glass
+spec:
+  shareProcessNamespace: true
+  volumes:
+    - name: www
+      emptyDir: {}
+  containers:
+    - name: web
+      image: busybox:stable
+      command: ["httpd", "-f", "-p", "8080", "-h", "/www"]
+      volumeMounts:
+        - name: www
+          mountPath: /www
+    - name: writer
+      image: busybox:stable
+      command: ["sh", "-c", "while :; do date > /www/index.html; sleep 2; done"]
+      volumeMounts:
+        - name: www
+          mountPath: /www
