@@ -27,6 +27,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 7 | First contact: kill a Pod and watch who resurrects it | Foundational | [ed1/cap07](ed1/cap07/) |
 | 8 | Kill the leader: quorum and elections in etcd | Foundational | [ed1/cap08](ed1/cap08/) |
 | 9 | Knock at the four gates (the API server, bare-handed) | Foundational | [ed1/cap09](ed1/cap09/) |
+| 10 | Write your own controller in twenty lines | Foundational | [ed1/cap10](ed1/cap10/) |
 
 ## Pull only this manual
 
