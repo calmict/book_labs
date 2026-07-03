@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bypass
+spec:
+  # the node is assigned by hand: the scheduler is never consulted
+  nodeName: book-labs-sched-worker
+  containers:
+    - name: sleeper
+      image: alpine:3
+      command: ["sleep", "infinity"]
