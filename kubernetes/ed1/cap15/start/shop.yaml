@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop
+  labels:
+    app: shop
+spec:
+  # TODO: three replicas
+  # TODO: the zero-downtime promise — a RollingUpdate strategy with
+  # maxSurge 1 and maxUnavailable 0
+  selector:
+    matchLabels:
+      app: shop
+  template:
+    metadata:
+      labels:
+        app: shop
+    spec:
+      containers:
+        - name: sleeper
+          # TODO: the opening version, alpine:3.19
+          command: ["sleep", "infinity"]
