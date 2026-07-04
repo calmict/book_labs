@@ -1,0 +1,65 @@
+# Two tenants, each answering with its own name, each behind its own
+# chapter 18 switchboard. Complete: nothing — the TODOs live in ingress.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uno
+  labels:
+    app: uno
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uno
+  template:
+    metadata:
+      labels:
+        app: uno
+    spec:
+      containers:
+        - name: web
+          image: busybox:stable
+          command: ["sh", "-c", "mkdir -p /www; echo app-uno > /www/index.html; httpd -f -p 8080 -h /www"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uno
+spec:
+  selector:
+    app: uno
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: due
+  labels:
+    app: due
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: due
+  template:
+    metadata:
+      labels:
+        app: due
+    spec:
+      containers:
+        - name: web
+          image: busybox:stable
+          command: ["sh", "-c", "mkdir -p /www; echo app-due > /www/index.html; httpd -f -p 8080 -h /www"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: due
+spec:
+  selector:
+    app: due
+  ports:
+    - port: 80
+      targetPort: 8080
