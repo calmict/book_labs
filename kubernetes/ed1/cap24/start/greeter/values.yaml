@@ -1,0 +1,5 @@
+# The settings sheet: the knobs the mould reads. Change these (here, or
+# with --set on the command line) and the same templates cast different
+# manifests. No copy-paste.
+replicaCount: 1
+message: "Greetings from revision one"
