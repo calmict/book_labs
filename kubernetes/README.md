@@ -37,6 +37,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 17 | The three trades: one per node, until done, on schedule | Intermediate | [ed1/cap17](ed1/cap17/) |
 | 18 | The address that does not exist (Services and kube-proxy) | Intermediate | [ed1/cap18](ed1/cap18/) |
 | 19 | The door and the doorman (Ingress and Ingress Controller) | Intermediate | [ed1/cap19](ed1/cap19/) |
+| 20 | The arranged marriage (PV, PVC, StorageClass) | Intermediate | [ed1/cap20](ed1/cap20/) |
 
 ## Pull only this manual
 

@@ -1,0 +1,11 @@
+# An identical claim, arrived too late: the manual-class volumes are gone.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spinster
+spec:
+  storageClassName: manual
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 30Mi

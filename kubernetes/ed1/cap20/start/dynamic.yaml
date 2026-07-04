@@ -1,0 +1,27 @@
+# The automatic matchmaker: no storageClassName means the default class,
+# and the tenant pod is what convinces it to act (WaitForFirstConsumer:
+# the provisioner waits to know WHERE the volume is needed).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cloud
+spec:
+  # TODO: 30Mi, ReadWriteOnce — and NO storageClassName at all:
+  # the default class will answer
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tenant
+spec:
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: cloud
+  containers:
+    - name: tenant
+      image: alpine:3
+      command: ["sleep", "infinity"]
+      volumeMounts:
+        - name: data
+          mountPath: /data

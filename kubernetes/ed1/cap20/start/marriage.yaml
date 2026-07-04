@@ -1,0 +1,40 @@
+# The arranged marriage: a hand-made volume, the claim that asks for it,
+# and the writer that stores the dowry.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: manual-pv
+spec:
+  capacity:
+    storage: 50Mi
+  accessModes: ["ReadWriteOnce"]
+  # Retain: the dowry survives the marriage
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /tmp/manual-pv
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bride
+spec:
+  # TODO: ask for 30Mi of the manual class, ReadWriteOnce
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: writer
+spec:
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: bride
+  containers:
+    - name: writer
+      image: alpine:3
+      command: ["sh", "-c", "echo dote > /data/dote.txt; sleep infinity"]
+      volumeMounts:
+        - name: data
+          mountPath: /data
