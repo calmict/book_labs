@@ -1,0 +1,24 @@
+# The stripped king: same workload, locked down from the inside.
+# These five settings are also exactly what the "restricted" Pod
+# Security Standard demands, so this pod passes the admission guard.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hardened
+  namespace: throne
+  labels:
+    app: hardened
+spec:
+  containers:
+    - name: crown
+      image: busybox:stable
+      command: ["sleep", "infinity"]
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault

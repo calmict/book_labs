@@ -1,0 +1,16 @@
+# The naked king: no securityContext at all.
+# Runs as root (uid 0), with the default bag of Linux capabilities,
+# no seccomp filter, and a writable root filesystem. It only looks
+# like a king — on a shared kernel, that is exactly the danger.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: king
+  namespace: throne
+  labels:
+    app: king
+spec:
+  containers:
+    - name: crown
+      image: busybox:stable
+      command: ["sleep", "infinity"]

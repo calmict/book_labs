@@ -1,0 +1,24 @@
+# The stripped king: same workload, but locked down from the inside.
+# TODO: add a securityContext to the container so that it:
+#   - runs as a non-root user           (runAsNonRoot: true, runAsUser: 65534)
+#   - cannot escalate privileges         (allowPrivilegeEscalation: false)
+#   - has a read-only root filesystem    (readOnlyRootFilesystem: true)
+#   - drops ALL Linux capabilities       (capabilities.drop: ["ALL"])
+#   - runs under the default seccomp     (seccompProfile.type: RuntimeDefault)
+# When you are done, this pod must also satisfy the "restricted" Pod
+# Security Standard (step 3) — the same five settings are what the
+# admission guard checks for.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hardened
+  namespace: throne
+  labels:
+    app: hardened
+spec:
+  containers:
+    - name: crown
+      image: busybox:stable
+      command: ["sleep", "infinity"]
+      # securityContext:
+      #   ... fill me in ...
