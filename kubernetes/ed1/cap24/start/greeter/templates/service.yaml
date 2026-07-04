@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # TODO: {{ .Release.Name }}
+  name: CHANGE-ME
+spec:
+  selector:
+    # TODO: {{ .Release.Name }}
+    app: CHANGE-ME
+  ports:
+    - port: 80
+      targetPort: 8080

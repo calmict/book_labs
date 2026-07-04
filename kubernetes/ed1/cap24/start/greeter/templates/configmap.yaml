@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # TODO: name it after the release, e.g. {{ .Release.Name }}-page
+  name: CHANGE-ME-page
+data:
+  index.html: |
+    # TODO: put the value of .Values.message here, e.g. {{ .Values.message }}
+    CHANGE-ME

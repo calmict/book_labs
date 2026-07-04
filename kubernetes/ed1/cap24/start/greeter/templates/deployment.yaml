@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # TODO: {{ .Release.Name }}
+  name: CHANGE-ME
+spec:
+  # TODO: {{ .Values.replicaCount }}
+  replicas: CHANGE-ME
+  selector:
+    matchLabels:
+      # TODO: {{ .Release.Name }}
+      app: CHANGE-ME
+  template:
+    metadata:
+      labels:
+        # TODO: {{ .Release.Name }}
+        app: CHANGE-ME
+      annotations:
+        # Given: a fingerprint of the ConfigMap. When the config changes,
+        # this hash changes, so the pod template changes, so the pods are
+        # rolled. Without it, editing the ConfigMap alone would NOT restart
+        # the pods and they would keep serving the old content.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: greeter
+          image: busybox:stable
+          command: ["httpd", "-f", "-p", "8080", "-h", "/www"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: page
+              mountPath: /www
+      volumes:
+        - name: page
+          configMap:
+            # TODO: {{ .Release.Name }}-page
+            name: CHANGE-ME-page

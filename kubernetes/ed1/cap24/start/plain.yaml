@@ -1,0 +1,50 @@
+# The "before": one small app, three manifests, every value hand-written.
+# Imagine keeping a dev, a staging and a prod copy of this file, identical
+# except for replicas and one message line — and repeating every change by
+# hand on all three. That copy-paste cramp is the problem Helm solves.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: greeter-page
+data:
+  index.html: |
+    Greetings from revision one
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: greeter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: greeter
+  template:
+    metadata:
+      labels:
+        app: greeter
+    spec:
+      containers:
+        - name: greeter
+          image: busybox:stable
+          command: ["httpd", "-f", "-p", "8080", "-h", "/www"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: page
+              mountPath: /www
+      volumes:
+        - name: page
+          configMap:
+            name: greeter-page
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: greeter
+spec:
+  selector:
+    app: greeter
+  ports:
+    - port: 80
+      targetPort: 8080

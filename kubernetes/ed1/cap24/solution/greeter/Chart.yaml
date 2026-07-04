@@ -1,0 +1,6 @@
+apiVersion: v2
+name: greeter
+description: A tiny greeter, cast from one Helm mould
+type: application
+version: 0.1.0
+appVersion: "1.0"
