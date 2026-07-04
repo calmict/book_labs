@@ -1,0 +1,37 @@
+# The vault, the legitimate app, and the guest with no role.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: safe
+  namespace: vault
+  labels:
+    app: safe
+spec:
+  containers:
+    - name: safe
+      image: busybox:stable
+      command: ["sh", "-c", "mkdir -p /www; echo gioielli > /www/index.html; httpd -f -p 8080 -h /www"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app
+  namespace: vault
+  labels:
+    role: app
+spec:
+  containers:
+    - name: app
+      image: busybox:stable
+      command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: guest
+  namespace: vault
+spec:
+  containers:
+    - name: guest
+      image: busybox:stable
+      command: ["sleep", "infinity"]

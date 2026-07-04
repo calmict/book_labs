@@ -39,6 +39,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 19 | The door and the doorman (Ingress and Ingress Controller) | Intermediate | [ed1/cap19](ed1/cap19/) |
 | 20 | The arranged marriage (PV, PVC, StorageClass) | Intermediate | [ed1/cap20](ed1/cap20/) |
 | 21 | The intern and the robot (authentication and RBAC) | Advanced | [ed1/cap21](ed1/cap21/) |
+| 22 | The vault and the corridor (NetworkPolicy and zero-trust) | Advanced | [ed1/cap22](ed1/cap22/) |
 
 ## Pull only this manual
 

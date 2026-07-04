@@ -1,0 +1,12 @@
+# The vault does not make phone calls: whoever cracks it carries
+# nothing out.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: no-exfiltration
+  namespace: vault
+spec:
+  podSelector:
+    matchLabels:
+      app: safe
+  policyTypes: ["Egress"]
