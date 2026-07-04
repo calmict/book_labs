@@ -1,0 +1,9 @@
+# The door with a nameplate: only role=app, only port 8080.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app
+  namespace: vault
+spec:
+  # TODO: select the safe (app: safe), rule Ingress, and allow one thing
+  # only — from pods labelled role: app, on TCP port 8080

@@ -1,0 +1,19 @@
+# The door with a nameplate: only role=app, only port 8080.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app
+  namespace: vault
+spec:
+  podSelector:
+    matchLabels:
+      app: safe
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: app
+      ports:
+        - protocol: TCP
+          port: 8080
