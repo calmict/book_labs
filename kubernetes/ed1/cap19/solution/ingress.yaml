@@ -1,0 +1,28 @@
+# The written request: two hosts, one door, each to its own tenant.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: labs
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: uno.labs.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: uno
+                port:
+                  number: 80
+    - host: due.labs.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: due
+                port:
+                  number: 80

@@ -1,0 +1,18 @@
+# One node, labelled and ready for the doorman (ingress-nginx), with the
+# host's port 8081 mapped to the node's port 80.
+# If 8081 is taken on your machine, change hostPort below.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: book-labs-ingress
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 8081
+        protocol: TCP
