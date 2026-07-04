@@ -1,0 +1,9 @@
+# A control plane and two workers: enough geography for a DaemonSet
+# to have something to say.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: book-labs-crew
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker

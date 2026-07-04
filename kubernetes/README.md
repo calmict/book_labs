@@ -34,6 +34,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 14 | The condo pod: two tenants, one invisible janitor | Intermediate | [ed1/cap14](ed1/cap14/) |
 | 15 | The release, the disaster and the comeback (rollout and rollback) | Intermediate | [ed1/cap15](ed1/cap15/) |
 | 16 | The registry office: names, order and disks that survive | Intermediate | [ed1/cap16](ed1/cap16/) |
+| 17 | The three trades: one per node, until done, on schedule | Intermediate | [ed1/cap17](ed1/cap17/) |
 
 ## Pull only this manual
 
