@@ -1,0 +1,16 @@
+# The robot: an identity for a workload, and the pod that wears it.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: robot
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: robot
+spec:
+  # TODO: make the pod wear the robot identity (serviceAccountName)
+  containers:
+    - name: robot
+      image: curlimages/curl:latest
+      command: ["sleep", "infinity"]
