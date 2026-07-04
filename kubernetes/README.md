@@ -38,6 +38,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 18 | The address that does not exist (Services and kube-proxy) | Intermediate | [ed1/cap18](ed1/cap18/) |
 | 19 | The door and the doorman (Ingress and Ingress Controller) | Intermediate | [ed1/cap19](ed1/cap19/) |
 | 20 | The arranged marriage (PV, PVC, StorageClass) | Intermediate | [ed1/cap20](ed1/cap20/) |
+| 21 | The intern and the robot (authentication and RBAC) | Advanced | [ed1/cap21](ed1/cap21/) |
 
 ## Pull only this manual
 

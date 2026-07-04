@@ -1,0 +1,22 @@
+# The intern's job description: read pods in default, nothing else.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: default
+rules: []
+# TODO: one rule — core apiGroup (""), resources pods,
+# verbs get, list, watch. Nothing more: that is the whole point.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: stagista-pod-reader
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-reader
+subjects: []
+# TODO: one subject — kind User, name stagista
+# (apiGroup rbac.authorization.k8s.io)
