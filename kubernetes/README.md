@@ -32,6 +32,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 12 | The ship's doctor: probes, restarts and the self-resurrecting pod | Foundational | [ed1/cap12](ed1/cap12/) |
 | 13 | The investigation: who touched my pod? | Intermediate | [ed1/cap13](ed1/cap13/) |
 | 14 | The condo pod: two tenants, one invisible janitor | Intermediate | [ed1/cap14](ed1/cap14/) |
+| 15 | The release, the disaster and the comeback (rollout and rollback) | Intermediate | [ed1/cap15](ed1/cap15/) |
 
 ## Pull only this manual
 
