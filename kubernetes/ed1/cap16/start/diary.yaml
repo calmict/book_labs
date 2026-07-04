@@ -1,0 +1,38 @@
+# The registry office: a headless Service for stable names, a StatefulSet
+# for stable identities, one personal disk per citizen.
+apiVersion: v1
+kind: Service
+metadata:
+  name: diary
+  labels:
+    app: diary
+spec:
+  clusterIP: None
+  selector:
+    app: diary
+  ports:
+    - port: 80
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: diary
+spec:
+  # TODO: tie the set to its headless Service (serviceName)
+  replicas: 3
+  selector:
+    matchLabels:
+      app: diary
+  template:
+    metadata:
+      labels:
+        app: diary
+    spec:
+      containers:
+        - name: diary
+          image: alpine:3
+          # one diary line per awakening: counting lines tells the lives
+          command: ["sh", "-c", "echo \"$(hostname) alive at $(date)\" >> /data/diary.txt; cat /data/diary.txt; sleep infinity"]
+          # TODO: mount the personal disk (volume name data) on /data
+  # TODO: the volumeClaimTemplates — a claim named data, ReadWriteOnce,
+  # 10Mi: one disk per replica, born with it
