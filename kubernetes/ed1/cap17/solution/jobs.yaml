@@ -1,0 +1,28 @@
+# Two jobs, two fates: one finishes with honour, one earns the right
+# to fail for good.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: countdown
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: counter
+          image: alpine:3
+          command: ["sh", "-c", "for i in 5 4 3 2 1; do echo $i; sleep 1; done; echo liftoff"]
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flaky
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: flaky
+          image: alpine:3
+          command: ["sh", "-c", "echo trying and failing...; exit 1"]

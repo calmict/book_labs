@@ -1,0 +1,23 @@
+# Step 2, second half: the written permission (chapter 11) that lets the
+# watchman guard the control plane too.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: watchman
+spec:
+  selector:
+    matchLabels:
+      app: watchman
+  template:
+    metadata:
+      labels:
+        app: watchman
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: watchman
+          image: alpine:3
+          command: ["sleep", "infinity"]

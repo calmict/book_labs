@@ -1,0 +1,19 @@
+# Note what is MISSING: no replicas, anywhere. The cluster's geography
+# decides the count.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: watchman
+spec:
+  selector:
+    matchLabels:
+      app: watchman
+  template:
+    metadata:
+      labels:
+        app: watchman
+    spec:
+      containers:
+        - name: watchman
+          image: alpine:3
+          command: ["sleep", "infinity"]
