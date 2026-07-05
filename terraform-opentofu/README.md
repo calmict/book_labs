@@ -27,6 +27,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | Chapter | Title | Level | Folder |
 |--------:|-------|:-----:|--------|
 | 1 | The snowflake and the herd (click-ops, drift, pets vs cattle) | Foundational | [ed1/cap01](ed1/cap01/) |
+| 2 | The recipe and the photograph (imperative vs declarative) | Foundational | [ed1/cap02](ed1/cap02/) |
 
 ## Pull only this manual
 
