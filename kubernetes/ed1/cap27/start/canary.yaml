@@ -1,0 +1,40 @@
+# Traffic management: split traffic between two versions from above, without
+# touching the app. The DestinationRule names the two subsets (by the
+# version label); the VirtualService decides how much traffic each gets.
+#
+# TODO: in the VirtualService below, route 80% of the traffic to subset v1
+# and 20% to subset v2 (fill in the two weights). Shifting these weights is
+# a canary rollout: 95/5, then 50/50, then 0/100.
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: web
+  namespace: mesh
+spec:
+  host: web
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+    - name: v2
+      labels:
+        version: v2
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: web
+  namespace: mesh
+spec:
+  hosts:
+    - web
+  http:
+    - route:
+        - destination:
+            host: web
+            subset: v1
+          weight: 0   # TODO: 80
+        - destination:
+            host: web
+            subset: v2
+          weight: 0   # TODO: 20
