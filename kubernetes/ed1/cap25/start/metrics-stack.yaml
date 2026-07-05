@@ -1,0 +1,93 @@
+# The meter reader, the meter on the wall, and a client to ask questions.
+#   - node-exporter: bolts a meter to the node, exposing its readings at /metrics
+#   - prometheus:    the reader that walks its round and scrapes each /metrics
+#   - client:        a plain busybox to curl the meter face and the Prometheus API
+#                    (neither prometheus nor node-exporter ships a shell)
+# The Prometheus config lives in a separate file, prometheus-config.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-exporter
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      containers:
+        - name: node-exporter
+          image: prom/node-exporter:v1.8.2
+          ports:
+            - containerPort: 9100
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+spec:
+  selector:
+    app: node-exporter
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: 9100
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.53.2
+          args: ["--config.file=/etc/prometheus/prometheus.yml"]
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: cfg
+              mountPath: /etc/prometheus
+      volumes:
+        - name: cfg
+          configMap:
+            name: prom-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+  namespace: monitoring
+spec:
+  containers:
+    - name: client
+      image: busybox:stable
+      command: ["sleep", "infinity"]
