@@ -32,7 +32,7 @@ parallelo al libro.
     │           ├── start/         # file di partenza — condivisi, neutri rispetto alla lingua
     │           └── solution/      # soluzione testata — condivisa, neutra rispetto alla lingua
     ├── ansible/               # (in arrivo con il manuale Ansible)
-    └── terraform-opentofu/    # (in arrivo con il manuale Terraform/OpenTofu)
+    └── terraform-opentofu/    # esercizi del manuale Terraform/OpenTofu
 
 **Lingue.** I nomi delle cartelle e il codice/manifest sono in inglese e
 condivisi tra le lingue (un file deployment.yaml è identico in qualsiasi

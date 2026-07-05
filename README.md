@@ -31,7 +31,7 @@ alongside the book.
     │           ├── start/         # starting files — shared, language-neutral
     │           └── solution/      # tested solution — shared, language-neutral
     ├── ansible/               # (coming with the Ansible manual)
-    └── terraform-opentofu/    # (coming with the Terraform/OpenTofu manual)
+    └── terraform-opentofu/    # exercises for the Terraform/OpenTofu manual
 
 **Languages.** Folder names and code/manifests are in English and shared across
 languages (a deployment.yaml file is the same in any language). Only the
