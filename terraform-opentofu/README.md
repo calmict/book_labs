@@ -26,7 +26,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 
 | Chapter | Title | Level | Folder |
 |--------:|-------|:-----:|--------|
-| _exercises are listed here as they are created_ | | | |
+| 1 | The snowflake and the herd (click-ops, drift, pets vs cattle) | Foundational | [ed1/cap01](ed1/cap01/) |
 
 ## Pull only this manual
 
