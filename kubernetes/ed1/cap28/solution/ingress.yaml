@@ -1,0 +1,27 @@
+# The doorman's rule, made HTTPS: the annotation asks cert-manager for a
+# certificate, the tls block says which host it is for and where to store it.
+# cert-manager fills the certificate's SAN from the host below, automatically.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shop
+  namespace: web
+  annotations:
+    cert-manager.io/cluster-issuer: local-ca
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - shop.book-labs.local
+      secretName: shop-tls
+  rules:
+    - host: shop.book-labs.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: shop
+                port:
+                  number: 80

@@ -45,6 +45,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 25 | The meter reader (Prometheus, PromQL and Grafana) | Cloud Architect | [ed1/cap25](ed1/cap25/) |
 | 26 | The ledger and the auditor (ArgoCD and GitOps) | Cloud Architect | [ed1/cap26](ed1/cap26/) |
 | 27 | The escort (Istio and the service mesh) | Cloud Architect | [ed1/cap27](ed1/cap27/) |
+| 28 | The doorman's passport (Ingress-Nginx and Cert-Manager, automatic TLS) | Cloud Architect | [ed1/cap28](ed1/cap28/) |
 
 ## Pull only this manual
 
