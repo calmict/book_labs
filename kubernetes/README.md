@@ -42,6 +42,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 22 | The vault and the corridor (NetworkPolicy and zero-trust) | Advanced | [ed1/cap22](ed1/cap22/) |
 | 23 | The cardboard king (container security and Pod Security Standards) | Advanced | [ed1/cap23](ed1/cap23/) |
 | 24 | The mould and the casts (Helm, the package manager) | Cloud Architect | [ed1/cap24](ed1/cap24/) |
+| 25 | The meter reader (Prometheus, PromQL and Grafana) | Cloud Architect | [ed1/cap25](ed1/cap25/) |
 
 ## Pull only this manual
 

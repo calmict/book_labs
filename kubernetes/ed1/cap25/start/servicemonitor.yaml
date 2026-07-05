@@ -1,0 +1,23 @@
+# The operator's way to write the same round — READ THIS, do not apply it.
+#
+# A ServiceMonitor is a Custom Resource of the Prometheus Operator. It does
+# NOT work on its own: it needs the operator installed (in the real world,
+# via a chart such as kube-prometheus-stack — the helm install of chapter
+# 24). When the operator IS present, you never hand-edit prometheus.yml
+# again. You declare which Services to scrape, by label, and the operator
+# generates exactly the scrape_config stanza you wrote by hand in this lab.
+#
+# This one says: "scrape every Service labelled app=node-exporter, on its
+# port named 'metrics', every 5s" — the operator equivalent of the node job.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: node-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  endpoints:
+    - port: metrics
+      interval: 5s

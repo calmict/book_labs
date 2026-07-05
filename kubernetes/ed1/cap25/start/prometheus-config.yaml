@@ -1,0 +1,22 @@
+# The reader's round: which doors to visit and how often.
+# Right now Prometheus only scrapes itself. TODO: add a second job named
+# "node" that scrapes the node-exporter Service at node-exporter:9100, so
+# the reader also walks past the meter on the wall. After editing, apply
+# this file and restart the prometheus deployment so it re-reads the round.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prom-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 5s
+    scrape_configs:
+      - job_name: prometheus
+        static_configs:
+          - targets: ["localhost:9090"]
+      # TODO: add the node job here, e.g.
+      # - job_name: node
+      #   static_configs:
+      #     - targets: ["node-exporter:9100"]
