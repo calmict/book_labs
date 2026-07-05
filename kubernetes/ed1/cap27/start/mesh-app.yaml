@@ -1,0 +1,90 @@
+# The workload: two versions of one web app, a client inside the mesh, and
+# a second namespace "outside" with NO sidecar injection (used in step 2 to
+# prove that mTLS STRICT refuses anyone without an escort).
+# The "mesh" namespace carries istio-injection=enabled: every pod born here
+# gets an Envoy sidecar attached automatically — the app is not modified.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mesh
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: outside
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-v1
+  namespace: mesh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: web
+        version: v1
+    spec:
+      containers:
+        - name: web
+          image: busybox:stable
+          command: ["sh", "-c", "mkdir -p /www; echo v1 > /www/index.html; httpd -f -p 8080 -h /www"]
+          ports:
+            - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-v2
+  namespace: mesh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: web
+        version: v2
+    spec:
+      containers:
+        - name: web
+          image: busybox:stable
+          command: ["sh", "-c", "mkdir -p /www; echo v2 > /www/index.html; httpd -f -p 8080 -h /www"]
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: mesh
+spec:
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+  namespace: mesh
+  labels:
+    app: client
+spec:
+  containers:
+    - name: client
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "infinity"]

@@ -1,0 +1,12 @@
+# Order the mesh namespace to accept only mutual TLS. With STRICT, every
+# call between sidecars is encrypted and mutually authenticated, and any
+# plaintext caller (a pod with no sidecar) is refused. You created no
+# certificates: istiod issues and rotates a SPIFFE identity per workload.
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: mesh
+spec:
+  mtls:
+    mode: STRICT

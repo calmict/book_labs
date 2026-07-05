@@ -44,6 +44,7 @@ for a reproducible (non-binding) environment using kind / minikube / k3d.
 | 24 | The mould and the casts (Helm, the package manager) | Cloud Architect | [ed1/cap24](ed1/cap24/) |
 | 25 | The meter reader (Prometheus, PromQL and Grafana) | Cloud Architect | [ed1/cap25](ed1/cap25/) |
 | 26 | The ledger and the auditor (ArgoCD and GitOps) | Cloud Architect | [ed1/cap26](ed1/cap26/) |
+| 27 | The escort (Istio and the service mesh) | Cloud Architect | [ed1/cap27](ed1/cap27/) |
 
 ## Pull only this manual
 
