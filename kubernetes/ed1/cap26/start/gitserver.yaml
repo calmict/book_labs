@@ -1,0 +1,94 @@
+# The ledger, hosted inside the cluster. A tiny git server (git daemon)
+# holding one repository, app.git, whose manifests/ directory declares the
+# desired state: a Deployment "web" at 1 replica. This is the single source
+# of truth ArgoCD will read from. It is lab infrastructure — you do not edit
+# this file; you make commits by exec-ing into the running pod (steps 4).
+#
+# Note: git:// has no authentication or encryption. That is fine for a local
+# throwaway cluster; never expose a git daemon like this on a real network.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitops
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitserver
+  namespace: gitops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitserver
+  template:
+    metadata:
+      labels:
+        app: gitserver
+    spec:
+      containers:
+        - name: gitserver
+          image: alpine:3.20
+          ports:
+            - containerPort: 9418
+          # ready only once git daemon is actually listening (after apk add
+          # and the repo is seeded), so consumers do not clone too early
+          readinessProbe:
+            tcpSocket:
+              port: 9418
+            initialDelaySeconds: 5
+            periodSeconds: 3
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              apk add --no-cache git git-daemon >/dev/null
+              git config --global init.defaultBranch main
+              git config --global user.email lab@calmict.com
+              git config --global user.name "Calm ICT Lab"
+              mkdir -p /srv
+              git init -q /work
+              cd /work
+              mkdir -p manifests
+              cat > manifests/web.yaml <<'Y'
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: web
+                labels:
+                  app: web
+              spec:
+                replicas: 1
+                selector:
+                  matchLabels:
+                    app: web
+                template:
+                  metadata:
+                    labels:
+                      app: web
+                  spec:
+                    containers:
+                      - name: web
+                        image: busybox:stable
+                        command: ["sleep", "infinity"]
+              Y
+              git add .
+              git commit -qm "initial: web at 1 replica"
+              git clone -q --bare /work /srv/app.git
+              git remote add origin /srv/app.git
+              echo "git server ready, serving git://gitserver.gitops.svc:9418/app.git"
+              exec git daemon --reuseaddr --base-path=/srv --export-all \
+                --enable=receive-pack --listen=0.0.0.0 --port=9418 /srv
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitserver
+  namespace: gitops
+spec:
+  selector:
+    app: gitserver
+  ports:
+    - port: 9418
+      targetPort: 9418
