@@ -34,6 +34,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 6 | The first stone (the CLI, the lifecycle, the saved plan) | Foundational | [ed1/cap06](ed1/cap06/) |
 | 7 | The version register (required_version, semver, the lock file) | Foundational | [ed1/cap07](ed1/cap07/) |
 | 8 | One translator, two sites (the provider block, aliases, auth) | Foundational | [ed1/cap08](ed1/cap08/) |
+| 9 | Arguments, attributes and the art of turning a blind eye (resources) | Intermediate | [ed1/cap09](ed1/cap09/) |
 
 ## Pull only this manual
 

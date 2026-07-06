@@ -1,0 +1,52 @@
+# GALLERY — read, do not execute (the .example extension keeps tofu away).
+#
+# The manual's extended example 9.6: a VM on vSphere. And a puzzle: some
+# blocks below are NOT resources. They create nothing — they LOOK UP what
+# already exists in vCenter (the datacenter, the datastore, the network)
+# and export its attributes. They are chapter 10's scouts: data sources.
+
+# Credentials from outside, as always (chapter 8).
+provider "vsphere" {
+  vsphere_server = "vcenter.example.internal"
+}
+
+# Not a resource: it QUERIES the existing datacenter.
+data "vsphere_datacenter" "dc" {
+  name = "DC-Milano"
+}
+
+data "vsphere_datastore" "ds" {
+  name          = "datastore-ssd-01"
+  datacenter_id = data.vsphere_datacenter.dc.id
+}
+
+data "vsphere_compute_cluster" "cluster" {
+  name          = "Cluster-Prod"
+  datacenter_id = data.vsphere_datacenter.dc.id
+}
+
+data "vsphere_network" "lan" {
+  name          = "VLAN-Prod"
+  datacenter_id = data.vsphere_datacenter.dc.id
+}
+
+# The only RESOURCE here: the one thing this configuration creates. Note
+# how its inputs are the outputs of the lookups above.
+resource "vsphere_virtual_machine" "app" {
+  name             = "app-server-01"
+  resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
+  datastore_id     = data.vsphere_datastore.ds.id
+
+  num_cpus = 2
+  memory   = 4096
+  guest_id = "otherLinux64Guest"
+
+  network_interface {
+    network_id = data.vsphere_network.lan.id
+  }
+
+  disk {
+    label = "disk0"
+    size  = 40
+  }
+}
