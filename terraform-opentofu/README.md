@@ -31,6 +31,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 3 | Renovate or rebuild (in-place vs replace, the lifecycle block) | Foundational | [ed1/cap03](ed1/cap03/) |
 | 4 | The invisible foreman (the dependency graph, DAG, cycles) | Foundational | [ed1/cap04](ed1/cap04/) |
 | 5 | The skyscraper's datasheet (HCL anatomy: types, strings, fmt) | Foundational | [ed1/cap05](ed1/cap05/) |
+| 6 | The first stone (the CLI, the lifecycle, the saved plan) | Foundational | [ed1/cap06](ed1/cap06/) |
 
 ## Pull only this manual
 
