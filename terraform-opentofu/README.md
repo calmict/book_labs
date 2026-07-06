@@ -36,6 +36,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 8 | One translator, two sites (the provider block, aliases, auth) | Foundational | [ed1/cap08](ed1/cap08/) |
 | 9 | Arguments, attributes and the art of turning a blind eye (resources) | Intermediate | [ed1/cap09](ed1/cap09/) |
 | 10 | The land registry (data sources: reading what you do not own) | Intermediate | [ed1/cap10](ed1/cap10/) |
+| 11 | The notebook and its secrets (the state file, three sources of truth) | Intermediate | [ed1/cap11](ed1/cap11/) |
 
 ## Pull only this manual
 
