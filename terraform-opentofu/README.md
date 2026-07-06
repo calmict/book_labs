@@ -37,6 +37,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 9 | Arguments, attributes and the art of turning a blind eye (resources) | Intermediate | [ed1/cap09](ed1/cap09/) |
 | 10 | The land registry (data sources: reading what you do not own) | Intermediate | [ed1/cap10](ed1/cap10/) |
 | 11 | The notebook and its secrets (the state file, three sources of truth) | Intermediate | [ed1/cap11](ed1/cap11/) |
+| 12 | One notebook, with a lock (remote backends, migration, state locking) | Intermediate | [ed1/cap12](ed1/cap12/) |
 
 ## Pull only this manual
 
