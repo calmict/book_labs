@@ -29,6 +29,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 1 | The snowflake and the herd (click-ops, drift, pets vs cattle) | Foundational | [ed1/cap01](ed1/cap01/) |
 | 2 | The recipe and the photograph (imperative vs declarative) | Foundational | [ed1/cap02](ed1/cap02/) |
 | 3 | Renovate or rebuild (in-place vs replace, the lifecycle block) | Foundational | [ed1/cap03](ed1/cap03/) |
+| 4 | The invisible foreman (the dependency graph, DAG, cycles) | Foundational | [ed1/cap04](ed1/cap04/) |
 
 ## Pull only this manual
 
