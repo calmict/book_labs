@@ -1,0 +1,34 @@
+# GALLERY — read, do not execute (the .example extension keeps tofu away).
+#
+# AWS: the ladder of trust. Note what is NOT here: no access key, no
+# secret. The provider block declares WHERE (region) and, at most, WHICH
+# IDENTITY TO BECOME (a role) — never who you are.
+
+# Rung 1 — credentials from outside.
+# The block is clean; the identity arrives from the environment:
+#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (environment variables), or
+#   a named profile in ~/.aws/ (AWS_PROFILE).
+provider "aws" {
+  region = "eu-south-1"
+}
+
+# Rung 2 — assume a role (the pattern that wins in teams and CI).
+# Your personal (or CI) credentials are only used to ASK for temporary
+# ones: the role's. What you gain over static keys:
+#   - duration: the obtained credentials expire by themselves;
+#   - perimeter: the role carries ONLY the permissions this project needs;
+#   - revocation and audit: one role to disable, every use logged.
+provider "aws" {
+  alias  = "production"
+  region = "eu-south-1"
+
+  assume_role {
+    role_arn     = "arn:aws:iam::123456789012:role/infra-deployer"
+    session_name = "opentofu-apply"
+  }
+}
+
+# Azure and Google follow the same principle with their own identities:
+# Managed Identity / Workload Identity / service accounts, or the
+# corporate CLI session (az login, gcloud auth) — the code never carries
+# the secret.
