@@ -33,6 +33,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 5 | The skyscraper's datasheet (HCL anatomy: types, strings, fmt) | Foundational | [ed1/cap05](ed1/cap05/) |
 | 6 | The first stone (the CLI, the lifecycle, the saved plan) | Foundational | [ed1/cap06](ed1/cap06/) |
 | 7 | The version register (required_version, semver, the lock file) | Foundational | [ed1/cap07](ed1/cap07/) |
+| 8 | One translator, two sites (the provider block, aliases, auth) | Foundational | [ed1/cap08](ed1/cap08/) |
 
 ## Pull only this manual
 

@@ -1,0 +1,29 @@
+# GALLERY — read, do not execute (the .example extension keeps tofu away).
+#
+# vSphere: the on-premise case. No cloud metadata service, no roles to
+# assume: just a server, a user and a password — which is exactly where
+# the capital sin gets committed.
+
+# ============================ THE SIN ================================
+# Credentials written in the .tf file. This file gets committed, the
+# password enters git history, and git history does not forget: even if
+# you remove it tomorrow, it stays in every clone, every mirror, every
+# backup, forever. A committed secret is a compromised secret.
+provider "vsphere" {
+  vsphere_server = "vcenter.example.internal"
+  user           = "administrator@vsphere.local"
+  password       = "SuperSecret123!" # <- the capital sin
+}
+
+# ============================ THE FIX ================================
+# The block states only WHERE. The identity arrives from the
+# environment, outside the code and outside git:
+#   export VSPHERE_USER="administrator@vsphere.local"
+#   export VSPHERE_PASSWORD=...   (from a vault, a keychain, a CI secret)
+provider "vsphere" {
+  alias          = "clean"
+  vsphere_server = "vcenter.example.internal"
+}
+
+# The golden rule, valid from Docker to AWS to this basement rack: the
+# code declares where and how to connect; who you are lives outside.
