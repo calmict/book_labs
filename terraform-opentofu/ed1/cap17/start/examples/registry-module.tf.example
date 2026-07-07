@@ -1,0 +1,25 @@
+# 17.3 — a REMOTE module from the Registry (read-only gallery, .tf.example so
+# tofu ignores it). Same module block you wrote for the local box, but source
+# points at the public Registry instead of a local path, and version is pinned.
+
+module "vpc" {
+  # namespace/name/provider on the Terraform Registry — NOT a local path.
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.8.1" # PIN it: a remote box must not change under your feet.
+
+  name = "cap17-example-vpc"
+  cidr = "10.0.0.0/16"
+
+  azs             = ["eu-south-1a", "eu-south-1b"]
+  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
+  private_subnets = ["10.0.11.0/24", "10.0.12.0/24"]
+}
+
+# Why the version pin matters as much as chapter 7's lock file: without it,
+# tofu init would fetch the newest matching module every time, and someone
+# else's refactor could silently change what your plan builds. The Registry is
+# other people's prefabs — you decide exactly which revision you stand on.
+#
+# output "vpc_id" {
+#   value = module.vpc.vpc_id  # you consume the remote module's OUTPUT doors,
+# }                            # never its internal resources.
