@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars and fill in your values:
+#
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# terraform.tfvars is gitignored on purpose: per-environment values (and
+# often credentials, keys, secrets) never travel in the repo — only this
+# example does. See chapter 11 on what the state keeps in plain text.
+
+environment   = "dev"
+external_port = 8095
