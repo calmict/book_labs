@@ -40,6 +40,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 12 | One notebook, with a lock (remote backends, migration, state locking) | Intermediate | [ed1/cap12](ed1/cap12/) |
 | 13 | The fire doors (state segregation, blast radius, remote_state) | Intermediate | [ed1/cap13](ed1/cap13/) |
 | 14 | The three doors (variables, outputs, locals, validation, precedence) | Intermediate | [ed1/cap14](ed1/cap14/) |
+| 15 | The fleet: by number or by name (count, for_each, conditionals, dynamic) | Intermediate | [ed1/cap15](ed1/cap15/) |
 
 ## Pull only this manual
 
