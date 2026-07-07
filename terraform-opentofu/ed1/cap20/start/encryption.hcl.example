@@ -1,0 +1,28 @@
+# Chapter 20 — the native state-encryption config (OpenTofu only).
+#
+# This is NOT a .tf file applied by tofu. It is the content you hand to the
+# TF_ENCRYPTION environment variable, so the passphrase lives in your shell,
+# never in a versioned file (the same rule as chapter 14's tfvars).
+#
+# TODO: replace CHANGE-ME with your OWN passphrase (at least 16 characters),
+# then export it (all on the environment, nothing committed):
+#
+#   export TF_ENCRYPTION="$(sed 's/^#.*//' encryption.hcl.example)"   # after editing
+#
+# or paste the three blocks straight into an export, as the README shows.
+# Do NOT commit your real passphrase anywhere.
+
+# key_provider: derives an encryption key from a passphrase (PBKDF2).
+key_provider "pbkdf2" "k" {
+  passphrase = "CHANGE-ME-to-a-long-passphrase"
+}
+
+# method: the cipher that uses that key (AES-GCM, authenticated encryption).
+method "aes_gcm" "m" {
+  keys = key_provider.pbkdf2.k
+}
+
+# state: apply the method to the state file.
+state {
+  method = method.aes_gcm.m
+}
