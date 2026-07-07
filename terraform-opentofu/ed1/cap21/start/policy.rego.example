@@ -1,0 +1,31 @@
+# 21.3 — policy as code (read-only gallery). An OPA/conftest policy, written
+# in Rego, that runs against the JSON plan and DENIES unpinned container
+# images. No scanner is installed in this lab: read it for the shape.
+#
+# How it would run in CI:
+#   tofu plan -out tfplan
+#   tofu show -json tfplan > plan.json
+#   conftest test plan.json --policy policy.rego
+#
+# The start configuration PASSES this rule (nginx:1.27-alpine is pinned); an
+# image like nginx:latest would be rejected automatically, with no human review.
+
+package main
+
+# Deny any docker_image whose name uses the moving :latest tag.
+deny[msg] {
+  rc := input.resource_changes[_]
+  rc.type == "docker_image"
+  name := rc.change.after.name
+  endswith(name, ":latest")
+  msg := sprintf("image '%s' is not pinned: use an explicit version, never :latest", [name])
+}
+
+# Deny any docker_image with no tag at all (also resolves to :latest at pull).
+deny[msg] {
+  rc := input.resource_changes[_]
+  rc.type == "docker_image"
+  name := rc.change.after.name
+  not contains(name, ":")
+  msg := sprintf("image '%s' has no version tag: pin an explicit version", [name])
+}
