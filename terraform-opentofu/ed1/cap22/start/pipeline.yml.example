@@ -1,0 +1,69 @@
+# Chapter 22 — the pipeline (GitHub Actions), a template to read and adapt.
+#
+# This file lives in the exercise folder on purpose: it is NOT under
+# .github/workflows/, so GitHub does not run it. Copy it into your own repo's
+# .github/workflows/ and adjust the working-directory to deploy for real.
+#
+# Two stretches of the belt:
+#   plan   (the gate)     -> runs on every pull request: checks + propose
+#   deploy (the delivery) -> runs only on push to main:  apply
+
+name: terraform
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  # OIDC (22.4): lets the deploy job request a short-lived cloud token instead
+  # of a static key. See the deploy job below.
+  id-token: write
+
+jobs:
+  # ---- The gate: chapter 21's pyramid, on every proposal ----
+  plan:
+    name: Plan (the gate)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform-opentofu/ed1/cap22/solution
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+
+      # TODO 1 (Phase 1): put the pyramid on the belt. Add the four steps that
+      # in chapter 21 you ran by hand, in order:
+      #   - run: tofu fmt -check -recursive
+      #   - run: tofu init -input=false
+      #   - run: tofu validate
+      #   - run: tofu plan -input=false -no-color
+      - run: tofu fmt -check -recursive
+
+  # ---- The delivery: apply, only after merge ----
+  deploy:
+    name: Apply (the delivery)
+    needs: plan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform-opentofu/ed1/cap22/solution
+
+    # TODO 2 (Phase 2): guard this job so it runs ONLY on a push to main, never
+    # on a pull request. Add the right if: condition here.
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+
+      # OIDC (22.4): assume a cloud role with a short-lived token — no static
+      # keys pasted into secrets. (Commented: needs a real cloud + trust setup.)
+      # - uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: arn:aws:iam::123456789012:role/tofu-deployer
+      #     aws-region: eu-south-1
+
+      - run: tofu init -input=false
+      - run: tofu apply -input=false -auto-approve
