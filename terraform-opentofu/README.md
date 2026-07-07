@@ -41,6 +41,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 13 | The fire doors (state segregation, blast radius, remote_state) | Intermediate | [ed1/cap13](ed1/cap13/) |
 | 14 | The three doors (variables, outputs, locals, validation, precedence) | Intermediate | [ed1/cap14](ed1/cap14/) |
 | 15 | The fleet: by number or by name (count, for_each, conditionals, dynamic) | Intermediate | [ed1/cap15](ed1/cap15/) |
+| 16 | The workbench (functions, for expressions, tofu console) | Intermediate | [ed1/cap16](ed1/cap16/) |
 
 ## Pull only this manual
 
