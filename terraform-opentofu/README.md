@@ -39,6 +39,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 11 | The notebook and its secrets (the state file, three sources of truth) | Intermediate | [ed1/cap11](ed1/cap11/) |
 | 12 | One notebook, with a lock (remote backends, migration, state locking) | Intermediate | [ed1/cap12](ed1/cap12/) |
 | 13 | The fire doors (state segregation, blast radius, remote_state) | Intermediate | [ed1/cap13](ed1/cap13/) |
+| 14 | The three doors (variables, outputs, locals, validation, precedence) | Intermediate | [ed1/cap14](ed1/cap14/) |
 
 ## Pull only this manual
 
