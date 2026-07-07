@@ -1,0 +1,39 @@
+# 17.4 — passing an ALIASED provider to a module (read-only gallery,
+# .tf.example so tofu ignores it). Builds on chapter 8's two datacenters.
+
+# The root declares two docker providers: a default (Milan) and an alias
+# (Frankfurt, a second engine reachable over TCP — see chapter 8).
+provider "docker" {}
+
+provider "docker" {
+  alias = "frankfurt"
+  host  = "tcp://127.0.0.1:23750"
+}
+
+# By DEFAULT a module inherits the root's DEFAULT provider. This instance's
+# resources are born in Milan, and you write nothing special:
+module "milan_app" {
+  source        = "./modules/webapp"
+  name          = "blog"
+  environment   = "prod"
+  external_port = 8101
+}
+
+# To place the SAME box's resources in Frankfurt instead, you PASS the aliased
+# provider explicitly with a providers = { } map. The key (docker) is the name
+# the module knows; the value (docker.frankfurt) is the config you hand it.
+module "frankfurt_app" {
+  source        = "./modules/webapp"
+  name          = "blog"
+  environment   = "prod"
+  external_port = 8102
+
+  providers = {
+    docker = docker.frankfurt
+  }
+}
+
+# The point: WHERE a module's resources live is decided by whoever CALLS the
+# module, not by whoever wrote it. The module stays provider-agnostic (no
+# provider block inside, only required_providers); the caller wires the
+# power line — the default one, or an aliased one.
