@@ -1,0 +1,56 @@
+# 19.4 — Terragrunt: the orchestrator (read-only gallery, .example so it is
+# not run). Terragrunt keeps the SEPARATE-DIRECTORY isolation but removes the
+# boilerplate copy-pasted into every environment folder.
+#
+# The layout it enables:
+#
+#   live/
+#     terragrunt.hcl          <- this ROOT file: the single source of truth
+#     dev/  terragrunt.hcl     <- includes the root + dev inputs
+#     prod/ terragrunt.hcl     <- includes the root + prod inputs
+#     modules/webapp/          <- the same shared module you already have
+
+# ---- ROOT terragrunt.hcl (live/terragrunt.hcl) ----
+
+# Generate the backend config for EVERY environment, with a state key that
+# differs per folder — so dev and prod never share a state (isolation kept).
+remote_state {
+  backend = "local"
+  generate = {
+    path      = "backend.tf"
+    if_exists = "overwrite"
+  }
+  config = {
+    path = "${path_relative_to_include()}/terraform.tfstate"
+  }
+}
+
+# Generate the provider once, for all environments — no more copy-paste.
+generate "provider" {
+  path      = "provider.tf"
+  if_exists = "overwrite"
+  contents  = <<-EOT
+    provider "docker" {}
+  EOT
+}
+
+
+# ---- Per-environment child (e.g. live/prod/terragrunt.hcl) ----
+#
+# include "root" {
+#   path = find_in_parent_folders()   # pull in the root's backend + provider
+# }
+#
+# terraform {
+#   source = "../modules/webapp"       # the same shared module
+# }
+#
+# inputs = {                           # only what differs lives here
+#   environment   = "prod"
+#   external_port = 8123
+# }
+#
+# What Terragrunt REMOVES: the repeated terraform/backend/provider boilerplate
+# (generated from the root). What it does NOT remove: the separation itself —
+# each folder still has its own state and its own plan/apply. DRY on top of
+# isolation, not instead of it.

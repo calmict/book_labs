@@ -44,6 +44,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 16 | The workbench (functions, for expressions, tofu console) | Intermediate | [ed1/cap16](ed1/cap16/) |
 | 17 | The prefab (local modules, for_each reuse, provider inheritance, the Registry) | Intermediate | [ed1/cap17](ed1/cap17/) |
 | 18 | The paperwork, not the buildings (moved, removed, import, state commands) | Advanced | [ed1/cap18](ed1/cap18/) |
+| 19 | The drawer or the room (environments: workspaces vs separate directories, Terragrunt) | Advanced | [ed1/cap19](ed1/cap19/) |
 
 ## Pull only this manual
 
