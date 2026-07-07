@@ -46,6 +46,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 18 | The paperwork, not the buildings (moved, removed, import, state commands) | Advanced | [ed1/cap18](ed1/cap18/) |
 | 19 | The drawer or the room (environments: workspaces vs separate directories, Terragrunt) | Advanced | [ed1/cap19](ed1/cap19/) |
 | 20 | The twins and the lock (OpenTofu vs Terraform: the 95%, the 5%, native state encryption) | Cloud Architect | [ed1/cap20](ed1/cap20/) |
+| 21 | The pyramid of checks (fmt, validate, policy as code, tofu test) | Cloud Architect | [ed1/cap21](ed1/cap21/) |
 
 ## Pull only this manual
 
