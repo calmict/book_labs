@@ -2,8 +2,7 @@
 
 Practical labs for the Calm ICT **Terraform & OpenTofu** manual.
 
-> Status: scaffolding. The chapter index below is filled in as exercises are
-> created from the manual sources.
+> Status: complete — all 22 chapters of the 1st edition have exercises.
 
 ## Recommended setup
 
@@ -47,6 +46,7 @@ one-to-one terraform equivalent — use whichever you have installed.
 | 19 | The drawer or the room (environments: workspaces vs separate directories, Terragrunt) | Advanced | [ed1/cap19](ed1/cap19/) |
 | 20 | The twins and the lock (OpenTofu vs Terraform: the 95%, the 5%, native state encryption) | Cloud Architect | [ed1/cap20](ed1/cap20/) |
 | 21 | The pyramid of checks (fmt, validate, policy as code, tofu test) | Cloud Architect | [ed1/cap21](ed1/cap21/) |
+| 22 | The conveyor belt (CI/CD, GitOps, OIDC) | Cloud Architect | [ed1/cap22](ed1/cap22/) |
 
 ## Pull only this manual
 

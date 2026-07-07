@@ -1,0 +1,63 @@
+# Chapter 22 solution — the pipeline, TODOs completed.
+#
+# Not under .github/workflows/, so GitHub does not run it: a template to copy
+# into your own repo. Two stretches: plan (gate, on PR) and deploy (delivery,
+# on push to main).
+
+name: terraform
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  # OIDC (22.4): lets the deploy job request a short-lived cloud token instead
+  # of a static key.
+  id-token: write
+
+jobs:
+  # ---- The gate: chapter 21's pyramid, on every proposal ----
+  plan:
+    name: Plan (the gate)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform-opentofu/ed1/cap22/solution
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+
+      # TODO 1, completed: the pyramid on the belt, on every pull request.
+      - run: tofu fmt -check -recursive
+      - run: tofu init -input=false
+      - run: tofu validate
+      - run: tofu plan -input=false -no-color
+
+  # ---- The delivery: apply, only after merge ----
+  deploy:
+    name: Apply (the delivery)
+    needs: plan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform-opentofu/ed1/cap22/solution
+
+    # TODO 2, completed: apply only on a push to main, never on a pull request.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+
+      # OIDC (22.4): assume a cloud role with a short-lived token — no static
+      # keys pasted into secrets. (Commented: needs a real cloud + trust setup.)
+      # - uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: arn:aws:iam::123456789012:role/tofu-deployer
+      #     aws-region: eu-south-1
+
+      - run: tofu init -input=false
+      - run: tofu apply -input=false -auto-approve
