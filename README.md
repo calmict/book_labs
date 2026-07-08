@@ -30,7 +30,7 @@ alongside the book.
     │           ├── README.en.md   # brief (English)
     │           ├── start/         # starting files — shared, language-neutral
     │           └── solution/      # tested solution — shared, language-neutral
-    ├── ansible/               # (coming with the Ansible manual)
+    ├── ansible/               # exercises for the Ansible manual
     └── terraform-opentofu/    # exercises for the Terraform/OpenTofu manual
 
 **Languages.** Folder names and code/manifests are in English and shared across
