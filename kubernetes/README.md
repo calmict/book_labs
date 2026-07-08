@@ -2,7 +2,7 @@
 
 Practical labs for the Calm ICT **Kubernetes** manual.
 
-> Status: scaffolding. The chapter index below is filled in as exercises are
+> Status: in progress. The chapter index below is filled in as exercises are
 > created from the manual sources.
 
 ## Recommended setup

@@ -1,7 +1,7 @@
 name: validate
 
 # Validates exercise files (YAML lint + per-technology checks).
-# Placeholder structure: jobs are scaffolded but kept minimal until the first
+# Placeholder structure: jobs are defined but kept minimal until the first
 # real exercises land. Tools differ per manual, so each is enabled as its
 # folder gets populated.
 

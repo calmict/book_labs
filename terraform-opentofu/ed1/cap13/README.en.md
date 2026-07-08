@@ -78,7 +78,7 @@ this cut *without* demolishing, moving resources between states live.)
 
 ### Phase 1 — The cut
 
-In start/ the two rooms are already scaffolded: network/ and app/. The
+In start/ the two rooms are already laid out: network/ and app/. The
 network room is complete: the same network as before, plus an *output* —
 network_name. Look at it carefully: it is the room's official door, the
 only thing the outside world will ever see. Apply:
