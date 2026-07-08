@@ -1,0 +1,35 @@
+# Chapter 4 — the fixed config: ambiguous values quoted so they keep their meaning,
+# and the duplicated host settings factored into a merged anchor.
+# Inspect it with:  python3 solution/inspect.py solution/config.yml
+
+service: web
+
+# Quoted: each of these stays the string it was meant to be, instead of being
+# silently retyped into a bool/float/int.
+country: "NO"
+maintenance: "no"
+feature_flag: "off"
+version: "1.20"
+build: "1.10"
+file_mode: "0644"
+device_id: "007"
+window: "22:30"
+
+motd: |
+  welcome to web
+  authorized use only
+
+# DRY: the shared settings live once under an anchor and are merged into each host
+# with <<; each host overrides only what differs.
+defaults: &defaults
+  retries: 3
+  timeout: 30
+  healthcheck: /healthz
+hosts:
+  web:
+    <<: *defaults
+    role: frontend
+  db:
+    <<: *defaults
+    timeout: 60
+    role: database

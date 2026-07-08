@@ -1,0 +1,37 @@
+# Chapter 4 — a deploy config that LOOKS right but, unquoted, does not MEAN what
+# you think. Inspect it with:  python3 solution/inspect.py start/config.yml
+# and watch several values turn into the wrong type.
+
+service: web
+
+# TODO 1: several values below are silently mis-typed by the YAML parser. Run
+# inspect.py to see it, then QUOTE each one so it keeps the meaning you intended
+# (a string). The comment shows what it becomes UNQUOTED. build is done for you.
+country: NO            # Norway Problem -> becomes the boolean False
+maintenance: no        # -> False
+feature_flag: off      # -> False
+version: 1.20          # -> the float 1.2 (the trailing zero is lost)
+build: "1.10"          # done for you: quoted, so it stays the string "1.10"
+file_mode: 0644        # -> the octal int 420
+device_id: 007         # -> the int 7 (leading zeros lost)
+window: 22:30          # -> 1350 (YAML reads 22:30 as base-60)
+
+# a multiline banner: the literal block | keeps newlines (use > to fold to spaces)
+motd: |
+  welcome to web
+  authorized use only
+
+# TODO 2: web and db repeat the same three settings. Give the shared block an
+# anchor (&defaults) and MERGE it into each host with <<, overriding only what
+# differs (db needs a longer timeout).
+hosts:
+  web:
+    retries: 3
+    timeout: 30
+    healthcheck: /healthz
+    role: frontend
+  db:
+    retries: 3
+    timeout: 60
+    healthcheck: /healthz
+    role: database
