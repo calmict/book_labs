@@ -36,7 +36,7 @@ parts are reproduced locally, so nothing costs money.
 |--------:|-------|:-----:|--------|
 | 1 | The three cracks (3/30/3000 servers, drift, repeatable vs convergent, push vs pull) | Foundational | [ed1/cap01](ed1/cap01/) |
 | 2 | The messenger, not the tenant (agentless, control/managed nodes, a task's journey, facts) | Foundational | [ed1/cap02](ed1/cap02/) |
-| 3 | SSH under the hood (keys, the handshake, ~/.ssh/config, bastion) | Foundational | ed1/cap03 |
+| 3 | The key that stays home (asymmetric keys, config aliases, ControlMaster, bastion/ProxyJump) | Foundational | [ed1/cap03](ed1/cap03/) |
 | 4 | The anatomy of YAML (structures, indentation, the traps, anchors) | Foundational | ed1/cap04 |
 | 5 | Idempotence (the switch vs the doorbell, changed_when/failed_when, check mode) | Foundational | ed1/cap05 |
 | 6 | Installation and environment (ansible-core vs ansible, venv, the target nodes) | Foundational | ed1/cap06 |

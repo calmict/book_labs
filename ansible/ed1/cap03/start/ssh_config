@@ -1,0 +1,36 @@
+# Chapter 3 — your SSH config. Use it with:  ssh -F start/ssh_config <host>
+#
+# The bastion entry is written for you as a worked example. Complete the two
+# TODOs below.
+
+Host bastion
+    HostName 127.0.0.1
+    Port 2223
+    User root
+    IdentityFile /tmp/cap03-lab/key
+    # lab niceties: the containers are throwaway, so we skip host-key prompts.
+    # In production you would NOT do this (see Phase 6).
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    LogLevel ERROR
+
+# TODO 1: reach the segregated target THROUGH the bastion.
+# The target has no published port and its name resolves only inside the lab
+# network, so a direct connection cannot even resolve it. Add the missing line
+# that tells SSH to jump via the bastion:
+#     ProxyJump bastion
+Host target
+    HostName cap03-target
+    User root
+    IdentityFile /tmp/cap03-lab/key
+    # ProxyJump bastion        <-- add this
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    LogLevel ERROR
+
+# TODO 2: make repeated connections fast (this is why Ansible is fast).
+# Add connection multiplexing to the bastion entry above (or here for all hosts),
+# keeping the ControlPath SHORT — the socket path must stay under ~108 chars:
+#     ControlMaster auto
+#     ControlPath /tmp/cap03-cm-%C
+#     ControlPersist 60s

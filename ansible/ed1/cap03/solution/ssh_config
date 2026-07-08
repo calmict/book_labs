@@ -1,0 +1,27 @@
+# Chapter 3 — the completed SSH config. Use it with:  ssh -F solution/ssh_config <host>
+
+# Connection multiplexing for every host: the first connection opens a master
+# socket, the next ones reuse it (near-zero setup). This is the foundation of
+# Ansible's speed. The ControlPath is kept SHORT (the socket path has a ~108-char
+# limit), so it lives in /tmp, not in a deep directory.
+Host *
+    ControlMaster auto
+    ControlPath /tmp/cap03-cm-%C
+    ControlPersist 60s
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    LogLevel ERROR
+
+Host bastion
+    HostName 127.0.0.1
+    Port 2223
+    User root
+    IdentityFile /tmp/cap03-lab/key
+
+# The target has no published port and its name resolves only inside the lab
+# network: we reach it by jumping through the bastion.
+Host target
+    HostName cap03-target
+    User root
+    IdentityFile /tmp/cap03-lab/key
+    ProxyJump bastion
