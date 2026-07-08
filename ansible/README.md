@@ -38,7 +38,7 @@ parts are reproduced locally, so nothing costs money.
 | 2 | The messenger, not the tenant (agentless, control/managed nodes, a task's journey, facts) | Foundational | [ed1/cap02](ed1/cap02/) |
 | 3 | The key that stays home (asymmetric keys, config aliases, ControlMaster, bastion/ProxyJump) | Foundational | [ed1/cap03](ed1/cap03/) |
 | 4 | The score that lies (YAML anatomy: implicit typing, the Norway Problem, quoting, anchors, linting) | Foundational | [ed1/cap04](ed1/cap04/) |
-| 5 | Idempotence (the switch vs the doorbell, changed_when/failed_when, check mode) | Foundational | ed1/cap05 |
+| 5 | The switch and the doorbell (idempotence, the colours of change, changed_when, check mode) | Foundational | [ed1/cap05](ed1/cap05/) |
 | 6 | Installation and environment (ansible-core vs ansible, venv, the target nodes) | Foundational | ed1/cap06 |
 | 7 | ansible.cfg (the search hierarchy, defaults, privilege_escalation, ssh_connection) | Foundational | ed1/cap07 |
 | 8 | Static inventories (INI/YAML, host patterns, ranges, host_vars/group_vars) | Foundational | ed1/cap08 |
