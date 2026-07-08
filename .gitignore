@@ -27,6 +27,11 @@ terraform.rc
 *vault*.yml
 !*vault*example*.yml
 
+# --- Python ---
+# Byte-compiled files from running the exercise scripts.
+__pycache__/
+*.py[cod]
+
 # --- Kubernetes ---
 # Local kubeconfig files: never commit cluster credentials.
 kubeconfig
