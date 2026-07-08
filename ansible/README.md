@@ -34,7 +34,7 @@ parts are reproduced locally, so nothing costs money.
 
 | Chapter | Title | Level | Folder |
 |--------:|-------|:-----:|--------|
-| 1 | The philosophy of automation (3/30/3000 servers, drift, push vs pull) | Foundational | ed1/cap01 |
+| 1 | The three cracks (3/30/3000 servers, drift, repeatable vs convergent, push vs pull) | Foundational | [ed1/cap01](ed1/cap01/) |
 | 2 | Agentless architecture (control node, managed nodes, the facts) | Foundational | ed1/cap02 |
 | 3 | SSH under the hood (keys, the handshake, ~/.ssh/config, bastion) | Foundational | ed1/cap03 |
 | 4 | The anatomy of YAML (structures, indentation, the traps, anchors) | Foundational | ed1/cap04 |
