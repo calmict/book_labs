@@ -1,0 +1,70 @@
+# Ansible — exercises
+
+Practical labs for the Calm ICT **Ansible** manual — the conductor of the
+infrastructure orchestra.
+
+> Status: in progress — chapters are being added.
+
+## Recommended setup
+
+These exercises run locally and for free — no paid cloud account is needed to
+complete any of them. Your machine is the **control node**; the **managed
+nodes** are ephemeral local containers, brought up and torn down on demand. See
+[SETUP.md](SETUP.md) for a reproducible (non-binding) environment: Ansible, a
+local Docker engine, and Molecule to provide the throwaway hosts.
+
+## Control node and managed nodes
+
+Ansible is agentless: it runs from one **control node** (your machine — Python
+plus ansible-core) and configures **managed nodes** over SSH, with nothing
+installed on them but Python. To stay free and reproducible, the managed nodes
+here are throwaway Docker containers driven by **Molecule** — one command up,
+one command down, teardown guaranteed. Molecule doubles as the testing tool the
+manual reaches in chapter 24.
+
+Cloud-specific topics from the manual (dynamic inventories on AWS, cloud secret
+managers) are shown as configuration you can read and reason about; the hands-on
+parts are reproduced locally, so nothing costs money.
+
+## Editions
+
+- **ed1/** — exercises cited by the 1st edition of the manual.
+
+## Chapter index (ed1)
+
+| Chapter | Title | Level | Folder |
+|--------:|-------|:-----:|--------|
+| 1 | The philosophy of automation (3/30/3000 servers, drift, push vs pull) | Foundational | ed1/cap01 |
+| 2 | Agentless architecture (control node, managed nodes, the facts) | Foundational | ed1/cap02 |
+| 3 | SSH under the hood (keys, the handshake, ~/.ssh/config, bastion) | Foundational | ed1/cap03 |
+| 4 | The anatomy of YAML (structures, indentation, the traps, anchors) | Foundational | ed1/cap04 |
+| 5 | Idempotence (the switch vs the doorbell, changed_when/failed_when, check mode) | Foundational | ed1/cap05 |
+| 6 | Installation and environment (ansible-core vs ansible, venv, the target nodes) | Foundational | ed1/cap06 |
+| 7 | ansible.cfg (the search hierarchy, defaults, privilege_escalation, ssh_connection) | Foundational | ed1/cap07 |
+| 8 | Static inventories (INI/YAML, host patterns, ranges, host_vars/group_vars) | Foundational | ed1/cap08 |
+| 9 | Ad-hoc commands (ping, command/shell, copy/file/service/setup, forks, -b) | Foundational | ed1/cap09 |
+| 10 | The anatomy of a playbook (play/task/module, re-running, many plays, tags) | Foundational | ed1/cap10 |
+| 11 | Privilege escalation in depth (become, sudoers, -K, the other methods) | Intermediate | ed1/cap11 |
+| 12 | Managing variables (types, Jinja2, where they live, register/set_fact, defaults) | Intermediate | ed1/cap12 |
+| 13 | The 22 levels of variable precedence (the three principles, real clashes, the traps) | Intermediate | ed1/cap13 |
+| 14 | Tasks, handlers and notifications (the changed state, notify/listen, the three rules) | Intermediate | ed1/cap14 |
+| 15 | Conditional logic and loops (when without braces, loop, loop_control) | Intermediate | ed1/cap15 |
+| 16 | Roles (structure, defaults vs vars, files/templates, galaxy init) | Intermediate | ed1/cap16 |
+| 17 | Galaxy and collections (FQCN, requirements.yml, Automation Hub) | Intermediate | ed1/cap17 |
+| 18 | Ansible Vault (encryption, encrypt_string, vault-id, the limits) | Advanced | ed1/cap18 |
+| 19 | Key management in production (runtime lookups, HashiCorp Vault, no_log) | Advanced | ed1/cap19 |
+| 20 | Advanced Jinja2 (map/select/selectattr, dict2items/combine, .j2 templates, lookups) | Advanced | ed1/cap20 |
+| 21 | Dynamic inventories (inventory plugins, keyed_groups, compose, cache) | Advanced | ed1/cap21 |
+| 22 | Error handling (block/rescue/always, until/retries, assert/fail) | Advanced | ed1/cap22 |
+| 23 | Linting and check mode (--syntax-check, ansible-lint, --diff) | Advanced | ed1/cap23 |
+| 24 | Testing with Molecule (scenario, create/converge/idempotence/verify/destroy) | Advanced | ed1/cap24 |
+| 25 | Performance at scale (forks, strategies, pipelining, taming facts, Mitogen) | Cloud Architect | ed1/cap25 |
+| 26 | CI/CD (version control, the pipeline, GitHub Actions, the production gate) | Cloud Architect | ed1/cap26 |
+| 27 | Orchestration and rolling updates (serial, delegate_to, pre/post_tasks, rollback) | Cloud Architect | ed1/cap27 |
+| 28 | AWX and Automation Platform (the job template, RBAC/audit, workflows, EE/EDA) | Cloud Architect | ed1/cap28 |
+
+## Pull only this manual
+
+    git clone --filter=blob:none --sparse https://github.com/calmict/book_labs.git
+    cd book_labs
+    git sparse-checkout set ansible/ed1

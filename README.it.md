@@ -31,7 +31,7 @@ parallelo al libro.
     │           ├── README.en.md   # consegna (inglese)
     │           ├── start/         # file di partenza — condivisi, neutri rispetto alla lingua
     │           └── solution/      # soluzione testata — condivisa, neutra rispetto alla lingua
-    ├── ansible/               # (in arrivo con il manuale Ansible)
+    ├── ansible/               # esercizi del manuale Ansible
     └── terraform-opentofu/    # esercizi del manuale Terraform/OpenTofu
 
 **Lingue.** I nomi delle cartelle e il codice/manifest sono in inglese e
