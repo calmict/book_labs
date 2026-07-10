@@ -1,0 +1,32 @@
+---
+# Chapter 10 — your first playbook (starting point). Check it without touching
+# the nodes first:
+#   ansible-playbook -i inventory.ini site.yml --syntax-check
+# Then fill the three TODOs and run it for real:
+#   ansible-playbook -i inventory.ini site.yml
+
+- name: Configure the web tier
+  hosts: web
+  become: true
+  vars:
+    app_dir: /etc/cap10.d
+  tasks:
+    # TODO 1: the first task — deploy ./motd to /etc/motd with the copy module.
+    # Give it a name, mode: "0644" (quoted — chapter 4), and tags: [content].
+    # Model it on the marker task already written below.
+
+    # TODO 2: ensure the directory {{ app_dir }} exists, with the file module
+    # (state: directory, mode: "0755", tags: [structure]).
+
+    - name: Drop a marker owned by root
+      ansible.builtin.copy:
+        content: "web tier configured by Calm ICT\n"
+        dest: "{{ app_dir }}/marker"
+        mode: "0644"
+      become_user: root
+      tags: [content]
+
+# TODO 3: a second play that configures the database tier. Same shape as the
+# play above: name, hosts: db, become: true, and one task that ensures the
+# directory /etc/cap10-db.d exists (file, state: directory, mode: "0755",
+# tags: [structure]).
