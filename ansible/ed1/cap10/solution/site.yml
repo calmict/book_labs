@@ -1,0 +1,43 @@
+---
+# Chapter 10 solution — the morning round of chapter 9, now a written score.
+# Two plays in one file: the web tier and the database tier. Every module here
+# is a switch (copy, file), so re-running converges to changed=0.
+
+- name: Configure the web tier
+  hosts: web
+  become: true
+  vars:
+    app_dir: /etc/cap10.d
+  tasks:
+    - name: Deploy the message of the day
+      ansible.builtin.copy:
+        src: motd
+        dest: /etc/motd
+        mode: "0644"
+      tags: [content]
+
+    - name: Ensure the app directory exists
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: "0755"
+      tags: [structure]
+
+    - name: Drop a marker owned by root
+      ansible.builtin.copy:
+        content: "web tier configured by Calm ICT\n"
+        dest: "{{ app_dir }}/marker"
+        mode: "0644"
+      become_user: root
+      tags: [content]
+
+- name: Configure the database tier
+  hosts: db
+  become: true
+  tasks:
+    - name: Ensure the data directory exists
+      ansible.builtin.file:
+        path: /etc/cap10-db.d
+        state: directory
+        mode: "0755"
+      tags: [structure]
