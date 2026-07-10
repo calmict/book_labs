@@ -40,7 +40,7 @@ parts are reproduced locally, so nothing costs money.
 | 4 | The score that lies (YAML anatomy: implicit typing, the Norway Problem, quoting, anchors, linting) | Foundational | [ed1/cap04](ed1/cap04/) |
 | 5 | The switch and the doorbell (idempotence, the colours of change, changed_when, check mode) | Foundational | [ed1/cap05](ed1/cap05/) |
 | 6 | The baton (installing ansible-core in a venv, the command family, preparing the target nodes) | Foundational | [ed1/cap06](ed1/cap06/) |
-| 7 | ansible.cfg (the search hierarchy, defaults, privilege_escalation, ssh_connection) | Foundational | ed1/cap07 |
+| 7 | The nearest music stand (ansible.cfg: the search hierarchy, dump --only-changed, the world-writable trap) | Foundational | [ed1/cap07](ed1/cap07/) |
 | 8 | Static inventories (INI/YAML, host patterns, ranges, host_vars/group_vars) | Foundational | ed1/cap08 |
 | 9 | Ad-hoc commands (ping, command/shell, copy/file/service/setup, forks, -b) | Foundational | ed1/cap09 |
 | 10 | The anatomy of a playbook (play/task/module, re-running, many plays, tags) | Foundational | ed1/cap10 |
