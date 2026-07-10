@@ -42,7 +42,7 @@ parts are reproduced locally, so nothing costs money.
 | 6 | The baton (installing ansible-core in a venv, the command family, preparing the target nodes) | Foundational | [ed1/cap06](ed1/cap06/) |
 | 7 | The nearest music stand (ansible.cfg: the search hierarchy, dump --only-changed, the world-writable trap) | Foundational | [ed1/cap07](ed1/cap07/) |
 | 8 | The address book (static inventories: INI/YAML, groups, patterns, ranges, group_vars) | Foundational | [ed1/cap08](ed1/cap08/) |
-| 9 | Ad-hoc commands (ping, command/shell, copy/file/service/setup, forks, -b) | Foundational | ed1/cap09 |
+| 9 | The cue, not the score (ad-hoc commands: ping, command/shell, copy/file/setup, forks, become) | Foundational | [ed1/cap09](ed1/cap09/) |
 | 10 | The anatomy of a playbook (play/task/module, re-running, many plays, tags) | Foundational | ed1/cap10 |
 | 11 | Privilege escalation in depth (become, sudoers, -K, the other methods) | Intermediate | ed1/cap11 |
 | 12 | Managing variables (types, Jinja2, where they live, register/set_fact, defaults) | Intermediate | ed1/cap12 |
