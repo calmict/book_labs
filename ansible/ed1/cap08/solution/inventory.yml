@@ -1,0 +1,27 @@
+# Chapter 8 — the SAME address book, in YAML (8.3). Compare it line by line with
+# inventory.ini: the structure is explicit (nesting), INI is terser. Verify with:
+#   ansible-inventory -i inventory.yml --graph
+---
+all:
+  vars:
+    ansible_host: 127.0.0.1
+    ansible_user: root
+    ansible_ssh_private_key_file: /tmp/cap08-lab/key
+    # quoted: the value starts with a dash and would confuse YAML unquoted (ch. 4)
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+  children:
+    prod:
+      children:
+        web:
+          hosts:
+            web1:
+              ansible_port: 2281
+            web2:
+              ansible_port: 2282
+        db:
+          hosts:
+            db1:
+              ansible_port: 2283
+    edge:
+      hosts:
+        edge[01:03].lab.internal:

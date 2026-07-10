@@ -1,0 +1,6 @@
+# Chapter 8 — variables for the whole 'web' group. This file is found because it
+# sits in group_vars/ next to the inventory, and its name matches the group.
+# web1 and web2 both inherit these; the inventory stays about identity/address.
+---
+http_port: 8080
+greeting: hello from the web section
