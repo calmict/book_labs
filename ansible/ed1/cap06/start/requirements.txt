@@ -1,0 +1,8 @@
+# Chapter 6 — the Python requirements for a reproducible control node.
+#
+# TODO 2: pin ansible-core here so anyone can rebuild the exact same environment.
+# ansible-core is the engine + the ansible.builtin modules; the separate "ansible"
+# package would be core PLUS hundreds of community collections (we do not need them
+# for these exercises).
+#
+#   ansible-core==2.15.13
