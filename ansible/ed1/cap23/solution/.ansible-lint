@@ -1,0 +1,3 @@
+# The project's strictness dial (23.3): everyone who runs ansible-lint, including
+# CI, enforces the same level. 'production' is the strictest built-in profile.
+profile: production

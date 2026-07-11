@@ -1,0 +1,38 @@
+# A playbook that RUNS but is sloppy. Put it through the three-level validation
+# net and fix what each level flags:
+#
+#   TODO 1 (23.3) - run  ansible-lint site.yml  and fix every violation until it
+#     passes: name the play and every task, use the FQCN (ansible.builtin.copy,
+#     not copy), quote the octal mode ("0644"), and give each command a
+#     changed_when so it declares whether it changes anything.
+#   TODO 2 (23.5) - the read task below is a command, and commands are SKIPPED in
+#     check mode, which makes --check lie (the register stays empty). Add
+#     check_mode: false to it so it always runs (it changes nothing) and the dry
+#     run stays accurate.
+#   TODO 3 (23.3) - create a .ansible-lint file next to this one that pins the
+#     project profile:   profile: production
+#
+# --syntax-check already passes (the file is structurally valid); the sloppiness
+# is what ansible-lint and check mode catch.
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    conf: "{{ lookup('env', 'CAP23_LAB') | default('/tmp/cap23-lab', true) }}/conf.txt"
+  tasks:
+    - file:
+        path: "{{ conf | dirname }}"
+        state: directory
+        mode: 755
+
+    - command: cat {{ conf }}
+      register: current
+      failed_when: false
+
+    - copy:
+        content: "mode = production\nworkers = 4\n"
+        dest: "{{ conf }}"
+        mode: 644
+
+    - name: log the deploy timestamp
+      command: date -u +%Y-%m-%dT%H:%M:%SZ

@@ -1,0 +1,30 @@
+---
+- name: Manage the app config through the validation net
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    conf: "{{ lookup('env', 'CAP23_LAB') | default('/tmp/cap23-lab', true) }}/conf.txt"
+  tasks:
+    - name: Ensure the config directory exists
+      ansible.builtin.file:
+        path: "{{ conf | dirname }}"
+        state: directory
+        mode: "0755"
+
+    - name: Read the current config (read-only, safe in check mode)
+      ansible.builtin.command: cat {{ conf }}
+      register: current
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Write the app config
+      ansible.builtin.copy:
+        content: "mode = production\nworkers = 4\n"
+        dest: "{{ conf }}"
+        mode: "0644"
+
+    - name: Log the deploy timestamp
+      ansible.builtin.command: date -u +%Y-%m-%dT%H:%M:%SZ
+      changed_when: false

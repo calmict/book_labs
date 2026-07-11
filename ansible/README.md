@@ -56,7 +56,7 @@ parts are reproduced locally, so nothing costs money.
 | 20 | The arranger (advanced Jinja2: map/select/selectattr, dict2items/combine, default/mandatory, tests, .j2 templates, lookups) | Advanced | [ed1/cap20](ed1/cap20/) |
 | 21 | The roll-call (dynamic inventories: inventory plugins, keyed_groups, groups/compose, hostnames, cache) | Advanced | [ed1/cap21](ed1/cap21/) |
 | 22 | When a string snaps (error handling: block/rescue/always, until/retries, ignore_errors/failed_when, any_errors_fatal, assert/fail, force_handlers) | Advanced | [ed1/cap22](ed1/cap22/) |
-| 23 | Linting and check mode (--syntax-check, ansible-lint, --diff) | Advanced | ed1/cap23 |
+| 23 | The dress rehearsal (linting and check mode: --syntax-check, ansible-lint profiles, --check/--diff, check_mode) | Advanced | [ed1/cap23](ed1/cap23/) |
 | 24 | Testing with Molecule (scenario, create/converge/idempotence/verify/destroy) | Advanced | ed1/cap24 |
 | 25 | Performance at scale (forks, strategies, pipelining, taming facts, Mitogen) | Cloud Architect | ed1/cap25 |
 | 26 | CI/CD (version control, the pipeline, GitHub Actions, the production gate) | Cloud Architect | ed1/cap26 |
