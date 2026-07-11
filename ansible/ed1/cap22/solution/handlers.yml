@@ -1,0 +1,35 @@
+---
+# Demonstration (22.8): a handler notified by a change would normally be SKIPPED
+# if a later task fails - the play stops before flushing handlers. force_handlers
+# runs the pending handlers anyway, so a reload you already earned is not lost.
+# Run it (it fails on purpose) and check the handler still ran:
+#     ansible-playbook -i inventory.ini handlers.yml
+#     cat "$CAP22_LAB/fh.done"    (or /tmp/cap22-lab/fh.done)
+- name: Handlers survive a later failure
+  hosts: web1
+  gather_facts: false
+  force_handlers: true
+  vars:
+    lab: "{{ lookup('env', 'CAP22_LAB') | default('/tmp/cap22-lab', true) }}"
+  tasks:
+    - name: Ensure the lab dir exists
+      ansible.builtin.file:
+        path: "{{ lab }}"
+        state: directory
+        mode: "0755"
+
+    - name: A change that always notifies the handler
+      ansible.builtin.command: /bin/true
+      changed_when: true
+      notify: reload
+
+    - name: A task that fails after the notify
+      ansible.builtin.command: /bin/false
+      changed_when: false
+
+  handlers:
+    - name: reload
+      ansible.builtin.copy:
+        content: "handler ran despite the failure\n"
+        dest: "{{ lab }}/fh.done"
+        mode: "0644"
