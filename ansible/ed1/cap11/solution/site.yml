@@ -1,0 +1,32 @@
+---
+# Chapter 11 solution — become in depth. The play escalates to root (sudo), and
+# one task drops further, to the service account appsvc, so the file it writes
+# is owned by appsvc from the start — not by root.
+
+- name: Privilege escalation in depth
+  hosts: all
+  become: true
+  tasks:
+    - name: Confirm we escalated to root
+      ansible.builtin.command: id -un
+      register: who
+      changed_when: false
+
+    - name: Show who connected and who we became
+      ansible.builtin.debug:
+        msg: "{{ ansible_user }} -> {{ who.stdout }}"
+
+    - name: Ensure the app directory exists (as root)
+      ansible.builtin.file:
+        path: /srv/app
+        state: directory
+        owner: appsvc
+        group: appsvc
+        mode: "0750"
+
+    - name: Write the ownership marker AS the app user, not root
+      ansible.builtin.copy:
+        content: "owned by the service account, not root\n"
+        dest: /srv/app/owner.txt
+        mode: "0640"
+      become_user: appsvc

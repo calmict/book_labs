@@ -44,7 +44,7 @@ parts are reproduced locally, so nothing costs money.
 | 8 | The address book (static inventories: INI/YAML, groups, patterns, ranges, group_vars) | Foundational | [ed1/cap08](ed1/cap08/) |
 | 9 | The cue, not the score (ad-hoc commands: ping, command/shell, copy/file/setup, forks, become) | Foundational | [ed1/cap09](ed1/cap09/) |
 | 10 | The written score (the first playbook: play/task/module, re-running, many plays, tags) | Foundational | [ed1/cap10](ed1/cap10/) |
-| 11 | Privilege escalation in depth (become, sudoers, -K, the other methods) | Intermediate | ed1/cap11 |
+| 11 | The caretaker's keys (privilege escalation in depth: become, sudoers, -K/password, become_user) | Intermediate | [ed1/cap11](ed1/cap11/) |
 | 12 | Managing variables (types, Jinja2, where they live, register/set_fact, defaults) | Intermediate | ed1/cap12 |
 | 13 | The 22 levels of variable precedence (the three principles, real clashes, the traps) | Intermediate | ed1/cap13 |
 | 14 | Tasks, handlers and notifications (the changed state, notify/listen, the three rules) | Intermediate | ed1/cap14 |

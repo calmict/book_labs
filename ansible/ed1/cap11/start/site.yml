@@ -1,0 +1,36 @@
+---
+# Chapter 11 — privilege escalation in depth (starting point). Check it first:
+#   ansible-playbook -i inventory.ini site.yml --syntax-check
+# Then fill the two playbook TODOs (and TODO 2 in inventory.ini) and run it:
+#   ansible-playbook -i inventory.ini site.yml
+
+- name: Privilege escalation in depth
+  hosts: all
+  # TODO 1: turn on privilege escalation for the whole play (become: true).
+  # Without it, every task runs as the unprivileged connect user and the file
+  # tasks below cannot write under /srv.
+  tasks:
+    - name: Confirm we escalated to root
+      ansible.builtin.command: id -un
+      register: who
+      changed_when: false
+
+    - name: Show who connected and who we became
+      ansible.builtin.debug:
+        msg: "{{ ansible_user }} -> {{ who.stdout }}"
+
+    - name: Ensure the app directory exists (as root)
+      ansible.builtin.file:
+        path: /srv/app
+        state: directory
+        owner: appsvc
+        group: appsvc
+        mode: "0750"
+
+    - name: Write the ownership marker AS the app user, not root
+      ansible.builtin.copy:
+        content: "owned by the service account, not root\n"
+        dest: /srv/app/owner.txt
+        mode: "0640"
+      # TODO 3: this task must run as appsvc, not root. Add become_user here so
+      # the file is created owned by the service account from the start.
