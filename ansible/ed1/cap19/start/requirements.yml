@@ -1,0 +1,9 @@
+---
+# TODO 1 - declare the collection that talks to HashiCorp Vault (like chapter
+# 17), pinned to a version, then install it with:
+#     ansible-galaxy collection install -r requirements.yml
+#
+# collections:
+#   - name: community.hashi_vault
+#     version: "7.1.0"
+collections: []

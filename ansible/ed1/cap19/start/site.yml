@@ -1,0 +1,41 @@
+---
+- name: Become root with a password fetched from the caveau at runtime
+  hosts: web
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Ensure the app config directory exists
+      ansible.builtin.file:
+        path: /etc/myapp
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Write a root-owned marker (proves become worked)
+      ansible.builtin.copy:
+        content: "secret never touched disk\n"
+        dest: /etc/cap19-marker.txt
+        owner: root
+        group: root
+        mode: "0644"
+
+    # TODO 3 - this task writes the app credential (fetched from the caveau) to
+    # a file. Add  no_log: true  so the secret it handles never appears in the
+    # logs, not even at -vvv. Without it, the value would be printed in clear.
+    - name: Configure the app with its DB credential
+      ansible.builtin.copy:
+        content: "db_password={{ app_db_password }}\n"
+        dest: /etc/myapp/db.conf
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Confirm we became root
+      ansible.builtin.command: id -un
+      register: who
+      changed_when: false
+
+    - name: Show privilege (never the secret)
+      ansible.builtin.debug:
+        msg: "became {{ who.stdout }}"

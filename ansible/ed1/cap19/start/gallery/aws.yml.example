@@ -1,0 +1,18 @@
+# Gallery (19.5) - AWS Secrets Manager. Same paradigm as HashiCorp Vault: the
+# secret lives in the manager, the playbook fetches it at runtime. Only the
+# plugin and the auth change. Not run here (needs an AWS account); read it.
+#
+# Requires: collection amazon.aws, python boto3; credentials from the
+# environment or an instance role (never keys in the file).
+---
+- name: Fetch a secret from AWS Secrets Manager at runtime
+  hosts: web
+  become: true
+  gather_facts: false
+  vars:
+    ansible_become_password: "{{ lookup('amazon.aws.aws_secret',
+        'myapp/become_password', region='eu-south-1') }}"
+  tasks:
+    - name: Use the secret without ever writing it to disk
+      ansible.builtin.command: id -un
+      changed_when: false

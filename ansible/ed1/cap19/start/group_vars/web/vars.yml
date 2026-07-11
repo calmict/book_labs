@@ -1,0 +1,17 @@
+---
+# Where the caveau is, and how we identify to it. Both come from the environment
+# so no address or token is written in the project.
+vault_url: "{{ lookup('env', 'VAULT_ADDR') }}"
+vault_token: "{{ lookup('env', 'VAULT_TOKEN') }}"
+
+# Worked example: an app credential fetched from the caveau at runtime. Notice
+# the value is not here - only the instructions to go and get it.
+app_db_password: "{{ lookup('community.hashi_vault.hashi_vault',
+    'secret/data/myapp:db_password',
+    url=vault_url, token=vault_token) }}"
+
+# TODO 2 - the paradigm shift. The become password is no longer a value on disk
+# (clear in chapter 11, encrypted in chapter 18): it is FETCHED from the caveau
+# at runtime, exactly like app_db_password above. Replace the placeholder with a
+# community.hashi_vault lookup of secret/data/myapp:become_password.
+ansible_become_password: PLACEHOLDER-REPLACE-WITH-A-LOOKUP

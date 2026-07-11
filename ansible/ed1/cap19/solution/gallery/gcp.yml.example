@@ -1,0 +1,17 @@
+# Gallery (19.5) - Google Cloud Secret Manager. Same idea, GCP's door. Not run
+# here (needs a GCP project); read it.
+#
+# Requires: collection google.cloud and its Python SDK; identity from a service
+# account or workload identity (never a key file committed to the repo).
+---
+- name: Fetch a secret from GCP Secret Manager at runtime
+  hosts: web
+  become: true
+  gather_facts: false
+  vars:
+    ansible_become_password: "{{ lookup('google.cloud.gcp_secret_manager',
+        name='become_password', project='myapp-prod') }}"
+  tasks:
+    - name: Use the secret without ever writing it to disk
+      ansible.builtin.command: id -un
+      changed_when: false

@@ -1,0 +1,21 @@
+---
+# Machine identity (19.4): instead of a human root token, a process identifies
+# with an AppRole - a role_id + secret_id pair bound to a least-privilege policy
+# (here: read that one secret, nothing else). Run it with the identity nodes.sh
+# prepared:
+#     ansible-playbook -i inventory.ini approle.yml \
+#         -e role_id="$(cat /tmp/cap19-lab/role_id)" \
+#         -e secret_id="$(cat /tmp/cap19-lab/secret_id)"
+- name: Read the secret using an AppRole machine identity
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: The AppRole reads the scoped secret (value never printed)
+      ansible.builtin.debug:
+        msg: "AppRole read the expected secret: {{
+          lookup('community.hashi_vault.hashi_vault',
+            'secret/data/myapp:become_password',
+            url=lookup('env', 'VAULT_ADDR'),
+            auth_method='approle',
+            role_id=role_id, secret_id=secret_id) == 'secops-pw' }}"

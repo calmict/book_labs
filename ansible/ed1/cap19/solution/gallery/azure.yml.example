@@ -1,0 +1,17 @@
+# Gallery (19.5) - Azure Key Vault. Same idea, Azure's door. Not run here
+# (needs an Azure subscription); read it.
+#
+# Requires: collection azure.azcollection and its Python SDK; identity from a
+# managed identity or the environment (never secrets in the file).
+---
+- name: Fetch a secret from Azure Key Vault at runtime
+  hosts: web
+  become: true
+  gather_facts: false
+  vars:
+    ansible_become_password: "{{ lookup('azure.azcollection.azure_keyvault_secret',
+        'become-password', vault_url='https://myapp-kv.vault.azure.net') }}"
+  tasks:
+    - name: Use the secret without ever writing it to disk
+      ansible.builtin.command: id -un
+      changed_when: false
