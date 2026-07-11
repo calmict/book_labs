@@ -1,0 +1,17 @@
+---
+# TODO 1 - the original sin (chapter 11): the sudo password, in clear text.
+# Anyone who reads this file reads the password; commit it once and Git keeps
+# it forever. Fix it in two moves:
+#   1. create an ENCRYPTED file next to this one, group_vars/web/vault.yml,
+#      holding the real value under a vault_-prefixed name:
+#          ansible-vault create group_vars/web/vault.yml
+#          # inside:  vault_become_password: secops-pw
+#   2. replace the line below with an INDIRECTION to that vaulted value:
+#          ansible_become_password: "{{ vault_become_password }}"
+ansible_become_password: secops-pw
+
+# TODO 2 - a single secret, inline. Replace the plaintext token below with an
+# encrypted !vault block produced by:
+#     ansible-vault encrypt_string --name app_api_token 'tkn-9f3a-SECRET'
+# Paste the whole multi-line output here in place of this line.
+app_api_token: tkn-9f3a-SECRET
