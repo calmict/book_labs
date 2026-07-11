@@ -1,0 +1,25 @@
+---
+# The raw fleet data. The whole config is a function of this: change a value,
+# re-render, and the config rewrites itself.
+services:
+  - { name: web-01, env: prod,    port: 8080, enabled: true }
+  - { name: web-02, env: prod,    port: 8081, enabled: false }
+  - { name: api-01, env: staging, port: 9090, enabled: true }
+  - { name: db-01,  env: prod,    port: 5432, enabled: true }
+
+base_config:
+  workers: 4
+  timeout: 30
+  loglevel: info
+
+env_overrides:
+  timeout: 60
+  loglevel: debug
+
+# For the shallow-vs-recursive combine lesson (20.4): a nested dict, where a
+# plain combine would drop the inner 'host' and only recursive keeps it.
+base_nested:
+  server: { host: 0.0.0.0, port: 80 }
+  tls: false
+over_nested:
+  server: { port: 8443 }

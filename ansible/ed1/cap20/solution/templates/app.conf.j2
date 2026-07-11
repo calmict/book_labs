@@ -1,0 +1,13 @@
+# app config - generated from data, do not hand-edit
+[settings]
+{% for item in effective_config | dict2items %}
+{{ item.key }} = {{ item.value }}
+{% endfor %}
+{% for s in enabled_services | sort(attribute='name') %}
+
+[{{ s.name }}]
+port = {{ s.port }}
+env = {{ s.env }}
+{% endfor %}
+
+# allowed prod ports: {{ services | selectattr('env', 'equalto', 'prod') | map(attribute='port') | join(',') }}
