@@ -1,0 +1,5 @@
+---
+# Chapter 12 — variables for web2 alone. This host runs on a different port, so
+# it overrides the group's value. A host variable beats a group variable (the
+# full precedence order is chapter 13).
+port: 8081

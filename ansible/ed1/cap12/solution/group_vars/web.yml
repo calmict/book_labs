@@ -1,0 +1,13 @@
+---
+# Chapter 12 solution — variables for the whole 'web' group, all five value
+# types: string, integer, boolean, list and dictionary.
+app_name: orchestra
+port: 8080
+debug_mode: false
+features:
+  - metrics
+  - tracing
+  - healthcheck
+limits:
+  max_connections: 200
+  timeout_seconds: 30

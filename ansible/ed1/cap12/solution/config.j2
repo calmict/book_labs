@@ -1,0 +1,9 @@
+# {{ app_name }} config, rendered on {{ ansible_hostname }}
+app_name = {{ app_name }}
+port = {{ port }}
+debug = {{ debug_mode }}
+features = {{ features | join(', ') }}
+max_connections = {{ limits.max_connections }}
+timeout = {{ limits.timeout_seconds }}
+log_level = {{ log_level | default('info') }}
+workers = {{ worker_count }}

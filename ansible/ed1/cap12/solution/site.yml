@@ -1,0 +1,31 @@
+---
+# Chapter 12 solution — one playbook renders a per-node config from variables
+# that come from four places: group_vars, host_vars, the command line (-e), and
+# facts. register captures a result; set_fact derives a new value from it.
+
+- name: Assemble the service config from variables
+  hosts: web
+  become: true
+  vars:
+    config_dir: /etc/myapp
+  tasks:
+    - name: How many CPUs does this node have?
+      ansible.builtin.command: nproc
+      register: nproc_result
+      changed_when: false
+
+    - name: Derive the worker count (2 per CPU)
+      ansible.builtin.set_fact:
+        worker_count: "{{ nproc_result.stdout | int * 2 }}"
+
+    - name: Ensure the config directory exists
+      ansible.builtin.file:
+        path: "{{ config_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Render the config from the template
+      ansible.builtin.template:
+        src: config.j2
+        dest: "{{ config_dir }}/config.ini"
+        mode: "0644"
