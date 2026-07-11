@@ -1,0 +1,6 @@
+---
+# Chapter 17 solution — the collections this project needs, pinned. Install with:
+#   ansible-galaxy collection install -r requirements.yml
+collections:
+  - name: community.general
+    version: "8.6.0"

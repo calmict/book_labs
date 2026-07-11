@@ -1,0 +1,10 @@
+---
+# Chapter 17 — the Ansible COLLECTIONS this project needs. Install them with:
+#   ansible-galaxy collection install -r requirements.yml
+#
+# TODO 1: declare the community.general collection, pinned to an exact version
+# (a version pin is a lock, like chapter 7 — reproducibility, not surprises):
+#   collections:
+#     - name: community.general
+#       version: "8.6.0"
+collections: []

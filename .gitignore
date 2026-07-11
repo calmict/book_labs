@@ -23,6 +23,8 @@ terraform.rc
 
 # --- Ansible ---
 *.retry
+# Downloaded Galaxy collections (regenerated from requirements.yml, never commit).
+ansible_collections/
 # Vault and inventory files with sensitive data (if ever present in exercises).
 *vault*.yml
 !*vault*example*.yml

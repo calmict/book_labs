@@ -1,0 +1,38 @@
+---
+# Chapter 17 — using a collection module (starting point). Check it first:
+#   ansible-playbook -i inventory.ini site.yml --syntax-check
+# Fill TODO 1 (requirements.yml), TODO 2 (ansible.cfg), install the collection:
+#   ansible-galaxy collection install -r requirements.yml
+# then fill TODO 3 below and run it:
+#   ansible-playbook -i inventory.ini site.yml
+
+- name: Standing on the shoulders of giants
+  hosts: local
+  gather_facts: false
+  vars:
+    conf_path: /tmp/cap17/app.ini
+  tasks:
+    - name: Ensure the target directory (ansible.builtin — always present)
+      ansible.builtin.file:
+        path: "{{ conf_path | dirname }}"
+        state: directory
+        mode: "0755"
+
+    # TODO 3: manage an INI key with the COLLECTION module, called by its full
+    # name (FQCN) namespace.collection.module:
+    #   - name: Manage an INI key with a collection module
+    #     community.general.ini_file:
+    #       path: "{{ conf_path }}"
+    #       section: server
+    #       option: port
+    #       value: "8080"
+    #       mode: "0644"
+
+    - name: Read the file back (ansible.builtin.slurp)
+      ansible.builtin.slurp:
+        src: "{{ conf_path }}"
+      register: ini
+
+    - name: Show the result
+      ansible.builtin.debug:
+        msg: "{{ ini.content | b64decode }}"
