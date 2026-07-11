@@ -1,0 +1,4 @@
+---
+# Chapter 16 solution — the role's handlers, found automatically by name.
+- name: reload webapp
+  ansible.builtin.shell: "date -Iseconds >> /var/log/webapp-reloads.log"

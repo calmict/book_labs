@@ -1,0 +1,11 @@
+---
+# Chapter 16 — the role's DEFAULTS (precedence level 2, almost the weakest).
+# These are the knobs: whoever uses the role can override any of them from the
+# inventory, the play, or the command line.
+#
+# TODO 1: add the three knobs the template needs:
+#   app_name: myapp
+#   port: 8080
+#   features:
+#     - logs
+#     - cache

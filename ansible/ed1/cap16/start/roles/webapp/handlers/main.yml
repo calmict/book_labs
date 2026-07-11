@@ -1,0 +1,5 @@
+---
+# Chapter 16 — the role's handlers. A task in tasks/main.yml can notify these by
+# name; Ansible finds them here automatically.
+- name: reload webapp
+  ansible.builtin.shell: "date -Iseconds >> /var/log/webapp-reloads.log"

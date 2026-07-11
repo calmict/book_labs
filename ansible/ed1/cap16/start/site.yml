@@ -1,0 +1,13 @@
+---
+# Chapter 16 — the playbook that uses the role (starting point). Check it first:
+#   ansible-playbook -i inventory.ini site.yml --syntax-check
+# Fill TODO 1 (defaults), TODO 2 (the template task), TODO 3 (below), then run:
+#   ansible-playbook -i inventory.ini site.yml
+
+- name: Configure the web tier
+  hosts: web
+  become: true
+  # TODO 3: use the webapp role. With a role, the playbook shrinks to this:
+  #   roles:
+  #     - webapp
+  tasks: []

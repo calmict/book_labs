@@ -1,0 +1,10 @@
+---
+# Chapter 16 — role metadata and dependencies. galaxy_info describes the role;
+# dependencies lists other roles that must run before this one (none here).
+galaxy_info:
+  role_name: webapp
+  author: Calm ICT
+  description: A tiny web app config role
+  license: MIT
+  min_ansible_version: "2.15"
+dependencies: []
