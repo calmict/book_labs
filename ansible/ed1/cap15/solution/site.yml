@@ -1,0 +1,84 @@
+---
+# Chapter 15 solution — one playbook that decides (when) and repeats (loop). The
+# same file provisions a dev or a prod node depending on how you call it.
+
+- name: Adaptive provisioning
+  hosts: web
+  become: true
+  gather_facts: false
+  vars:
+    # app_env, not 'environment' — the latter is a reserved Ansible keyword.
+    app_env: dev
+    enable_metrics: false
+    app_users:
+      - name: websvc
+        shell: /bin/bash
+      - name: batchsvc
+        shell: /usr/sbin/nologin
+    feature_dirs:
+      - logs
+      - cache
+      - run
+  tasks:
+    - name: Ensure the base directory
+      ansible.builtin.file:
+        path: /srv/app
+        state: directory
+        mode: "0755"
+
+    - name: Create the feature directories (loop over a list)
+      ansible.builtin.file:
+        path: "/srv/app/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: "{{ feature_dirs }}"
+
+    - name: Create the application users (loop over a list of dicts)
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        shell: "{{ item.shell }}"
+        create_home: false
+      loop: "{{ app_users }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Drop the production marker (prod only)
+      ansible.builtin.copy:
+        content: "PROD\n"
+        dest: /srv/app/PRODUCTION
+        mode: "0644"
+      when: app_env == 'prod'
+
+    - name: Enable metrics (prod AND enabled)
+      ansible.builtin.file:
+        path: /srv/app/metrics.enabled
+        state: touch
+        mode: "0644"
+      when:
+        - app_env == 'prod'
+        - enable_metrics | bool
+
+    - name: Apply optional tuning (only if the variable exists)
+      ansible.builtin.copy:
+        content: "tuning={{ tuning_profile | default('') }}\n"
+        dest: /srv/app/tuning.conf
+        mode: "0644"
+      when: tuning_profile is defined
+
+    - name: Look for the first-run sentinel
+      ansible.builtin.stat:
+        path: /srv/app/.provisioned
+      register: sentinel
+
+    - name: First-time provisioning (register + when)
+      ansible.builtin.copy:
+        content: "first run\n"
+        dest: /srv/app/firstrun.txt
+        mode: "0644"
+      when: not sentinel.stat.exists
+
+    - name: Write the first-run sentinel
+      ansible.builtin.copy:
+        content: "done\n"
+        dest: /srv/app/.provisioned
+        mode: "0644"
