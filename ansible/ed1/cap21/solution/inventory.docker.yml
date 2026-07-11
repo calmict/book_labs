@@ -1,0 +1,34 @@
+---
+# A dynamic inventory: not a list of nodes, but how to FIND them. Ansible asks
+# the (isolated) Docker engine "who is here now?" and builds the inventory live.
+plugin: community.docker.docker_containers
+docker_host: tcp://127.0.0.1:23751
+
+# Readable names (21.6): the container name, not the long id.
+hostnames:
+  - docker_name
+
+# keyed_groups (21.4): build groups from each host's data, here the container
+# labels (the cloud tags): a group per role, a group per env.
+keyed_groups:
+  - key: docker_config.Labels['role'] | default('none')
+    prefix: role
+  - key: docker_config.Labels['env'] | default('none')
+    prefix: env
+
+# groups (21.5): create a group when a Jinja2 condition is true.
+groups:
+  production: "docker_config.Labels['env'] | default('') == 'prod'"
+
+# compose (21.5): build host variables from expressions. Here: make every node
+# reachable over the docker connection (no SSH), and derive service_role from the
+# label. This is the chapter-20 arranger, applied to the inventory.
+compose:
+  ansible_connection: "'community.docker.docker'"
+  service_role: "docker_config.Labels['role'] | default('unknown')"
+
+# cache (21.6): in production, querying the provider on every command is costly;
+# a cache keeps the last answer for a while. Left off here so the lab is fresh.
+# cache: true
+# cache_plugin: ansible.builtin.jsonfile
+# cache_timeout: 3600

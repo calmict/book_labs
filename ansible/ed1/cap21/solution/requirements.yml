@@ -1,0 +1,7 @@
+---
+# community.docker 3.4.11 provides the docker_containers inventory plugin and
+# the docker connection. The 5.x line needs a newer ansible-core than the one
+# that still supports a Python 3.9 controller, so it is pinned to 3.x.
+collections:
+  - name: community.docker
+    version: "3.4.11"

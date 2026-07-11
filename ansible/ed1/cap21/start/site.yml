@@ -1,0 +1,14 @@
+---
+# TODO 3 - an inventory exists to ACT on. Target the WEB tier using the group
+# keyed_groups builds from the 'role' label. Change the hosts: line below to that
+# dynamic group (role_web). Until you do, the play matches no hosts and does
+# nothing.
+- name: Configure the web tier, discovered dynamically
+  hosts: replace_me_with_role_web
+  gather_facts: false
+  tasks:
+    - name: Write a marker only on the web servers
+      ansible.builtin.copy:
+        content: "web tier, found by the dynamic inventory\n"
+        dest: /etc/cap21-web.txt
+        mode: "0644"
