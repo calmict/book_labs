@@ -1,0 +1,57 @@
+---
+# Chapter 14 — handlers and notifications (starting point). Check it first:
+#   ansible-playbook -i inventory.ini site.yml --syntax-check
+# Then fill TODO 1 (notify), TODO 2 (the handlers), TODO 3 (changed_when), and
+# run it a few times, watching /var/log/myapp/reloads.log grow only when it must.
+
+- name: Handlers and notifications
+  hosts: web
+  become: true
+  gather_facts: false
+  vars:
+    greeting: hello
+    force_reload: false
+  tasks:
+    - name: Ensure directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - /etc/myapp
+        - /var/log/myapp
+
+    - name: Deploy app.conf
+      ansible.builtin.copy:
+        content: "greeting = {{ greeting }}\n"
+        dest: /etc/myapp/app.conf
+        mode: "0644"
+      # TODO 1: notify the handler topic when this file changes:
+      #   notify: "app config changed"
+
+    - name: Deploy app.env
+      ansible.builtin.copy:
+        content: "ENV=prod\n"
+        dest: /etc/myapp/app.env
+        mode: "0644"
+      # TODO 1 (again): notify the SAME topic here too. Two tasks notifying the
+      # same topic still fire each handler only ONCE per play (rule 3).
+
+    - name: Force a reload on demand
+      ansible.builtin.command: "echo force={{ force_reload }}"
+      register: forced
+      # TODO 3: a command is a doorbell (chapter 9) — it reports changed every
+      # run. Add changed_when so it is 'changed' only when asked, and notify the
+      # topic, so this task can trigger a reload on demand:
+      #   changed_when: force_reload | bool
+      #   notify: "app config changed"
+
+  # TODO 2: replace the empty list below with two handlers that BOTH subscribe
+  # to the topic "app config changed" via listen:
+  #   - name: reload app
+  #     listen: "app config changed"
+  #     ansible.builtin.shell: "date -Iseconds >> /var/log/myapp/reloads.log"
+  #   - name: bump reload metric
+  #     listen: "app config changed"
+  #     ansible.builtin.shell: "echo reloaded >> /var/log/myapp/metrics.log"
+  handlers: []
