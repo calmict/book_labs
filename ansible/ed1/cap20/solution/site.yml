@@ -1,0 +1,52 @@
+---
+- name: Jinja2 turns data into a config that writes itself
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - data.yml
+  vars:
+    output_dir: "{{ lookup('env', 'CAP20_OUT') | default('/tmp/cap20-lab', true) }}"
+
+    # The enabled services, filtered out of the raw list (20.3).
+    enabled_services: "{{ services | selectattr('enabled') | list }}"
+
+    # Base config merged with the environment overrides (20.4).
+    effective_config: "{{ base_config | combine(env_overrides) }}"
+  tasks:
+    - name: Guard on the ansible version (20.5, is version)
+      ansible.builtin.assert:
+        that: ansible_version.full is version('2.12', '>=')
+        fail_msg: "this playbook needs ansible-core >= 2.12"
+        success_msg: "ansible version is recent enough"
+
+    - name: The safety net (20.2) and a couple of lookups (20.7)
+      ansible.builtin.debug:
+        msg:
+          - "region (default) = {{ region | default('eu-south-1') }}"
+          - "env HOME set = {{ (lookup('env', 'HOME') | length) > 0 }}"
+          - "pipe year = {{ lookup('pipe', 'date +%Y') }}"
+
+    - name: Shallow vs recursive combine (20.4, echoes chapter 13)
+      ansible.builtin.debug:
+        msg:
+          - "shallow   = {{ base_nested | combine(over_nested) }}"
+          - "recursive = {{ base_nested | combine(over_nested, recursive=true) }}"
+
+    - name: Ensure the output directory exists
+      ansible.builtin.file:
+        path: "{{ output_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Render the config that writes itself (20.6)
+      ansible.builtin.template:
+        src: templates/app.conf.j2
+        dest: "{{ output_dir }}/app.conf"
+        mode: "0644"
+
+    - name: Show what was derived
+      ansible.builtin.debug:
+        msg:
+          - "enabled = {{ enabled_services | map(attribute='name') | list }}"
+          - "effective = {{ effective_config }}"

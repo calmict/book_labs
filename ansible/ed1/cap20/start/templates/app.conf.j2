@@ -1,0 +1,17 @@
+# app config - generated from data, do not hand-edit
+[settings]
+{% for item in effective_config | dict2items %}
+{{ item.key }} = {{ item.value }}
+{% endfor %}
+{# TODO 3 (20.6) - add a block for each ENABLED service, sorted by name. Loop
+   over enabled_services (TODO 1) and, for each service s, print:
+       [s.name]
+       port = s.port
+       env  = s.env
+   Use a Jinja2 for loop:
+       {% for s in enabled_services | sort(attribute='name') %}
+       ...
+       {% endfor %}
+   The [settings] loop above and the prod-ports line below are your models. #}
+
+# allowed prod ports: {{ services | selectattr('env', 'equalto', 'prod') | map(attribute='port') | join(',') }}

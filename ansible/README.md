@@ -53,7 +53,7 @@ parts are reproduced locally, so nothing costs money.
 | 17 | The shared repertoire (Galaxy and collections: FQCN, requirements.yml, collections_path, Automation Hub) | Intermediate | [ed1/cap17](ed1/cap17/) |
 | 18 | The strongbox (Ansible Vault: encrypt/view/rekey, encrypt_string, running with encrypted data, vault-id) | Advanced | [ed1/cap18](ed1/cap18/) |
 | 19 | The strongroom (key management in production: runtime lookups, HashiCorp Vault, AppRole, cloud managers, no_log) | Advanced | [ed1/cap19](ed1/cap19/) |
-| 20 | Advanced Jinja2 (map/select/selectattr, dict2items/combine, .j2 templates, lookups) | Advanced | ed1/cap20 |
+| 20 | The arranger (advanced Jinja2: map/select/selectattr, dict2items/combine, default/mandatory, tests, .j2 templates, lookups) | Advanced | [ed1/cap20](ed1/cap20/) |
 | 21 | Dynamic inventories (inventory plugins, keyed_groups, compose, cache) | Advanced | ed1/cap21 |
 | 22 | Error handling (block/rescue/always, until/retries, assert/fail) | Advanced | ed1/cap22 |
 | 23 | Linting and check mode (--syntax-check, ansible-lint, --diff) | Advanced | ed1/cap23 |
