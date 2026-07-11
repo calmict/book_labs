@@ -1,0 +1,51 @@
+---
+# Chapter 14 solution — restart only when needed. The config tasks notify a
+# topic; two handlers subscribe to it via listen and each runs once, at the end
+# of the play, only if a notifying task reported changed. The reload log grows
+# by one line per real reload, so you can count exactly how often it happened.
+
+- name: Handlers and notifications
+  hosts: web
+  become: true
+  gather_facts: false
+  vars:
+    greeting: hello
+    force_reload: false
+  tasks:
+    - name: Ensure directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - /etc/myapp
+        - /var/log/myapp
+
+    - name: Deploy app.conf
+      ansible.builtin.copy:
+        content: "greeting = {{ greeting }}\n"
+        dest: /etc/myapp/app.conf
+        mode: "0644"
+      notify: "app config changed"
+
+    - name: Deploy app.env
+      ansible.builtin.copy:
+        content: "ENV=prod\n"
+        dest: /etc/myapp/app.env
+        mode: "0644"
+      notify: "app config changed"
+
+    - name: Force a reload on demand
+      ansible.builtin.command: "echo force={{ force_reload }}"
+      register: forced
+      changed_when: force_reload | bool
+      notify: "app config changed"
+
+  handlers:
+    - name: reload app
+      listen: "app config changed"
+      ansible.builtin.shell: "date -Iseconds >> /var/log/myapp/reloads.log"
+
+    - name: bump reload metric
+      listen: "app config changed"
+      ansible.builtin.shell: "echo reloaded >> /var/log/myapp/metrics.log"

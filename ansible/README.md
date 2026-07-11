@@ -47,7 +47,7 @@ parts are reproduced locally, so nothing costs money.
 | 11 | The caretaker's keys (privilege escalation in depth: become, sudoers, -K/password, become_user) | Intermediate | [ed1/cap11](ed1/cap11/) |
 | 12 | Annotations on the score (variables: types, Jinja2, where they live, register/set_fact, defaults) | Intermediate | [ed1/cap12](ed1/cap12/) |
 | 13 | The chain of command (the 22 levels of variable precedence: three principles, real clashes, the traps) | Intermediate | [ed1/cap13](ed1/cap13/) |
-| 14 | Tasks, handlers and notifications (the changed state, notify/listen, the three rules) | Intermediate | ed1/cap14 |
+| 14 | The recall at the end of rehearsal (tasks, handlers and notifications: notify/listen, changed_when, the three rules) | Intermediate | [ed1/cap14](ed1/cap14/) |
 | 15 | Conditional logic and loops (when without braces, loop, loop_control) | Intermediate | ed1/cap15 |
 | 16 | Roles (structure, defaults vs vars, files/templates, galaxy init) | Intermediate | ed1/cap16 |
 | 17 | Galaxy and collections (FQCN, requirements.yml, Automation Hub) | Intermediate | ed1/cap17 |
