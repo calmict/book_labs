@@ -1,0 +1,13 @@
+---
+# Chapter 13 solution — group-level variables (a low precedence level).
+winner: group_vars(web)
+
+# A dictionary the group defines. web2 overrides it partially (the trap).
+bad_limits:
+  max_connections: 200
+  timeout_seconds: 30
+
+# The base dictionary, overridden the safe way via combine (the fix).
+limits:
+  max_connections: 200
+  timeout_seconds: 30

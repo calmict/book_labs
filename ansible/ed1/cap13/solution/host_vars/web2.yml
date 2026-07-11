@@ -1,0 +1,13 @@
+---
+# Chapter 13 solution — web2's own variables (a higher level than the group).
+winner: host_vars(web2)
+
+# THE TRAP: a partial override of a dictionary replaces it wholesale, so
+# timeout_seconds is silently dropped on web2.
+bad_limits:
+  max_connections: 500
+
+# THE FIX: keep the override in a separate variable and combine it onto the
+# base 'limits' in the playbook, so no key is lost.
+limits_override:
+  max_connections: 500

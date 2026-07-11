@@ -1,0 +1,38 @@
+---
+# Chapter 13 — precedence clashes, seen with the debug module (starting point).
+# Check it first:  ansible-playbook -i inventory.ini site.yml --syntax-check
+# Then fill TODO 1 (host_vars/web2.yml), TODO 2 and TODO 3 below, and run it:
+#   ansible-playbook -i inventory.ini site.yml
+#   ansible-playbook -i inventory.ini site.yml -e winner=EXTRA
+
+- name: The 22 levels, seen in action
+  hosts: web
+  gather_facts: false
+  vars:
+    mode: play_vars
+  tasks:
+    - name: The specificity ladder (host beats group; -e beats all)
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: winner = {{ winner }}"
+
+    - name: The dict trap (a partial host override replaces the whole dict)
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: bad_limits keys = {{ bad_limits.keys() | list }}"
+
+    # TODO 2: merge the base dict with the host override so no key is lost.
+    # Replace REPLACE-ME with: {{ limits | combine(limits_override | default({})) }}
+    - name: The dict done right (combine the base with the override)
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: merged = REPLACE-ME"
+
+    # TODO 3: pin 'mode' with set_fact here (set it to set_fact_value). set_fact
+    # is level 19, so the task var below (level 17) can no longer lower it.
+    #   - name: Pin mode with set_fact
+    #     ansible.builtin.set_fact:
+    #       mode: set_fact_value
+
+    - name: set_fact is sticky (a task var here is ignored)
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: mode = {{ mode }}"
+      vars:
+        mode: task_var

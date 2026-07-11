@@ -1,0 +1,15 @@
+---
+# Chapter 13 — variables for the whole 'web' group (a low precedence level).
+# web2 will contest some of these in host_vars (a higher level).
+winner: group_vars(web)
+
+# A dictionary defined once for the group. Watch what a PARTIAL host override
+# does to it (the trap in Phase 6).
+bad_limits:
+  max_connections: 200
+  timeout_seconds: 30
+
+# The same base dictionary, this time overridden the safe way (with combine).
+limits:
+  max_connections: 200
+  timeout_seconds: 30
