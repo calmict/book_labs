@@ -1,0 +1,15 @@
+---
+# The sudo password is no longer here in clear text: it is an INDIRECTION to a
+# value that lives, encrypted, in vault.yml next to this file. This plaintext
+# file shows the SHAPE (which variables exist); the vault holds the values.
+ansible_become_password: "{{ vault_become_password }}"
+
+# A single secret, encrypted inline with ansible-vault encrypt_string. The
+# file around it stays readable; only this one value is ciphertext.
+app_api_token: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          62303034393935636134313839323462383961393762346162363738376265636638633035646433
+          6338346365636530303766376532353366333537653965340a306135623264333062623564326563
+          36656437633730333862313735363166326563336265363036366235396332653466643461626637
+          3439386131356265360a383965396430643938613233363162326661396366613866633539323166
+          3161

@@ -1,0 +1,18 @@
+---
+# The production play: it becomes root (password from the vaulted become
+# secret) AND reads a production secret kept under its own vault-id. Running it
+# therefore needs TWO identities at once (18.7).
+- name: Deploy the production DB password (needs two vault identities)
+  hosts: web
+  become: true
+  gather_facts: false
+  vars_files:
+    - prod_secret.yml
+  tasks:
+    - name: Store the prod DB password
+      ansible.builtin.copy:
+        content: "{{ prod_db_password }}\n"
+        dest: /etc/myapp/prod-db-pw
+        owner: root
+        group: root
+        mode: "0600"

@@ -1,0 +1,38 @@
+---
+- name: Configure the web tier - the become password comes from the vault
+  hosts: web
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Ensure the app config directory exists
+      ansible.builtin.file:
+        path: /etc/myapp
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Write a root-owned marker (proves become worked)
+      ansible.builtin.copy:
+        content: "secured by vault\n"
+        dest: /etc/cap18-marker.txt
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Store the API token, decrypted only at runtime
+      ansible.builtin.copy:
+        content: "{{ app_api_token }}\n"
+        dest: /etc/myapp/token
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Confirm we became root
+      ansible.builtin.command: id -un
+      register: whoami_out
+      changed_when: false
+
+    - name: Show connection and privilege
+      ansible.builtin.debug:
+        msg: "connected as {{ ansible_user }}, became {{ whoami_out.stdout }}"

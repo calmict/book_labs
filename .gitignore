@@ -28,6 +28,10 @@ ansible_collections/
 # Vault and inventory files with sensitive data (if ever present in exercises).
 *vault*.yml
 !*vault*example*.yml
+# Exception: solution vault files are demo-encrypted with a passphrase printed
+# in the chapter README (never a real secret), and are meant to be committed so
+# the exercise ships complete. Real vaults anywhere else stay ignored.
+!ansible/**/solution/**/vault.yml
 
 # --- Python ---
 # Byte-compiled files from running the exercise scripts.
