@@ -1,0 +1,6 @@
+ansible-core==2.15.13
+# The docker SDK and requests are pinned: community.docker 3.x needs SDK < 7 and
+# requests < 2.32, otherwise the daemon call fails with "Not supported URL
+# scheme http+docker".
+docker==6.1.3
+requests==2.31.0

@@ -1,0 +1,31 @@
+# Gallery (21.3) - the same mechanism on AWS. The plugin and the source change,
+# the idea does not: discover, group by tag, compose. Not run here (needs an AWS
+# account); read it. In a real project the file must be named *.aws_ec2.yml for
+# the auto plugin to recognise it.
+#
+# Requires: collection amazon.aws, python boto3; credentials from the environment
+# or an instance role (never keys in the file).
+---
+plugin: amazon.aws.aws_ec2
+regions:
+  - eu-south-1
+# only running instances
+filters:
+  instance-state-name: running
+# readable names from the Name tag (21.6), like docker_name in this chapter
+hostnames:
+  - tag:Name
+# group by the cloud tags - exactly like the docker labels here (21.4)
+keyed_groups:
+  - key: tags.role
+    prefix: role
+  - key: tags.env
+    prefix: env
+  - key: placement.availability_zone
+    prefix: az
+# a conditional group (21.5)
+groups:
+  production: "tags.env == 'prod'"
+# reach instances on their private IP (21.5)
+compose:
+  ansible_host: private_ip_address

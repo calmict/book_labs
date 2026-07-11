@@ -1,0 +1,10 @@
+---
+- name: Configure the web tier, discovered dynamically
+  hosts: role_web
+  gather_facts: false
+  tasks:
+    - name: Write a marker only on the web servers
+      ansible.builtin.copy:
+        content: "web tier, found by the dynamic inventory\n"
+        dest: /etc/cap21-web.txt
+        mode: "0644"
