@@ -1,0 +1,9 @@
+---
+# Chapter 16 solution — with the role, the playbook is three lines. It does not
+# know HOW the web app is configured; it only knows WHO to call.
+
+- name: Configure the web tier
+  hosts: web
+  become: true
+  roles:
+    - webapp

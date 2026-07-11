@@ -1,0 +1,7 @@
+---
+# Chapter 16 solution — the role's DEFAULTS (level 2): the overridable knobs.
+app_name: myapp
+port: 8080
+features:
+  - logs
+  - cache

@@ -1,0 +1,6 @@
+---
+# Chapter 16 solution — group variables (precedence level 6). app_name overrides
+# the role's default (level 2); config_dir tries to, but the role's vars (level
+# 15) win, so /etc/WRONG is never used.
+app_name: webfromgroup
+config_dir: /etc/WRONG

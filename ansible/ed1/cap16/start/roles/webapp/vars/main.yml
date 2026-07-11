@@ -1,0 +1,5 @@
+---
+# Chapter 16 — the role's VARS (precedence level 15, high). These are the
+# internal gears: they beat the inventory, group_vars, host_vars and play vars,
+# so they are not meant to be changed from outside the role.
+config_dir: /etc/webapp

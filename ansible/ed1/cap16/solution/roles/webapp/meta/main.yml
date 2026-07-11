@@ -1,0 +1,9 @@
+---
+# Chapter 16 solution — role metadata and dependencies.
+galaxy_info:
+  role_name: webapp
+  author: Calm ICT
+  description: A tiny web app config role
+  license: MIT
+  min_ansible_version: "2.15"
+dependencies: []

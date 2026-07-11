@@ -1,0 +1,8 @@
+---
+# Chapter 16 — group variables (precedence level 6). They exist to prove the
+# defaults-vs-vars contrast of the role:
+#   app_name   -> the role puts it in defaults (level 2), so THIS wins over it.
+#   config_dir -> the role puts it in vars (level 15), so the ROLE wins over
+#                 this, and /etc/WRONG is never used.
+app_name: webfromgroup
+config_dir: /etc/WRONG

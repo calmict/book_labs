@@ -1,0 +1,22 @@
+---
+# Chapter 16 solution — what the role does. src is a bare filename: template
+# resolves it under templates/, copy under files/, automatically.
+
+- name: Ensure the config directory
+  ansible.builtin.file:
+    path: "{{ config_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Render the config
+  ansible.builtin.template:
+    src: app.conf.j2
+    dest: "{{ config_dir }}/app.conf"
+    mode: "0644"
+  notify: reload webapp
+
+- name: Deploy the motd
+  ansible.builtin.copy:
+    src: motd
+    dest: "{{ config_dir }}/motd"
+    mode: "0644"

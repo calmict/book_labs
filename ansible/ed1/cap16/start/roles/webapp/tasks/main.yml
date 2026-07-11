@@ -1,0 +1,26 @@
+---
+# Chapter 16 — what the role does. Note the paths: inside a role, template looks
+# in templates/ and copy looks in files/ automatically, so you write a bare
+# filename, never an absolute path.
+
+- name: Ensure the config directory
+  ansible.builtin.file:
+    path: "{{ config_dir }}"
+    state: directory
+    mode: "0755"
+
+# TODO 2: render the config with the template module. Use src: app.conf.j2
+# WITHOUT a path (the role auto-resolves it to templates/app.conf.j2), write it
+# to "{{ config_dir }}/app.conf", and notify the handler:
+#   - name: Render the config
+#     ansible.builtin.template:
+#       src: app.conf.j2
+#       dest: "{{ config_dir }}/app.conf"
+#       mode: "0644"
+#     notify: reload webapp
+
+- name: Deploy the motd
+  ansible.builtin.copy:
+    src: motd
+    dest: "{{ config_dir }}/motd"
+    mode: "0644"
