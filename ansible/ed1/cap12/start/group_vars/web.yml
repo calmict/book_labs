@@ -1,0 +1,10 @@
+---
+# Chapter 12 — variables for the whole 'web' group. Two of the value types are
+# already here; TODO 1 adds the structured ones the template needs.
+app_name: orchestra
+port: 8080
+debug_mode: false
+
+# TODO 1: add the two structured types the template reads:
+#   features: a LIST of three strings — metrics, tracing, healthcheck
+#   limits:   a DICT with two keys — max_connections: 200, timeout_seconds: 30

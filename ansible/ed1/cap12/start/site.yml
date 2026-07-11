@@ -1,0 +1,32 @@
+---
+# Chapter 12 — assemble a config from variables (starting point). Check it first:
+#   ansible-playbook -i inventory.ini site.yml --syntax-check
+# Then fill TODO 1 (group_vars/web.yml), TODO 2 (config.j2) and TODO 3 (below),
+# and run it:
+#   ansible-playbook -i inventory.ini site.yml
+
+- name: Assemble the service config from variables
+  hosts: web
+  become: true
+  vars:
+    config_dir: /etc/myapp
+  tasks:
+    - name: How many CPUs does this node have?
+      ansible.builtin.command: nproc
+      register: nproc_result
+      changed_when: false
+
+    # TODO 3: create a new variable worker_count = CPUs * 2, using set_fact and
+    # the captured nproc_result.stdout (convert it to a number with | int).
+
+    - name: Ensure the config directory exists
+      ansible.builtin.file:
+        path: "{{ config_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Render the config from the template
+      ansible.builtin.template:
+        src: config.j2
+        dest: "{{ config_dir }}/config.ini"
+        mode: "0644"

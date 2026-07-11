@@ -1,0 +1,4 @@
+---
+# Chapter 12 solution — web2 alone runs on a different port; this host variable
+# overrides the group's value (a host variable beats a group variable).
+port: 8081

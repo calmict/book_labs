@@ -1,0 +1,12 @@
+# {{ app_name }} config, rendered on {{ ansible_hostname }}
+app_name = {{ app_name }}
+
+# TODO 2: add the remaining lines, each pulling a value out of a variable with
+# the {{ }} braces. Use these exact keys so run.sh can check the result:
+#   port            = {{ port }}
+#   debug           = {{ debug_mode }}
+#   features        = the list, comma-joined: {{ features | join(', ') }}
+#   max_connections = a dict value: {{ limits.max_connections }}
+#   timeout         = {{ limits.timeout_seconds }}
+#   log_level       = with a fallback if unset: {{ log_level | default('info') }}
+#   workers         = {{ worker_count }}   (comes from set_fact — TODO 3)
