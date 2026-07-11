@@ -1,0 +1,19 @@
+---
+# Demonstration (22.6): with any_errors_fatal, one host's failure aborts the
+# whole play for EVERYONE - the dangerous rollout reaches nobody. Compare a fleet
+# where a poisoned batch must stop before it spreads. Run it and watch the
+# rollout task reach no host:
+#     ansible-playbook -i inventory.ini failfast.yml
+- name: Fail fast to protect the fleet
+  hosts: all
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Precheck (fails on db1)
+      ansible.builtin.command: /bin/false
+      when: inventory_hostname == 'db1'
+      changed_when: false
+
+    - name: The dangerous rollout (must reach NOBODY if any precheck failed)
+      ansible.builtin.debug:
+        msg: "ROLLOUT on {{ inventory_hostname }}"

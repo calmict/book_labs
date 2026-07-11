@@ -1,0 +1,64 @@
+---
+- name: A resilient deploy across the fleet
+  hosts: all
+  gather_facts: false
+  force_handlers: true
+  vars:
+    lab: "{{ lookup('env', 'CAP22_LAB') | default('/tmp/cap22-lab', true) }}"
+    deploy_env: dev
+    fail_host: db1
+  tasks:
+    - name: Ensure the lab dir exists
+      ansible.builtin.file:
+        path: "{{ lab }}"
+        state: directory
+        mode: "0755"
+
+    # TODO 3 (22.7) - validate the preconditions BEFORE acting, so a bad value
+    # fails fast instead of half-deploying. Add an assert on deploy_env here:
+    #   - name: deploy_env must be one we know
+    #     ansible.builtin.assert:
+    #       that: deploy_env in ['dev', 'staging', 'prod']
+    #       fail_msg: "invalid deploy_env '{{ deploy_env }}'"
+
+    # TODO 1 (22.2) - wrap the deploy in block/rescue/always so a mid-deploy
+    # failure is recovered, not fatal. Turn the plain deploy task below into a
+    # block whose second step fails on fail_host, with a rescue that rolls back
+    # and an always that cleans up (see README, phase 3).
+    - name: Deploy the app
+      ansible.builtin.copy:
+        content: "deployed {{ deploy_env }}\n"
+        dest: "{{ lab }}/{{ inventory_hostname }}.deployed"
+        mode: "0644"
+
+    # TODO 2 (22.5) - the health check is slow: retry it with until/retries/delay
+    # instead of failing on the first attempt. Replace the placeholder below with
+    # the flaky check + until (see README, phase 4).
+    - name: Health check (placeholder - always passes)
+      ansible.builtin.command: /bin/true
+      changed_when: false
+
+    - name: Send optional metrics (non-critical - ignore if it fails)
+      ansible.builtin.command: /bin/false
+      ignore_errors: true
+      changed_when: false
+
+    - name: Confirm no stale lock (rc=1 just means 'not found', not an error)
+      ansible.builtin.command: "grep -q deploy-lock {{ lab }}/{{ inventory_hostname }}.deployed"
+      register: lockcheck
+      failed_when: false
+      changed_when: false
+
+    - name: Signal the reload
+      ansible.builtin.copy:
+        content: "reload requested\n"
+        dest: "{{ lab }}/{{ inventory_hostname }}.reload"
+        mode: "0644"
+      notify: reload the app
+
+  handlers:
+    - name: reload the app
+      ansible.builtin.copy:
+        content: "reloaded\n"
+        dest: "{{ lab }}/{{ inventory_hostname }}.reloaded"
+        mode: "0644"
