@@ -1,0 +1,10 @@
+---
+# Chapter 13 — variables for web2 alone (a higher precedence level than the
+# group). This file is where you stage the clashes.
+#
+# TODO 1: give web2 its own conflicting values, then re-run to see who wins:
+#   winner: host_vars(web2)            # a host var beats the group var
+#   bad_limits:                        # a PARTIAL dict override (the trap):
+#     max_connections: 500             #   only this key -> timeout_seconds is lost
+#   limits_override:                   # the override kept SEPARATE (the fix):
+#     max_connections: 500             #   combined onto 'limits' in the playbook

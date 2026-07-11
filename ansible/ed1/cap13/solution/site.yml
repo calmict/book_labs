@@ -1,0 +1,31 @@
+---
+# Chapter 13 solution — precedence clashes made visible. No infrastructure is
+# built: the debug module prints who wins each contest, on the control node.
+
+- name: The 22 levels, seen in action
+  hosts: web
+  gather_facts: false
+  vars:
+    mode: play_vars
+  tasks:
+    - name: The specificity ladder (host beats group; -e beats all)
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: winner = {{ winner }}"
+
+    - name: The dict trap (a partial host override replaces the whole dict)
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: bad_limits keys = {{ bad_limits.keys() | list }}"
+
+    - name: The dict done right (combine the base with the override)
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: merged = {{ limits | combine(limits_override | default({})) }}"
+
+    - name: Pin mode with set_fact (level 19)
+      ansible.builtin.set_fact:
+        mode: set_fact_value
+
+    - name: set_fact is sticky (a task var, level 17, is ignored)
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: mode = {{ mode }}"
+      vars:
+        mode: task_var
