@@ -1,0 +1,20 @@
+---
+# The same rollout, tuned. Three levers move it from "marches at the speed of
+# the slowest node, twice, in several waves" to "each node runs its own work
+# straight through, all at once":
+#   - forks = 12 (ansible.cfg)  -> the whole fleet in one wave
+#   - strategy: free            -> no per-task barrier; a node races to its next
+#                                  task the moment it finishes the current one
+#   - gather_facts: false       -> skip a round of setup nobody uses
+- name: Roll out to the fleet
+  hosts: fleet
+  gather_facts: false
+  strategy: free
+  tasks:
+    - name: Fetch the release
+      ansible.builtin.command: "sleep {{ t1 }}"
+      changed_when: false
+
+    - name: Apply the release
+      ansible.builtin.command: "sleep {{ t2 }}"
+      changed_when: false

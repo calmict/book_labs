@@ -1,0 +1,24 @@
+---
+# A rollout across the fleet. It works, but it is needlessly slow. Two levers
+# live here in the play; the third (forks) lives in ansible.cfg.
+#
+# TODO 2 (25.3) - strategy. With the default 'linear' every node must finish a
+#   task before ANY node starts the next one: the whole fleet marches at the
+#   speed of its slowest member, twice. Switch to a strategy that lets each node
+#   race ahead to its own next task instead of waiting at the barrier.
+#
+# TODO 3 (25.5) - facts. This play gathers facts on every node before it starts,
+#   yet it never uses a single one of them. That is a full round of setup on
+#   twelve nodes for nothing. Turn fact gathering off for this play.
+- name: Roll out to the fleet
+  hosts: fleet
+  gather_facts: true
+  strategy: linear
+  tasks:
+    - name: Fetch the release
+      ansible.builtin.command: "sleep {{ t1 }}"
+      changed_when: false
+
+    - name: Apply the release
+      ansible.builtin.command: "sleep {{ t2 }}"
+      changed_when: false
