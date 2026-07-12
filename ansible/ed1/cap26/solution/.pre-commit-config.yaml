@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ansible-lint
+        name: ansible-lint
+        entry: ./ci/lint.sh
+        language: system
+        pass_filenames: false
+        files: \.(yml|yaml)$

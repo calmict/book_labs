@@ -1,0 +1,13 @@
+---
+# The playbook being shipped through the pipeline. It is deliberately clean:
+# named play, named task, FQCN module, an explicit mode - so ansible-lint passes
+# at the 'production' profile. The pipeline's job is to keep it that way.
+- name: Ship the app config
+  hosts: local
+  gather_facts: false
+  tasks:
+    - name: Ensure the app config directory exists
+      ansible.builtin.file:
+        path: /tmp/cap26app
+        state: directory
+        mode: "0755"

@@ -1,0 +1,35 @@
+name: ansible-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      # TODO 1 (26.4) - add the two quality-gate steps that run on every push.
+      # They must run the two scripts already written for you in ci/:
+      #   - a "Lint" step:     run: ./ci/lint.sh
+      #   - a "Validate" step: run: ./ci/validate.sh
+      # If either exits non-zero the job goes red and the pipeline stops here.
+
+  deploy:
+    name: Deploy to production
+    # TODO 2 (26.5) - make this the production gate. Two conditions, both needed:
+    #   needs: test                                 -> never deploy if CI failed
+    #   if: startsWith(github.ref, 'refs/tags/v')   -> only from a release tag
+    # Add both lines here, above runs-on.
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: echo "deploying $GITHUB_REF to production"

@@ -1,0 +1,16 @@
+# TODO 3 (26.7) - add a pre-commit hook that runs the SAME lint as the pipeline,
+# so the gate fires before the commit even exists. Use a LOCAL hook (repo: local)
+# so nothing is downloaded from the network - it just calls the script you have:
+#
+#   repos:
+#     - repo: local
+#       hooks:
+#         - id: ansible-lint
+#           name: ansible-lint
+#           entry: ./ci/lint.sh
+#           language: system
+#           pass_filenames: false
+#           files: \.(yml|yaml)$
+#
+# Replace the empty list below with that block, then run: pre-commit install
+repos: []
