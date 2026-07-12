@@ -1,0 +1,18 @@
+---
+- name: Ensure the config directory exists
+  ansible.builtin.file:
+    path: /etc/cap24app
+    state: directory
+    mode: "0755"
+
+- name: Deploy the app config
+  ansible.builtin.copy:
+    dest: /etc/cap24app/app.conf
+    content: "message = {{ app_message }}\nworkers = {{ app_workers }}\n"
+    mode: "0644"
+
+# TODO 2 (24.5): this command runs on every apply - it is a doorbell (cap5/cap9),
+#   so molecule idempotence fails on the second pass. Add a 'creates:' guard under
+#   an 'args:' key so Ansible skips it once /etc/cap24app/deployed already exists.
+- name: Stamp a deploy marker once
+  ansible.builtin.command: touch /etc/cap24app/deployed

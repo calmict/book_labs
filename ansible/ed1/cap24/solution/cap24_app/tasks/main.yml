@@ -1,0 +1,17 @@
+---
+- name: Ensure the config directory exists
+  ansible.builtin.file:
+    path: /etc/cap24app
+    state: directory
+    mode: "0755"
+
+- name: Deploy the app config
+  ansible.builtin.copy:
+    dest: /etc/cap24app/app.conf
+    content: "message = {{ app_message }}\nworkers = {{ app_workers }}\n"
+    mode: "0644"
+
+- name: Stamp a deploy marker once
+  ansible.builtin.command: touch /etc/cap24app/deployed
+  args:
+    creates: /etc/cap24app/deployed
