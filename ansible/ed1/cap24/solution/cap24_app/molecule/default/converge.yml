@@ -1,0 +1,8 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Apply the app role
+      ansible.builtin.include_role:
+        name: cap24_app

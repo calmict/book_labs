@@ -1,0 +1,11 @@
+---
+driver:
+  name: docker
+platforms:
+  - name: cap24-instance
+    image: python:3.12-slim
+    pre_build_image: true
+provisioner:
+  name: ansible
+verifier:
+  name: testinfra

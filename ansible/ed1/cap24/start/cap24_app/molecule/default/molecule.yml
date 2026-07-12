@@ -1,0 +1,13 @@
+---
+# TODO 1 (24.4): complete this scenario.
+#   - platforms: replace the empty list with one platform:
+#       name: cap24-instance, image: python:3.12-slim, pre_build_image: true
+#     (the image must ship Python: the provisioner runs Ansible inside the container)
+#   - verifier: declare it as testinfra
+driver:
+  name: docker
+platforms: []
+provisioner:
+  name: ansible
+# verifier:
+#   name: ...
