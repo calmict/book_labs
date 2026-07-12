@@ -1,0 +1,52 @@
+---
+# A rolling update of the web farm. Three levers turn "apply to everyone at once"
+# (an outage) into "apply in small waves, the service always up".
+#
+# The load balancer's pool is normally invisible; here it is a ledger file, so you
+# can SEE the rollout. Each task appends one timestamped line - DRAIN when a node
+# leaves the pool, UPDATED when it is upgraded, ENABLE when it returns. Watch it:
+#   : > /tmp/cap27-pool.log
+#   ansible-playbook site.yml
+#   cat /tmp/cap27-pool.log
+- name: Rolling update of the web farm
+  hosts: webfarm
+  gather_facts: false
+  # TODO 1 (27.2) - serial: the wave size. Without it Ansible updates the WHOLE
+  #   farm at once, every backend down together. Add a line here:
+  #       serial: 2
+  # TODO 3 (27.5) - max_fail_percentage: the emergency brake. If more than this
+  #   share of a wave fails, stop the rollout before it touches the rest of the
+  #   farm. Add a line here:
+  #       max_fail_percentage: 25
+  vars:
+    lb_host: balancer
+    ledger: /tmp/cap27-pool.log
+    fail_hosts: []   # set by the test to simulate a broken update on some nodes
+  pre_tasks:
+    - name: Take the host out of the pool
+      # delegate_to runs this ON THE LOAD BALANCER, not on the web host: it is the
+      # balancer that must stop sending traffic here before we touch the node.
+      ansible.builtin.shell: 'echo "$(date +%s%N) DRAIN {{ inventory_hostname }}" >> {{ ledger }}'
+      delegate_to: "{{ lb_host }}"
+      changed_when: false
+  tasks:
+    - name: Simulate a broken update on poisoned hosts
+      ansible.builtin.fail:
+        msg: "broken update on {{ inventory_hostname }}"
+      when: inventory_hostname in fail_hosts
+    - name: Apply the new release
+      ansible.builtin.shell: |
+        sleep 1
+        echo "$(date +%s%N) UPDATED {{ inventory_hostname }}" >> {{ ledger }}
+      changed_when: true
+  # TODO 2 (27.4) - post_tasks: put the host BACK in the pool once it is updated.
+  #   This is the other half of the choreography (drain -> update -> re-enable),
+  #   and the half people forget: skip it and every wave leaves nodes out of the
+  #   pool for good. Mirror the pre_tasks drain, but write ENABLE instead of DRAIN,
+  #   and remember to delegate_to the balancer. Add the block here:
+  #
+  #   post_tasks:
+  #     - name: Put the host back in the pool
+  #       ansible.builtin.shell: 'echo "$(date +%s%N) ENABLE {{ inventory_hostname }}" >> {{ ledger }}'
+  #       delegate_to: "{{ lb_host }}"
+  #       changed_when: false

@@ -1,0 +1,41 @@
+---
+# A rolling update of the web farm, fully choreographed: apply in small waves,
+# with the balancer draining and re-enabling each node, and an emergency brake.
+#
+# The load balancer's pool is a ledger file so the rollout is visible and testable:
+# each task appends one timestamped line - DRAIN when a node leaves the pool,
+# UPDATED when it is upgraded, ENABLE when it returns. Watch it:
+#   : > /tmp/cap27-pool.log
+#   ansible-playbook site.yml
+#   cat /tmp/cap27-pool.log
+- name: Rolling update of the web farm
+  hosts: webfarm
+  gather_facts: false
+  serial: 2                 # 27.2 - waves of two: never the whole farm at once
+  max_fail_percentage: 25   # 27.5 - brake: a failing wave stops the rollout
+  vars:
+    lb_host: balancer
+    ledger: /tmp/cap27-pool.log
+    fail_hosts: []   # set by the test to simulate a broken update on some nodes
+  pre_tasks:
+    - name: Take the host out of the pool
+      # delegate_to runs this ON THE LOAD BALANCER, not on the web host: it is the
+      # balancer that must stop sending traffic here before we touch the node.
+      ansible.builtin.shell: 'echo "$(date +%s%N) DRAIN {{ inventory_hostname }}" >> {{ ledger }}'
+      delegate_to: "{{ lb_host }}"
+      changed_when: false
+  tasks:
+    - name: Simulate a broken update on poisoned hosts
+      ansible.builtin.fail:
+        msg: "broken update on {{ inventory_hostname }}"
+      when: inventory_hostname in fail_hosts
+    - name: Apply the new release
+      ansible.builtin.shell: |
+        sleep 1
+        echo "$(date +%s%N) UPDATED {{ inventory_hostname }}" >> {{ ledger }}
+      changed_when: true
+  post_tasks:
+    - name: Put the host back in the pool
+      ansible.builtin.shell: 'echo "$(date +%s%N) ENABLE {{ inventory_hostname }}" >> {{ ledger }}'
+      delegate_to: "{{ lb_host }}"
+      changed_when: false
