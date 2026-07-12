@@ -60,7 +60,7 @@ parts are reproduced locally, so nothing costs money.
 | 24 | The throwaway stage (testing with Molecule: scenario anatomy, create/converge/idempotence/verify/destroy, Testinfra, phases, more distributions) | Advanced | [ed1/cap24](ed1/cap24/) |
 | 25 | The right tempo (performance at scale: forks, strategies linear/free, pipelining, taming facts, Mitogen, profile_tasks) | Cloud Architect | [ed1/cap25](ed1/cap25/) |
 | 26 | The stage machinery (CI/CD: version control, pipeline anatomy, GitHub Actions quality gates, the production gate, GitLab CI, pre-commit hooks) | Cloud Architect | [ed1/cap26](ed1/cap26/) |
-| 27 | Orchestration and rolling updates (serial, delegate_to, pre/post_tasks, rollback) | Cloud Architect | ed1/cap27 |
+| 27 | Without stopping the music (orchestration and rolling updates: serial waves, delegate_to the load balancer, pre/post_tasks choreography, max_fail_percentage, rollback and recovery) | Cloud Architect | [ed1/cap27](ed1/cap27/) |
 | 28 | AWX and Automation Platform (the job template, RBAC/audit, workflows, EE/EDA) | Cloud Architect | ed1/cap28 |
 
 ## Pull only this manual
