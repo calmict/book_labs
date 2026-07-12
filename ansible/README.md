@@ -58,7 +58,7 @@ parts are reproduced locally, so nothing costs money.
 | 22 | When a string snaps (error handling: block/rescue/always, until/retries, ignore_errors/failed_when, any_errors_fatal, assert/fail, force_handlers) | Advanced | [ed1/cap22](ed1/cap22/) |
 | 23 | The dress rehearsal (linting and check mode: --syntax-check, ansible-lint profiles, --check/--diff, check_mode) | Advanced | [ed1/cap23](ed1/cap23/) |
 | 24 | The throwaway stage (testing with Molecule: scenario anatomy, create/converge/idempotence/verify/destroy, Testinfra, phases, more distributions) | Advanced | [ed1/cap24](ed1/cap24/) |
-| 25 | Performance at scale (forks, strategies, pipelining, taming facts, Mitogen) | Cloud Architect | ed1/cap25 |
+| 25 | The right tempo (performance at scale: forks, strategies linear/free, pipelining, taming facts, Mitogen, profile_tasks) | Cloud Architect | [ed1/cap25](ed1/cap25/) |
 | 26 | CI/CD (version control, the pipeline, GitHub Actions, the production gate) | Cloud Architect | ed1/cap26 |
 | 27 | Orchestration and rolling updates (serial, delegate_to, pre/post_tasks, rollback) | Cloud Architect | ed1/cap27 |
 | 28 | AWX and Automation Platform (the job template, RBAC/audit, workflows, EE/EDA) | Cloud Architect | ed1/cap28 |
