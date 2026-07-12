@@ -1,0 +1,32 @@
+name: ansible-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Lint
+        run: ./ci/lint.sh
+      - name: Validate
+        run: ./ci/validate.sh
+
+  deploy:
+    name: Deploy to production
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: echo "deploying $GITHUB_REF to production"
