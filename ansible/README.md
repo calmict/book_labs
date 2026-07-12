@@ -3,7 +3,7 @@
 Practical labs for the Calm ICT **Ansible** manual — the conductor of the
 infrastructure orchestra.
 
-> Status: in progress — chapters are being added.
+> Status: complete — all 28 chapters published.
 
 ## Recommended setup
 
@@ -61,7 +61,7 @@ parts are reproduced locally, so nothing costs money.
 | 25 | The right tempo (performance at scale: forks, strategies linear/free, pipelining, taming facts, Mitogen, profile_tasks) | Cloud Architect | [ed1/cap25](ed1/cap25/) |
 | 26 | The stage machinery (CI/CD: version control, pipeline anatomy, GitHub Actions quality gates, the production gate, GitLab CI, pre-commit hooks) | Cloud Architect | [ed1/cap26](ed1/cap26/) |
 | 27 | Without stopping the music (orchestration and rolling updates: serial waves, delegate_to the load balancer, pre/post_tasks choreography, max_fail_percentage, rollback and recovery) | Cloud Architect | [ed1/cap27](ed1/cap27/) |
-| 28 | AWX and Automation Platform (the job template, RBAC/audit, workflows, EE/EDA) | Cloud Architect | ed1/cap28 |
+| 28 | The standing theatre (AWX and Automation Platform as code: the job template, credentials/RBAC/audit, workflows with failure branches, EE/scheduling/EDA) | Cloud Architect | [ed1/cap28](ed1/cap28/) |
 
 ## Pull only this manual
 

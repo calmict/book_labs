@@ -1,0 +1,12 @@
+---
+# The project's deploy play - what the "deploy" job template runs. On a real farm
+# this is the rolling update of chapter 27; here it is a stand-in so the exercise
+# stays offline. The point of this chapter is the platform objects around it, not
+# the play itself.
+- name: Deploy the release to the web farm
+  hosts: webfarm
+  gather_facts: false
+  tasks:
+    - name: Apply the release
+      ansible.builtin.debug:
+        msg: "deploying the new release"

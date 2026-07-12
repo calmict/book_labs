@@ -1,0 +1,10 @@
+---
+# The project's rollback play - what the "rollback" job template runs when the
+# deploy or the smoke-test fails, to bring the farm back to the previous release.
+- name: Roll back the web farm to the previous release
+  hosts: webfarm
+  gather_facts: false
+  tasks:
+    - name: Restore the previous release
+      ansible.builtin.debug:
+        msg: "rolling back to the previous release"

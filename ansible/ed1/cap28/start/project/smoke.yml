@@ -1,0 +1,10 @@
+---
+# The project's smoke-test play - what the "smoke-test" job template runs after a
+# deploy, to confirm the service answers before the workflow moves on.
+- name: Smoke-test the web farm
+  hosts: webfarm
+  gather_facts: false
+  tasks:
+    - name: Check the service answers
+      ansible.builtin.debug:
+        msg: "smoke test passed"

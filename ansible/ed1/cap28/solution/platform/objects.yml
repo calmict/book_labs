@@ -1,0 +1,57 @@
+# AWX / Automation Platform objects, defined as code (GitOps): this is what your CI
+# validates and then imports into the controller. No secret value lives here - only
+# a reference to where the controller fetches it at run time.
+
+projects:
+  - name: infra-playbooks
+    scm_type: git
+    scm_url: https://example.com/acme/infra-playbooks.git
+
+inventories:
+  - name: production
+    source: static
+
+credentials:
+  - name: deploy-ssh
+    kind: machine
+    # The value is NEVER stored here: the controller resolves it at run time from a
+    # secret manager (chapter 19). Only this reference travels in git.
+    secret: "{{ lookup('community.hashi_vault.vault_kv2_get', 'ansible/deploy-ssh').secret.ssh_key }}"
+
+job_templates:
+  - name: deploy
+    project: infra-playbooks
+    inventory: production
+    playbook: deploy.yml
+    credentials: [deploy-ssh]
+    limit: webfarm
+  - name: smoke-test
+    project: infra-playbooks
+    inventory: production
+    playbook: smoke.yml
+    credentials: [deploy-ssh]
+  - name: rollback
+    project: infra-playbooks
+    inventory: production
+    playbook: rollback.yml
+    credentials: [deploy-ssh]
+
+rbac:
+  # Least privilege: the deployers team may EXECUTE the deploy job template, and
+  # nothing more - not admin over the organisation.
+  - team: deployers
+    role: execute
+    resource: job_template:deploy
+
+workflows:
+  - name: release
+    nodes:
+      - id: n_deploy
+        job_template: deploy
+        success_nodes: [n_smoke]
+        failure_nodes: [n_rollback]
+      - id: n_smoke
+        job_template: smoke-test
+        failure_nodes: [n_rollback]
+      - id: n_rollback
+        job_template: rollback
