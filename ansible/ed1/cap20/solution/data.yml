@@ -2,10 +2,10 @@
 # The raw fleet data. The whole config is a function of this: change a value,
 # re-render, and the config rewrites itself.
 services:
-  - { name: web-01, env: prod,    port: 8080, enabled: true }
-  - { name: web-02, env: prod,    port: 8081, enabled: false }
+  - { name: web-01, env: prod, port: 8080, enabled: true }
+  - { name: web-02, env: prod, port: 8081, enabled: false }
   - { name: api-01, env: staging, port: 9090, enabled: true }
-  - { name: db-01,  env: prod,    port: 5432, enabled: true }
+  - { name: db-01, env: prod, port: 5432, enabled: true }
 
 base_config:
   workers: 4

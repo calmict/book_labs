@@ -13,7 +13,7 @@
     src: app.conf.j2
     dest: "{{ config_dir }}/app.conf"
     mode: "0644"
-  notify: reload webapp
+  notify: Reload webapp
 
 - name: Deploy the motd
   ansible.builtin.copy:

@@ -24,7 +24,7 @@
       ansible.builtin.set_fact:
         mode: set_fact_value
 
-    - name: set_fact is sticky (a task var, level 17, is ignored)
+    - name: The set_fact value is sticky (a task var, level 17, is ignored)
       ansible.builtin.debug:
         msg: "{{ inventory_hostname }}: mode = {{ mode }}"
       vars:

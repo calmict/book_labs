@@ -21,14 +21,14 @@
     - name: A change that always notifies the handler
       ansible.builtin.command: /bin/true
       changed_when: true
-      notify: reload
+      notify: Reload
 
     - name: A task that fails after the notify
       ansible.builtin.command: /bin/false
       changed_when: false
 
   handlers:
-    - name: reload
+    - name: Reload
       ansible.builtin.copy:
         content: "handler ran despite the failure\n"
         dest: "{{ lab }}/fh.done"
