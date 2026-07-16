@@ -15,7 +15,7 @@
         mode: "0755"
 
     # TODO 3 (22.7) - validate the preconditions BEFORE acting.
-    - name: deploy_env must be one we know
+    - name: Validate deploy_env is a known value
       ansible.builtin.assert:
         that: deploy_env in ['dev', 'staging', 'prod']
         fail_msg: "invalid deploy_env '{{ deploy_env }}'"
@@ -70,10 +70,10 @@
         content: "reload requested\n"
         dest: "{{ lab }}/{{ inventory_hostname }}.reload"
         mode: "0644"
-      notify: reload the app
+      notify: Reload the app
 
   handlers:
-    - name: reload the app
+    - name: Reload the app
       ansible.builtin.copy:
         content: "reloaded\n"
         dest: "{{ lab }}/{{ inventory_hostname }}.reloaded"

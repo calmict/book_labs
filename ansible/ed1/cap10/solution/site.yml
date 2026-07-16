@@ -28,6 +28,7 @@
         content: "web tier configured by Calm ICT\n"
         dest: "{{ app_dir }}/marker"
         mode: "0644"
+      become: true
       become_user: root
       tags: [content]
 

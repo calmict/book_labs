@@ -1,0 +1,28 @@
+---
+# ansible-lint configuration for the exercise solutions.
+#
+# The strictness dial is the strictest built-in profile, 'production': every
+# solution playbook is held to production standards in CI. A small, deliberate
+# set of rules is skipped because the exercises teach those very constructs, or
+# use them as examples on purpose — enforcing them would distort the lesson.
+# Everything else stays enforced and blocking.
+profile: production
+
+skip_list:
+  # Chapter 22 (error handling) uses ignore_errors on purpose and contrasts it
+  # with failed_when in the same play.
+  - ignore-errors
+  # Chapter 12 (variables) uses 'port' as its integer example and chapter 16
+  # (roles) keeps it as a role default. 'port' is a reserved Ansible name — which
+  # is exactly the kind of value the variables chapter is illustrating.
+  - var-naming[no-reserved]
+  - schema[vars]
+  # Chapter 16 (roles) introduces roles with short, unprefixed variable names
+  # (app_name, features, config_dir) for readability, before the prefixing
+  # convention is taught.
+  - var-naming[no-role-prefix]
+
+exclude_paths:
+  # Encrypted with Ansible Vault: a syntax-check needs the vault secret, which is
+  # never committed to the repository. Readers run it with their own password.
+  - ansible/ed1/cap18/solution/prod.yml

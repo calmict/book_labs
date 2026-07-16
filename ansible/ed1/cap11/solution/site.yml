@@ -29,4 +29,5 @@
         content: "owned by the service account, not root\n"
         dest: /srv/app/owner.txt
         mode: "0640"
+      become: true
       become_user: appsvc
