@@ -43,27 +43,73 @@ jobs:
             echo "No shell scripts yet — nothing to check."
           fi
 
-  # --- Per-technology jobs (enabled as exercises are added) ---
+  # --- Per-technology jobs ---
   #
   # NOTE: validate solution/ ONLY — never start/. Starting files are
   # intentionally incomplete and would fail validation by design.
-  #
-  # kubernetes:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: kubeconform on kubernetes/**/solution
-  #       run: ...   # validate manifests against the K8s schema
-  #
-  # ansible:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - run: pip install ansible-lint && ansible-lint ansible/
-  #
-  # terraform:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - run: terraform fmt -check -recursive && terraform validate
-  #       # or: tofu validate
+
+  kubernetes:
+    name: kubeconform (solution manifests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          ver=v0.6.7
+          url=https://github.com/yannh/kubeconform/releases/download/$ver/kubeconform-linux-amd64.tar.gz
+          curl -sSL "$url" | tar -xz -C /tmp kubeconform
+          sudo install /tmp/kubeconform /usr/local/bin/kubeconform
+      - name: Validate manifests (skip Helm chart trees)
+        run: |
+          charts=$(git ls-files 'kubernetes/ed1/*/solution/Chart.yaml' \
+            'kubernetes/ed1/*/solution/**/Chart.yaml' | sed -E 's#/Chart.yaml$##' | sort -u)
+          files=$(git ls-files 'kubernetes/ed1/*/solution/*.yaml' | while read -r f; do
+            skip=0
+            for c in $charts; do case "$f" in "$c"/*) skip=1 ;; esac; done
+            [ "$skip" = 0 ] && printf '%s\n' "$f"
+          done)
+          if [ -n "$files" ]; then
+            # -ignore-missing-schemas tolerates CRDs (Istio, Argo CD) with no public schema.
+            echo "$files" | xargs kubeconform -summary -strict -ignore-missing-schemas
+          else
+            echo "No Kubernetes manifests yet — nothing to validate."
+          fi
+
+  ansible:
+    name: ansible-lint (solution playbooks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ansible-lint (pinned for reproducibility)
+        run: pip install "ansible-lint==6.22.2" "ansible-core==2.15.13"
+      - name: Lint solution playbooks (production profile via .ansible-lint)
+        run: |
+          dirs=$(git ls-files 'ansible/ed1/*/solution/*.yml' \
+            'ansible/ed1/*/solution/**/*.yml' | sed -E 's#(solution)/.*#\1#' | sort -u)
+          if [ -n "$dirs" ]; then
+            echo "$dirs" | xargs ansible-lint --offline
+          else
+            echo "No Ansible solution playbooks yet — nothing to lint."
+          fi
+
+  terraform:
+    name: tofu fmt (solution modules)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+      - name: Check formatting of solution modules
+        run: |
+          dirs=$(git ls-files 'terraform-opentofu/ed1/*/solution/*.tf' \
+            | sed -E 's#/[^/]+$##' | sort -u)
+          rc=0
+          for d in $dirs; do
+            tofu fmt -check -diff "$d" || rc=1
+          done
+          if [ "$rc" -ne 0 ]; then
+            echo "Some solution modules are not formatted — run: tofu fmt"
+          fi
+          exit $rc

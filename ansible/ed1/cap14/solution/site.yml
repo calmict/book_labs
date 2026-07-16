@@ -42,10 +42,12 @@
       notify: "app config changed"
 
   handlers:
-    - name: reload app
+    - name: Reload app
       listen: "app config changed"
       ansible.builtin.shell: "date -Iseconds >> /var/log/myapp/reloads.log"
+      changed_when: true
 
-    - name: bump reload metric
+    - name: Bump reload metric
       listen: "app config changed"
       ansible.builtin.shell: "echo reloaded >> /var/log/myapp/metrics.log"
+      changed_when: true
