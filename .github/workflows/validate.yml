@@ -85,6 +85,13 @@ jobs:
           python-version: "3.11"
       - name: Install ansible-lint (pinned for reproducibility)
         run: pip install "ansible-lint==6.22.2" "ansible-core==2.15.13"
+      - name: Install the collections the solutions declare (pinned)
+        run: |
+          # Reuse the pins the exercises already commit, so a syntax-check can
+          # resolve modules like community.general.ini_file.
+          for req in $(git ls-files 'ansible/ed1/*/solution/requirements.yml'); do
+            ansible-galaxy collection install -r "$req"
+          done
       - name: Lint solution playbooks (production profile via .ansible-lint)
         run: |
           dirs=$(git ls-files 'ansible/ed1/*/solution/*.yml' \
