@@ -42,5 +42,8 @@ so they run without Docker and without root.
 | 17 | The private switchboard — default vs custom bridge: a user-defined network resolves containers by name and isolates them | Advanced | [ed1/cap17](ed1/cap17/) |
 | 18 | Plugged in or unplugged — the host and none drivers, and choosing: host shares the host stack, none has no network | Advanced | [ed1/cap18](ed1/cap18/) |
 | 19 | On the quay, and beyond the horizon — macvlan (own MAC on the segment), ipvlan and the overlay horizon | Cloud Architect | [ed1/cap19](ed1/cap19/) |
+| 20 | The fleet in one file — designing a multi-service app with Docker Compose: services, depends_on, the app network | Intermediate | [ed1/cap20](ed1/cap20/) |
+| 21 | The all-clear signal — dependencies, healthchecks and startup order: wait for healthy, not just started | Advanced | [ed1/cap21](ed1/cap21/) |
+| 22 | The safe, not the sticky note — configuration with env vars, .env and secrets: mount secrets as files, not env | Advanced | [ed1/cap22](ed1/cap22/) |
 
 More chapters are added as the volume is consolidated.
