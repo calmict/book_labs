@@ -1,0 +1,18 @@
+# cap22 start - configuration with env vars and secrets, to complete. Fill TODO
+# 1..3. Create the required .env and db_password.txt first (see README) - they are
+# never committed. As written app has no config and no secret; the test fails.
+services:
+  app:
+    image: busybox
+    command: ["sh", "-c", "sleep 3600"]
+    # TODO 1 (22.1): pass an environment variable, its value taken from .env:
+    #   environment:
+    #     APP_ENV: ${APP_ENV}
+    # TODO 3 (22.3): give the app the secret (mounted as a file, not an env var):
+    #   secrets:
+    #     - db_password
+
+# TODO 2 (22.3): define the secret at project level, from a file:
+#   secrets:
+#     db_password:
+#       file: ./db_password.txt

@@ -1,0 +1,15 @@
+# cap22 solution - configuration with env vars and secrets. app gets an environment
+# variable whose value comes from .env (kept out of the repo); a sensitive value is
+# given as a secret, defined from a file and mounted into the container at
+# /run/secrets/db_password - a restricted file, not an environment variable.
+services:
+  app:
+    image: busybox
+    command: ["sh", "-c", "sleep 3600"]
+    environment:
+      APP_ENV: ${APP_ENV}
+    secrets:
+      - db_password
+secrets:
+  db_password:
+    file: ./db_password.txt
