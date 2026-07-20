@@ -48,5 +48,6 @@ so they run without Docker and without root.
 | 23 | King only in his own room — rootless and the privilege model: root in a user namespace maps to an unprivileged host user | Cloud Architect | [ed1/cap23](ed1/cap23/) |
 | 24 | The right keys, not all of them — capabilities as least privilege; seccomp and AppArmor/SELinux as further layers | Cloud Architect | [ed1/cap24](ed1/cap24/) |
 | 25 | The logbook and the gauges — logging and observability: docker logs captures stdout/stderr, the json-file driver, docker stats | Advanced | [ed1/cap25](ed1/cap25/) |
+| 26 | The black box of the mute container — troubleshooting silent containers and crash loops: exit code and restart count via inspect | Cloud Architect | [ed1/cap26](ed1/cap26/) |
 
 More chapters are added as the volume is consolidated.
