@@ -1,0 +1,12 @@
+# cap20 solution - a two-service application in one file. Compose creates an app
+# network for the project and puts both services on it, so web reaches db by name;
+# depends_on makes db start before web. One file, one command (up/down).
+services:
+  db:
+    image: busybox
+    command: sleep 3600
+  web:
+    image: busybox
+    command: sleep 3600
+    depends_on:
+      - db
