@@ -1,0 +1,25 @@
+# cap21 start - readiness-aware dependencies, to complete. Fill TODO 1..3. As
+# written db has no healthcheck and web only waits for db to have started, so the
+# readiness gate does not bite and the test fails.
+services:
+  db:
+    image: busybox
+    # TODO 2 (21.1): make db signal readiness only after a delay:
+    #   command: ["sh", "-c", "sleep 4; touch /tmp/ready; sleep 3600"]
+    command: ["sh", "-c", "sleep 3600"]
+    # TODO 1 (21.2): add a healthcheck so Compose knows when db is truly ready:
+    #   healthcheck:
+    #     test: ["CMD-SHELL", "test -f /tmp/ready"]
+    #     interval: 1s
+    #     timeout: 2s
+    #     retries: 10
+    #     start_period: 1s
+  web:
+    image: busybox
+    command: ["sh", "-c", "sleep 3600"]
+    # TODO 3 (21.3): make web wait for db to be HEALTHY, not just started:
+    #   depends_on:
+    #     db:
+    #       condition: service_healthy
+    depends_on:
+      - db
