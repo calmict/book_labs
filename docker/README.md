@@ -37,5 +37,10 @@ so they run without Docker and without root.
 | 12 | The ship in production — small, secure, non-root images: a dedicated USER, ownership, least privilege | Advanced | [ed1/cap12](ed1/cap12/) |
 | 13 | What stays ashore — the lifecycle of data: the container's writable layer is ephemeral, a named volume persists | Fundamental | [ed1/cap13](ed1/cap13/) |
 | 14 | Three ways to stow — bind mounts, volumes and tmpfs: host-shared vs daemon-managed vs in-memory | Intermediate | [ed1/cap14](ed1/cap14/) |
+| 15 | The number on the badge — UID/GID permissions on shared volumes: match the numeric UID or the write is denied | Advanced | [ed1/cap15](ed1/cap15/) |
+| 16 | The cable and the switchboard — how Docker networks a container: network namespace, veth pair, the docker0 bridge | Advanced | [ed1/cap16](ed1/cap16/) |
+| 17 | The private switchboard — default vs custom bridge: a user-defined network resolves containers by name and isolates them | Advanced | [ed1/cap17](ed1/cap17/) |
+| 18 | Plugged in or unplugged — the host and none drivers, and choosing: host shares the host stack, none has no network | Advanced | [ed1/cap18](ed1/cap18/) |
+| 19 | On the quay, and beyond the horizon — macvlan (own MAC on the segment), ipvlan and the overlay horizon | Cloud Architect | [ed1/cap19](ed1/cap19/) |
 
 More chapters are added as the volume is consolidated.
