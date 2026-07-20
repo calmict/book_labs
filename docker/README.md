@@ -45,5 +45,6 @@ so they run without Docker and without root.
 | 20 | The fleet in one file — designing a multi-service app with Docker Compose: services, depends_on, the app network | Intermediate | [ed1/cap20](ed1/cap20/) |
 | 21 | The all-clear signal — dependencies, healthchecks and startup order: wait for healthy, not just started | Advanced | [ed1/cap21](ed1/cap21/) |
 | 22 | The safe, not the sticky note — configuration with env vars, .env and secrets: mount secrets as files, not env | Advanced | [ed1/cap22](ed1/cap22/) |
+| 23 | King only in his own room — rootless and the privilege model: root in a user namespace maps to an unprivileged host user | Cloud Architect | [ed1/cap23](ed1/cap23/) |
 
 More chapters are added as the volume is consolidated.
