@@ -1,6 +1,6 @@
 # Chapter 13 — What stays ashore
 
-**Level:** Fundamental
+**Level:** Foundational
 
 A container is a ship: it sets sail, makes its voyage, and sooner or later is
 scrapped. Everything you write in its hold — the writable layer you met in chapter
