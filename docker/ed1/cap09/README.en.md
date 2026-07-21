@@ -1,6 +1,6 @@
 # Chapter 9 — The loading plan
 
-**Level:** Fundamental
+**Level:** Foundational
 
 In chapter 8 you took an image apart into its layers; now you build one yourself,
 with intent. The Dockerfile is the ship's loading plan: an ordered list of
