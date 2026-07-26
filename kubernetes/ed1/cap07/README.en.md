@@ -15,7 +15,7 @@ By the end of this lab you will be able to:
 
 ## Prerequisites
 
-- Phase 1 completed (chapters 1-6): from here on, containers are a given.
+- Part 1 completed (chapters 1-6): from here on, containers are a given.
 - A local cluster: follow [SETUP.md](../../SETUP.md) (kind recommended; minikube or k3d work too).
 - kubectl configured (kubectl get nodes must answer).
 
@@ -32,7 +32,7 @@ By the end of this lab you will be able to:
 
    Identify and note down: kube-apiserver (the switchboard), etcd (the memory), kube-scheduler (who decides where), kube-controller-manager (who chases the desired state), plus kube-proxy and the CNI. Curious detail: the kubelet is NOT in the list — it runs as a process on the node, outside the cluster it watches over (with kind: docker exec book-labs-control-plane pgrep -l kubelet — chapter 5 comes in handy).
 
-3. Declare a desired state: two replicas of a sleeping process (your old friends from Phase 1):
+3. Declare a desired state: two replicas of a sleeping process (your old friends from Part 1):
 
        kubectl create deployment lab-cap07 --replicas=2 --image=alpine:3 -- sleep infinity
        kubectl get pods -o wide

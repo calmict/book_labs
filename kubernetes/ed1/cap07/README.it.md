@@ -15,7 +15,7 @@ Al termine di questo laboratorio saprai:
 
 ## Prerequisiti
 
-- Aver completato la Fase 1 (cap. 1-6): da qui in poi i container li dai per capiti.
+- Aver completato la Parte 1 (cap. 1-6): da qui in poi i container li dai per capiti.
 - Un cluster locale: segui [SETUP.md](../../SETUP.md) (kind consigliato; va bene anche minikube o k3d).
 - kubectl configurato (kubectl get nodes deve rispondere).
 
@@ -32,7 +32,7 @@ Al termine di questo laboratorio saprai:
 
    Individua e annota: kube-apiserver (il centralino), etcd (la memoria), kube-scheduler (chi decide dove), kube-controller-manager (chi insegue lo stato desiderato), più kube-proxy e il CNI. Nota curiosa: il kubelet NON è nell'elenco — gira come processo sul nodo, fuori dal cluster che sorveglia (con kind: docker exec book-labs-control-plane pgrep -l kubelet — il cap. 5 ti torna utile).
 
-3. Dichiara uno stato desiderato: due repliche di un processo dormiente (i vecchi amici della Fase 1):
+3. Dichiara uno stato desiderato: due repliche di un processo dormiente (i vecchi amici della Parte 1):
 
        kubectl create deployment lab-cap07 --replicas=2 --image=alpine:3 -- sleep infinity
        kubectl get pods -o wide
