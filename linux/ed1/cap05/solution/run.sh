@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT_DIR=${1:-$PWD}
+OUTPUT_DIR=${1:-$HOME}
 WORK_DIR=$(mktemp -d /tmp/labcap05.XXXXXX)
 PARTIAL_BACKUP=
+
+if command -v git >/dev/null 2>&1 && \
+   git -C "$OUTPUT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Refusing to write the backup into a git working tree: $OUTPUT_DIR" >&2
+  echo "This archive holds your real boot configuration. Pass a plain directory," >&2
+  echo "for example: solution/run.sh \$HOME/boot-backups" >&2
+  exit 1
+fi
 
 cleanup() {
   status=$?
