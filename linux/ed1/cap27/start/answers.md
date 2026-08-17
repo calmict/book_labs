@@ -15,7 +15,7 @@
 
 ## Conntrack pressure
 
-- Configured limit and observed count:
-- insert_failed before and after:
-- Unique flows sent and received:
-- Symptom and explanation:
+- nf_conntrack_max written inside labcap27, then read back inside labcap27 and from the initial namespace:
+- Unique flows sent and unique sources received:
+- Did the declared limit change anything? Evidence:
+- Why nf_conntrack_max behaves differently from net.ipv4.ip_forward (chapter 26):

@@ -12,7 +12,7 @@ Al termine di questo laboratorio saprai:
 - leggere la distribuzione per CPU delle interruzioni associate alla rete;
 - provocare e riconoscere lo scarto dovuto al buffer di ricezione di una singola socket UDP;
 - distinguere lo scarto della socket da quello registrato sull'interfaccia;
-- riempire una tabella conntrack isolata e riconoscere contatore e sintomo applicativo.
+- verificare se net.netfilter.nf_conntrack_max è davvero isolato per namespace, e riconoscere il sintomo quando non lo è.
 
 ## Prerequisiti
 
@@ -43,7 +43,7 @@ Al termine di questo laboratorio saprai:
 
    RcvbufErrors e il contatore della socket identificano una coda di ricezione piena. RX dropped dell'interfaccia descrive invece uno scarto a un altro livello del sistema.
 
-4. Attiva il tracciamento con una tabella nft innocua e una chain output con policy accept, porta nf_conntrack_max a 128 soltanto nel namespace e genera più flussi UDP distinti del limite. Confronta nf_conntrack_count, conntrack -C e conntrack -S prima e dopo. Il contatore insert_failed crescente e un numero di datagrammi ricevuti inferiore a quelli inviati sono il sintomo della tabella piena.
+4. Attiva il tracciamento con una tabella nft innocua e una chain output con policy accept. Prova a portare nf_conntrack_max a 128 scrivendolo dentro labcap27, poi rileggi lo stesso valore sia da dentro il namespace sia dal namespace iniziale, prima di generare più flussi UDP distinti di quanti il presunto limite ne permetterebbe. A differenza di net.ipv4.ip_forward nel capitolo 26, net.netfilter.nf_conntrack_max compare in ogni namespace ma resta un'unica variabile del kernel: la scrittura dentro labcap27 non produce errore, ma non cambia nulla, e i 512 flussi vengono tracciati tutti senza perdita.
 
 5. Esegui la soluzione automatica come root. Lo script rifiuta un namespace preesistente e lo elimina sempre alla fine:
 
@@ -53,6 +53,7 @@ Al termine di questo laboratorio saprai:
 
 - [ ] Hai riportato i contatori per CPU di almeno una sorgente di interruzioni di rete, oppure hai documentato che l'ambiente non ne espone.
 - [ ] Hai fatto crescere Udp RcvbufErrors e i drop della socket senza attribuirli erroneamente a RX dropped dell'interfaccia.
-- [ ] Hai osservato nf_conntrack_count vicino al limite e insert_failed maggiore del valore iniziale.
-- [ ] Hai collegato la pressione conntrack a una perdita osservabile dal ricevitore.
+- [ ] Hai riletto nf_conntrack_max sia dentro labcap27 sia dal namespace iniziale dopo averlo scritto a 128 nel namespace, e hai verificato che il valore non è cambiato.
+- [ ] Hai verificato che tutti i flussi UDP inviati risultano tracciati e ricevuti, coerente con l'assenza di un tetto realmente applicato.
+- [ ] Hai annotato perché nf_conntrack_max non è isolato per-namespace su questo kernel, a differenza di net.ipv4.ip_forward.
 - [ ] labcap27, la sua tabella nft e ogni processo di prova sono stati rimossi.

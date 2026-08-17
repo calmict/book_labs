@@ -99,17 +99,25 @@ if (( rcvbuf_after <= rcvbuf_before )); then
     exit 1
 fi
 
-printf 'STEP 3 isolated conntrack table pressure\n'
+printf 'STEP 3 nf_conntrack_max and the namespace illusion\n'
 ip netns exec "$namespace" nft add table inet labcap27
 ip netns exec "$namespace" nft \
     'add chain inet labcap27 output { type filter hook output priority filter; policy accept; }'
 ip netns exec "$namespace" nft add rule inet labcap27 output ct state new accept
+
+host_max_before=$(cat /proc/sys/net/netfilter/nf_conntrack_max)
 ip netns exec "$namespace" sysctl -w net.netfilter.nf_conntrack_max=128
+netns_max_after=$(ip netns exec "$namespace" cat /proc/sys/net/netfilter/nf_conntrack_max)
+host_max_after=$(cat /proc/sys/net/netfilter/nf_conntrack_max)
+printf 'HOST nf_conntrack_max before the namespace write: %s\n' "$host_max_before"
+printf 'NETNS nf_conntrack_max read back inside labcap27: %s\n' "$netns_max_after"
+printf 'HOST nf_conntrack_max read back from the initial namespace: %s\n' "$host_max_after"
+if (( netns_max_after != host_max_before )) || (( host_max_after != host_max_before )); then
+    printf 'ERROR nf_conntrack_max changed on this kernel; the namespace-illusion premise no longer holds here\n' >&2
+    exit 1
+fi
+
 count_before=$(ip netns exec "$namespace" conntrack -C)
-failed_before=$(ip netns exec "$namespace" conntrack -S | awk '
-    { for (i = 1; i <= NF; i++) if ($i ~ /^insert_failed=/) { split($i, value, "="); sum += value[2] } }
-    END { print sum + 0 }
-')
 ready_file="$work_dir/conntrack-ready"
 ip netns exec "$namespace" python3 "$start_dir/conntrack_pressure.py" \
     server 27271 "$ready_file" > "$work_dir/conntrack-server.log" &
@@ -122,21 +130,18 @@ done
 ip netns exec "$namespace" python3 "$start_dir/conntrack_pressure.py" \
     clients 27271 512 > "$work_dir/conntrack-clients.log" &
 client_pid=$!
-sleep 0.5
-count_after=$(ip netns exec "$namespace" conntrack -C)
-failed_after=$(ip netns exec "$namespace" conntrack -S | awk '
-    { for (i = 1; i <= NF; i++) if ($i ~ /^insert_failed=/) { split($i, value, "="); sum += value[2] } }
-    END { print sum + 0 }
-')
 wait "$client_pid"
 client_pid=
+count_after=$(ip netns exec "$namespace" conntrack -C)
 wait "$server_pid"
 server_pid=
 cat "$work_dir/conntrack-clients.log"
 cat "$work_dir/conntrack-server.log"
-printf 'CONNTRACK_COUNT=%s->%s limit=128\n' "$count_before" "$count_after"
-printf 'CONNTRACK_INSERT_FAILED=%s->%s\n' "$failed_before" "$failed_after"
-if (( failed_after <= failed_before )); then
-    printf 'ERROR conntrack insert_failed did not increase\n' >&2
+flows_sent=$(awk -F= '/^UNIQUE_FLOWS_SENT=/{print $2}' "$work_dir/conntrack-clients.log")
+sources_received=$(awk -F= '/^UNIQUE_SOURCES_RECEIVED=/{print $2}' "$work_dir/conntrack-server.log")
+printf 'CONNTRACK_COUNT=%s->%s (the 128 ceiling declared above was never actually applied)\n' "$count_before" "$count_after"
+printf 'UNIQUE_FLOWS_SENT=%s UNIQUE_SOURCES_RECEIVED=%s\n' "$flows_sent" "$sources_received"
+if (( sources_received != flows_sent )); then
+    printf 'ERROR expected zero drops since the namespace write never took effect; sources_received differs from flows_sent\n' >&2
     exit 1
 fi

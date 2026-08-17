@@ -12,7 +12,7 @@ By the end of this lab you will be able to:
 - read the per-CPU distribution of network-related interrupts;
 - trigger and identify drops caused by a full UDP receive buffer;
 - distinguish socket drops from drops recorded on an interface;
-- fill an isolated conntrack table and recognize its counter and application-level symptom.
+- test whether net.netfilter.nf_conntrack_max is really namespace-isolated, and recognize the symptom when it is not.
 
 ## Prerequisites
 
@@ -43,7 +43,7 @@ By the end of this lab you will be able to:
 
    RcvbufErrors and the socket counter identify a full receive queue. Interface RX dropped describes a drop at a different layer of the system.
 
-4. Enable tracking with a harmless nft table and an output chain whose policy is accept, set nf_conntrack_max to 128 only inside the namespace, and generate more distinct UDP flows than the limit. Compare nf_conntrack_count, conntrack -C, and conntrack -S before and after. A rising insert_failed counter and fewer received datagrams than sent datagrams are the full-table symptom.
+4. Enable tracking with a harmless nft table and an output chain whose policy is accept. Try setting nf_conntrack_max to 128 by writing it inside labcap27, then read the same value back both from inside the namespace and from the initial namespace, before generating more distinct UDP flows than the claimed limit would allow. Unlike net.ipv4.ip_forward in chapter 26, net.netfilter.nf_conntrack_max appears under every namespace but stays a single kernel-wide variable: the write inside labcap27 produces no error, yet changes nothing, and all 512 flows get tracked with no loss.
 
 5. Run the automated solution as root. The script refuses to reuse an existing namespace and always deletes its own namespace at the end:
 
@@ -53,6 +53,7 @@ By the end of this lab you will be able to:
 
 - [ ] You recorded per-CPU counters for at least one network interrupt source, or documented that the environment exposes none.
 - [ ] You increased Udp RcvbufErrors and socket drops without incorrectly attributing them to interface RX dropped.
-- [ ] You observed nf_conntrack_count near its limit and insert_failed above its initial value.
-- [ ] You connected conntrack pressure to loss visible at the receiver.
+- [ ] You read nf_conntrack_max back from inside labcap27 and from the initial namespace after writing 128 inside the namespace, and confirmed the value did not change.
+- [ ] You confirmed that every UDP flow sent was tracked and received, consistent with no ceiling actually being applied.
+- [ ] You recorded why nf_conntrack_max is not namespace-isolated on this kernel, unlike net.ipv4.ip_forward.
 - [ ] labcap27, its nft table, and all test processes have been removed.
