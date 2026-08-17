@@ -13,7 +13,7 @@ Al termine di questo laboratorio saprai:
 - riconoscere uno zombie e collegarlo alla mancata wait del processo padre;
 - distinguere il sonno interrompibile S dal sonno non interrompibile D;
 - verificare sperimentalmente l'effetto di SIGKILL su un processo bloccato su una FIFO;
-- (passo opzionale, richiede sudo) produrre un vero stato D con un device-mapper `delay` e vedere perché una FIFO non può farlo.
+- (passo opzionale, richiede sudo) produrre un vero stato D con un device-mapper delay e vedere perché una FIFO non può farlo.
 
 ## Prerequisiti
 
@@ -48,19 +48,19 @@ Al termine di questo laboratorio saprai:
 
    Una FIFO non produce quindi lo stato D richiesto dalla formulazione originale del laboratorio e non può dimostrare che SIGKILL resti pendente su un'attesa non interrompibile. Un vero D dipende da un percorso del kernel che usa TASK_UNINTERRUPTIBLE, tipicamente durante particolari attese I/O. Provocarlo richiederebbe un meccanismo diverso e un isolamento aggiuntivo — il passo 6 lo fa davvero, senza sostituire questa misura con un'etichetta falsa.
 
-6. Passo opzionale, richiede sudo: produci un vero stato D con il target device-mapper `delay`. Lo script crea un file di backing di 32 MB, lo collega a un loop device, e vi mappa sopra un device `delay` che ritarda ogni I/O di 5 secondi:
+6. Passo opzionale, richiede sudo: produci un vero stato D con il target device-mapper delay. Lo script crea un file di backing di 32 MB, lo collega a un loop device, e vi mappa sopra un device delay che ritarda ogni I/O di 5 secondi:
 
       sudo dmsetup create labcap09-delay --noudevsync --table "0 65536 delay /dev/loopN 0 5000"
 
-   `--noudevsync` evita che il comando resti in attesa (potenzialmente per sempre, su alcune macchine) di una conferma da udev che il kernel non deve a nessuno per aver già creato il device — una trappola reale, non teorica, incontrata costruendo questo laboratorio. Una lettura con `dd ... iflag=direct` sul device risultante mostra `ps` con STAT `D` e `/proc/PID/status` con `State: D (disk sleep)` per tutta la durata del ritardo: `iflag=direct` è necessario perché una lettura bufferizzata può essere già servita dalla cache e tornare istantanea senza mai attraversare il ritardo.
+   --noudevsync evita che il comando resti in attesa (potenzialmente per sempre, su alcune macchine) di una conferma da udev che il kernel non deve a nessuno per aver già creato il device — una trappola reale, non teorica, incontrata costruendo questo laboratorio. Una lettura con dd ... iflag=direct sul device risultante mostra ps con STAT D e /proc/PID/status con State: D (disk sleep) per tutta la durata del ritardo: iflag=direct è necessario perché una lettura bufferizzata può essere già servita dalla cache e tornare istantanea senza mai attraversare il ritardo.
 
-   Una seconda trappola, anch'essa reale: le regole udev di sistema lanciano `blkid` su ogni nuovo device-mapper e vi impostano sopra un watch — contro un device `delay` anche solo la sonda di `blkid` costa il ritardo pieno, e `dmsetup remove` rifiuta un device ancora aperto, risultando in un `Device or resource busy` che nessun riprovare risolve da solo. Lo script installa una regola udev temporanea e volatile (in `/run/udev/rules.d/`, non sopravvive a un riavvio), specifica per il solo nome `labcap09-delay`, che dice a udev di ignorare completamente questo device; la rimuove sempre al termine, insieme al device e al loop device, anche in caso di errore.
+   Una seconda trappola, anch'essa reale: le regole udev di sistema lanciano blkid su ogni nuovo device-mapper e vi impostano sopra un watch — contro un device delay anche solo la sonda di blkid costa il ritardo pieno, e dmsetup remove rifiuta un device ancora aperto, risultando in un Device or resource busy che nessun riprovare risolve da solo. Lo script installa una regola udev temporanea e volatile (in /run/udev/rules.d/, non sopravvive a un riavvio), specifica per il solo nome labcap09-delay, che dice a udev di ignorare completamente questo device; la rimuove sempre al termine, insieme al device e al loop device, anche in caso di errore.
 
 7. Esegui la soluzione completa e conserva l'output:
 
       solution/run.sh
 
-   Il trap finale termina soltanto i PID registrati dal laboratorio, rimuove il device-mapper e il loop device se creati, e cancella la directory temporanea. Per includere anche il passo 6: `sudo solution/run.sh`.
+   Il trap finale termina soltanto i PID registrati dal laboratorio, rimuove il device-mapper e il loop device se creati, e cancella la directory temporanea. Per includere anche il passo 6: sudo solution/run.sh.
 
 ## Criteri di "fatto"
 
@@ -70,7 +70,7 @@ Al termine di questo laboratorio saprai:
 - [ ] Hai osservato che il blocco sulla FIFO è S, non D.
 - [ ] Hai verificato che SIGKILL termina il processo bloccato sulla FIFO con stato di attesa 137.
 - [ ] Hai annotato perché la FIFO non può dimostrare lo stato D, senza dichiararla verificata comunque.
-- [ ] (se hai eseguito il passo 6) Hai osservato STAT `D` e `State: D (disk sleep)` durante l'attesa sul device dm-delay, e il contatore non nullo di `dmsetup status` mentre l'I/O era in sospeso.
+- [ ] (se hai eseguito il passo 6) Hai osservato STAT D e State: D (disk sleep) durante l'attesa sul device dm-delay, e il contatore non nullo di dmsetup status mentre l'I/O era in sospeso.
 - [ ] Nessun processo, device-mapper, loop device o file temporaneo labcap09 rimane al termine.
 
 ## Sicurezza
