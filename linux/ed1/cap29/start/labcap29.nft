@@ -1,0 +1,35 @@
+table inet labcap29filter {
+    counter labcap29_input_seen {
+        packets 0 bytes 0
+    }
+
+    counter labcap29_forward_web {
+        packets 0 bytes 0
+    }
+
+    chain input {
+        type filter hook input priority filter; policy drop;
+        iifname "lo" accept
+        ct state established,related accept
+        iifname "labcap29in" ip daddr 10.29.2.2 tcp dport 8080 counter name labcap29_input_seen
+    }
+
+    chain forward {
+        type filter hook forward priority filter; policy drop;
+        ct state established,related accept
+        iifname "labcap29in" oifname "labcap29out" tcp dport 8080 counter name labcap29_forward_web accept
+    }
+
+    chain output {
+        type filter hook output priority filter; policy drop;
+        oifname "lo" accept
+        ct state established,related accept
+    }
+}
+
+table ip labcap29nat {
+    chain prerouting {
+        type nat hook prerouting priority dstnat; policy accept;
+        iifname "labcap29in" ip daddr 10.29.1.1 tcp dport 18080 counter dnat to 10.29.2.2:8080
+    }
+}
