@@ -16,7 +16,7 @@ def receive(port: int) -> int:
         try:
             sock.recvfrom(2048)
             received += 1
-        except TimeoutError:
+        except socket.timeout:
             break
     print(f"RECEIVED={received}", flush=True)
     return 0

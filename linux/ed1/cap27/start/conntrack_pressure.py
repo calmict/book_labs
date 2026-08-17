@@ -15,7 +15,7 @@ def server(port: int, ready_file: str) -> int:
         try:
             _, address = sock.recvfrom(64)
             sources.add(address)
-        except TimeoutError:
+        except socket.timeout:
             break
     print(f"UNIQUE_SOURCES_RECEIVED={len(sources)}", flush=True)
     return 0
