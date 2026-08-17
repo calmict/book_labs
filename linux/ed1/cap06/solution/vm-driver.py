@@ -127,9 +127,14 @@ def edit_linux_line(child, extra, editor_text):
     if linux_command is not None:
         words = linux_command.split()
         if "quiet" in words:
+            # This editor's help text documents Tab, Ctrl-x/F10, Ctrl-c/F2
+            # and ESC only: Ctrl-K is not kill-line here. The cursor is
+            # already at end-of-line from the Ctrl-E above, so erase
+            # exactly the known length of the existing command with
+            # backspaces before typing the replacement, instead of relying
+            # on a kill command that silently does nothing.
             replacement = " ".join(word for word in words if word != "quiet")
-            child.send("\x01")
-            child.send("\x0b")
+            child.send("\x7f" * len(linux_command))
             child.send(replacement)
 
     child.send(" console=ttyS0,115200n8 " + extra)
