@@ -1,0 +1,14 @@
+[Unit]
+Description=Write observable timestamps for labcap08
+Wants=labcap08-ready.service
+After=labcap08-ready.service
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/test -f %t/labcap08/ready-at
+ExecStart=/bin/sh -c 'date --iso-8601=seconds >> %t/labcap08/timestamps.log; if test ! -e %t/labcap08/failed-once; then : > %t/labcap08/failed-once; exit 1; fi; exec sleep 300'
+Restart=on-failure
+RestartSec=1s
+
+[Install]
+WantedBy=default.target

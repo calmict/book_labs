@@ -1,0 +1,7 @@
+[Unit]
+Description=Prepare the labcap08 user-service workspace
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'mkdir -p %t/labcap08 && date --iso-8601=seconds > %t/labcap08/ready-at'
+RemainAfterExit=yes
