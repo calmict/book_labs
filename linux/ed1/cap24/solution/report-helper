@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+printf 'report generated at %s\n' "$(date -u +%FT%TZ)"
