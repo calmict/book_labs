@@ -21,7 +21,7 @@ alongside the book.
 ## Repository layout
 
     book_labs/
-    ├── kubernetes/            # exercises for the Kubernetes manual
+    ├── linux/                 # exercises for the Linux manual (foundational volume)
     │   ├── README.md          # chapter index + recommended setup
     │   ├── SETUP.md           # reproducible environment guide (non-binding)
     │   └── ed1/               # 1st edition — frozen once the manual is published
@@ -30,8 +30,15 @@ alongside the book.
     │           ├── README.en.md   # brief (English)
     │           ├── start/         # starting files — shared, language-neutral
     │           └── solution/      # tested solution — shared, language-neutral
+    ├── docker/                # exercises for the Docker manual
+    ├── kubernetes/            # exercises for the Kubernetes manual
     ├── ansible/               # exercises for the Ansible manual
     └── terraform-opentofu/    # exercises for the Terraform/OpenTofu manual
+
+Every manual folder has the same three entries: README.md with the chapter
+index, SETUP.md with the environment, and edN/ with the exercises. The reading
+order of the series is Linux → Docker → Kubernetes → Ansible → Terraform &
+OpenTofu; each volume also stands on its own.
 
 **Languages.** Folder names and code/manifests are in English and shared across
 languages (a deployment.yaml file is the same in any language). Only the
@@ -48,7 +55,7 @@ Pull only the manual and edition you need (sparse checkout):
 
     git clone --filter=blob:none --sparse https://github.com/calmict/book_labs.git
     cd book_labs
-    git sparse-checkout set kubernetes/ed1
+    git sparse-checkout set linux/ed1
 
 To update later, run git pull.
 

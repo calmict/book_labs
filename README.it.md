@@ -22,7 +22,7 @@ parallelo al libro.
 ## Struttura del repository
 
     book_labs/
-    ├── kubernetes/            # esercizi del manuale Kubernetes
+    ├── linux/                 # esercizi del manuale Linux (volume fondativo)
     │   ├── README.md          # indice dei capitoli + setup consigliato
     │   ├── SETUP.md           # guida ambiente riproducibile (non vincolante)
     │   └── ed1/               # 1ª edizione — congelata alla pubblicazione del manuale
@@ -31,8 +31,15 @@ parallelo al libro.
     │           ├── README.en.md   # consegna (inglese)
     │           ├── start/         # file di partenza — condivisi, neutri rispetto alla lingua
     │           └── solution/      # soluzione testata — condivisa, neutra rispetto alla lingua
+    ├── docker/                # esercizi del manuale Docker
+    ├── kubernetes/            # esercizi del manuale Kubernetes
     ├── ansible/               # esercizi del manuale Ansible
     └── terraform-opentofu/    # esercizi del manuale Terraform/OpenTofu
+
+Ogni cartella di manuale ha le stesse tre voci: README.md con l'indice dei
+capitoli, SETUP.md con l'ambiente ed edN/ con gli esercizi. L'ordine di lettura
+della collana è Linux → Docker → Kubernetes → Ansible → Terraform & OpenTofu;
+ogni volume resta comunque leggibile da solo.
 
 **Lingue.** I nomi delle cartelle e il codice/manifest sono in inglese e
 condivisi tra le lingue (un file deployment.yaml è identico in qualsiasi
@@ -51,7 +58,7 @@ Scarica solo il manuale e l'edizione che ti servono (sparse checkout):
 
     git clone --filter=blob:none --sparse https://github.com/calmict/book_labs.git
     cd book_labs
-    git sparse-checkout set kubernetes/ed1
+    git sparse-checkout set linux/ed1
 
 Per aggiornare in seguito basta un git pull.
 
