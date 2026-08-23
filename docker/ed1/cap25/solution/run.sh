@@ -20,6 +20,10 @@ stdout_seen=$(val "$WORK/obs.txt" stdout_seen)
 stderr_seen=$(val "$WORK/obs.txt" stderr_seen)
 driver=$(val "$WORK/obs.txt" driver)
 mem=$(val "$WORK/obs.txt" mem)
+unrotated_bytes=$(val "$WORK/obs.txt" unrotated_bytes)
+rotated_bytes=$(val "$WORK/obs.txt" rotated_bytes)
+stats_limit=$(val "$WORK/obs.txt" stats_limit)
+configured_limit=$(val "$WORK/obs.txt" configured_limit)
 
 # 1. docker logs captured both stdout and stderr
 if [ "$stdout_seen" -lt 1 ] || [ "$stderr_seen" -lt 1 ]; then
@@ -39,6 +43,19 @@ case "$mem" in
   *) echo "UNEXPECTED: docker stats returned no memory metric (mem='$mem')" >&2; exit 1 ;;
 esac
 echo "OK 3 - docker stats reports live memory usage ($mem)"
+
+# 4. direct file-size comparison: rotation bounds the chatty workload.
+if [ "$unrotated_bytes" -le 50000 ] || [ "$rotated_bytes" -ge 50000 ] || [ "$unrotated_bytes" -le "$rotated_bytes" ]; then
+  echo "UNEXPECTED: log sizes unrotated=$unrotated_bytes rotated=$rotated_bytes" >&2; exit 1
+fi
+echo "OK 4 - log rotation bounds files: unrotated=${unrotated_bytes}B, rotated=${rotated_bytes}B"
+
+# 5. stats LIMIT corresponds to the configured 64 MiB (binary or decimal display).
+if [ "$configured_limit" != 67108864 ]; then
+  echo "UNEXPECTED: configured memory limit is $configured_limit bytes" >&2; exit 1
+fi
+case "$stats_limit" in 64MiB|67.11MB|67.1MB) ;; *) echo "UNEXPECTED: stats LIMIT is '$stats_limit', expected 64MiB" >&2; exit 1;; esac
+echo "OK 5 - docker stats LIMIT $stats_limit matches --memory=64MiB ($configured_limit bytes)"
 
 echo
 echo "ALL CHECKS PASSED"

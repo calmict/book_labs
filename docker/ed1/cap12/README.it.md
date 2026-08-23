@@ -29,8 +29,8 @@ serve — e verifichi, permesso alla mano, che non può scrivere dove non deve.
 ## Lo scenario
 
 In start/ trovi un Dockerfile incompleto e app.txt. Il Dockerfile costruisce
-un'immagine che funziona, ma gira come root: non crea un utente, non assegna la
-proprietà e non abbassa i privilegi. Colmi tre lacune (TODO 1..3) perché l'immagine
+un'immagine finale `scratch` con un'app statica, ma non abbassa i privilegi e non
+dichiara il controllo di salute. Colmi due lacune (TODO 1..2) perché l'immagine
 sia da produzione. Immagine usa-e-getta, nessun privilegio sull'host, il demone
 condiviso non si tocca.
 
@@ -51,33 +51,33 @@ privilegiato, e possiedi solo ciò che ti serve.
 Apri start/Dockerfile e completa il **TODO 1**: crea un utente non-root che farà
 girare l'app.
 
-    RUN adduser -D appuser
-
-### Fase 3 — Proprietà minima (12.3 — TODO 2)
-
-Completa il **TODO 2**: dai a quell'utente la proprietà della directory dell'app,
-così potrà scrivere lì e solo lì.
-
-    RUN chown -R appuser /app
-
-### Fase 4 — Abbassare i privilegi (12.2 — TODO 3)
-
-Completa il **TODO 3**: dichiara USER, così ogni container nato dall'immagine parte
-come utente non privilegiato — non a runtime, ma scritto nell'immagine.
-
     USER appuser
 
-Quando i tre TODO sono colmati, esegui il test:
+### Fase 3 — Proprietà minima (12.3)
+
+Il build stage crea `appuser`; `COPY --chown` assegna la directory dell'app a
+quell'utente, così potrà scrivere lì e solo lì.
+
+    COPY --from=build --chown=10001:10001 /app/app.txt /app/app.txt
+
+### Fase 4 — Immagine minimale e salute (12.4 — TODO 2)
+
+Il final stage `scratch` non contiene shell né gestore di pacchetti. Completa il
+**TODO 2** dichiarando il probe reale dell'app, che Docker porterà a `healthy`.
+
+    HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
+
+Quando i due TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
 
 ## Criteri di "fatto"
 
-- Il Dockerfile crea un utente non-root (TODO 1).
-- Assegna a quell'utente la proprietà della directory dell'app (TODO 2).
-- Dichiara USER per girare non-root (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Il Dockerfile dichiara USER per girare non-root (TODO 1).
+- Dichiara un HEALTHCHECK reale (TODO 2).
+- Il final stage non contiene shell né gestore di pacchetti.
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -88,6 +88,9 @@ solution/run.sh costruisce l'immagine e verifica, punto per punto:
   quindi vale per ogni container senza doverlo passare a runtime.
 - **OK 3** — privilegio minimo: l'utente può scrivere nella sua directory /app, ma
   è respinto quando prova a scrivere in /, di proprietà di root.
+- **OK 4** — il controllo dichiarato raggiunge lo stato `healthy`.
+- **OK 5** — nel final stage `scratch` non sono eseguibili shell né gestori di
+  pacchetti comuni.
 
 ## Domande di riflessione
 

@@ -32,7 +32,7 @@ diverse condividono gli stessi strati senza copiarli.
 In start/ trovi lanatomia.sh: uno script che costruisce una piccola immagine
 (busybox più due istruzioni che scrivono un file) e dovrebbe registrarne
 l'anatomia, ma le tre misure chiave non sono ancora prese. Colmi tre lacune
-(TODO 1..3) usando immagini usa-e-getta, senza mai toccare il demone condiviso.
+(TODO 1..4) usando immagini usa-e-getta, senza mai toccare il demone condiviso.
 
 Prepara l'ambiente:
 
@@ -79,17 +79,25 @@ duplicati.
     docker image inspect -f '{{range .RootFS.Layers}}{{println .}}{{end}}' "$TAG-child" | grep '^sha256' | sort > "$OUT/.c"
     shared=$(comm -12 "$OUT/.p" "$OUT/.c" | grep -c .)
 
-Quando i tre TODO sono colmati, esegui il test:
+Quando i quattro TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
+
+### Fase 5 — Tag mutabile, digest immutabile (8.3 — TODO 4)
+
+Costruisci due contenuti diversi assegnando a entrambi lo stesso tag. Conserva
+il primo image ID prima che il secondo build sposti il tag, quindi ispeziona
+direttamente quel digest: il tag cambia destinazione, il digest no.
 
 ## Criteri di "fatto"
 
 - lanatomia.sh registra numero di layer dell'immagine e della base (TODO 1).
 - Registra l'image ID e il digest del layer in cima (TODO 2).
 - Costruisce l'immagine figlia e conta i layer condivisi (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Dimostra che lo stesso tag può puntare a due digest diversi e che il primo
+  digest continua a risolvere lo stesso contenuto (TODO 4).
+- run.sh stampa OK 1..4 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -102,6 +110,8 @@ solution/run.sh costruisce le immagini e verifica, punto per punto:
 - **OK 3** — l'immagine figlia ha esattamente un layer in più della prima e ne
   riusa tutti gli strati (shared = layer della prima): gli strati sono condivisi,
   non copiati.
+- **OK 4** — il secondo build sposta il tag a un image ID diverso, mentre
+  l'ispezione diretta del primo digest restituisce ancora il primo image ID.
 
 ## Domande di riflessione
 

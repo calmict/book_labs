@@ -14,6 +14,13 @@
 
     CMD ["default"]
 
+**TODO 4 (10.1) — compare CMD forms:**
+
+`Dockerfile.shell` uses `CMD /signal.sh & wait` (so the shell remains PID 1);
+`Dockerfile.exec` uses
+`CMD ["/signal.sh"]`. The trapping application is identical, so the measured
+stop-time difference comes from signal delivery through PID 1.
+
 ## Reflection questions
 
 **a. How do ENTRYPOINT and CMD combine, and what happens with run arguments?**

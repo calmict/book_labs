@@ -31,7 +31,7 @@ copying them.
 
 In start/ you will find lanatomia.sh: a script that builds a small image (busybox
 plus two instructions that each write a file) and should record its anatomy, but
-the three key measurements are not taken yet. You fill three gaps (TODO 1..3)
+the key measurements are not taken yet. You fill four gaps (TODO 1..4)
 using throwaway images, never touching the shared daemon.
 
 Prepare the environment:
@@ -78,17 +78,25 @@ Content-addressing means shared layers are not duplicated.
     docker image inspect -f '{{range .RootFS.Layers}}{{println .}}{{end}}' "$TAG-child" | grep '^sha256' | sort > "$OUT/.c"
     shared=$(comm -12 "$OUT/.p" "$OUT/.c" | grep -c .)
 
-Once the three TODOs are filled, run the test:
+Once the four TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
+
+### Phase 5 — Mutable tag, immutable digest (8.3 — TODO 4)
+
+Build two different contents under the same tag. Preserve the first image ID
+before the second build moves the tag, then inspect that digest directly: the
+tag changes destination, while the digest does not.
 
 ## "Done" criteria
 
 - lanatomia.sh records the number of layers of the image and of the base (TODO 1).
 - It records the image ID and the digest of the top layer (TODO 2).
 - It builds the child image and counts the shared layers (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It proves that one tag can point to two different digests and that the first
+  digest still resolves the same content (TODO 4).
+- run.sh prints OK 1..4 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -101,6 +109,8 @@ solution/run.sh builds the images and checks, point by point:
 - **OK 3** — the child image has exactly one more layer than the first and reuses
   all of its layers (shared = the first image's layers): the layers are shared,
   not copied.
+- **OK 4** — the second build moves the tag to a different image ID, while a
+  direct inspection of the first digest still returns the first image ID.
 
 ## Reflection questions
 

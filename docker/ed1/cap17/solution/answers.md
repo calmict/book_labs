@@ -15,6 +15,12 @@
     b_ip=$(docker exec "$B" sh -c 'ip addr show eth0 | grep -w inet | grep -oE "[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+" | head -1')
     isolation=$(docker exec "$DA" sh -c "ping -c1 -w2 $b_ip >/dev/null 2>&1 && echo REACHED || echo BLOCKED")
 
+**TODO 4 (17.4) — compare published-address exposure:**
+
+Bind identical throwaway HTTP services to dynamic ports on `127.0.0.1` and
+`0.0.0.0`; probe them through loopback and the host's real IP. This observes the
+effective connectivity without privileged access to DNAT rules.
+
 ## Reflection questions
 
 **a. Why do names resolve on a custom network but not on the default bridge?**

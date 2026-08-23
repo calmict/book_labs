@@ -15,6 +15,12 @@
     COPY deps.txt ./deps.txt
     RUN cat deps.txt > /out/deps-installed.txt
 
+## Final-image size
+
+The completed image measures about 2.23 MB in this environment. The automated
+check uses a 3 MiB ceiling: enough headroom for small base-image metadata changes,
+while still catching the accidental inclusion of a materially heavier stage.
+
 ## Reflection questions
 
 **a. Why copy and install dependencies before the code?**

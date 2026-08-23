@@ -27,6 +27,12 @@ The complete compose.yaml:
         depends_on:
           - db
 
+**TODO 4/5 (20.5) — profiles and development override:**
+
+The `debug` service declares `profiles: [debug]`. The base web environment is
+`production`; `compose.override.yaml`, loaded automatically, changes it to
+`development` without modifying the base topology.
+
 ## Reflection questions
 
 **a. Why service names and never IPs, and what about two projects with a "db"?**

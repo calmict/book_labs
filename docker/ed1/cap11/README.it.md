@@ -80,7 +80,8 @@ Quando i tre TODO sono colmati, esegui il test:
 - Lo stage di build è nominato con AS (TODO 1).
 - Lo stage finale copia solo l'artefatto con COPY --from (TODO 2).
 - Le dipendenze sono copiate e «installate» prima della sorgente (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- L'immagine finale resta sotto la soglia calibrata di 3 MiB.
+- run.sh stampa OK 1..4 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -93,6 +94,8 @@ solution/run.sh costruisce l'immagine e verifica, punto per punto:
 - **OK 3** — cache strategica: modificando solo la sorgente e ricostruendo, il
   passo di installazione delle dipendenze resta CACHED, mentre la sorgente viene
   ricostruita.
+- **OK 4** — `docker image inspect` misura la dimensione finale e verifica che
+  sia inferiore a 3 MiB (l'immagine reale misura circa 2,23 MB).
 
 ## Domande di riflessione
 

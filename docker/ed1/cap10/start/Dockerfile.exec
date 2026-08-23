@@ -1,0 +1,4 @@
+FROM busybox
+COPY signal.sh /signal.sh
+RUN chmod +x /signal.sh
+# TODO 4 (10.1): add CMD in exec form: CMD ["/signal.sh"]

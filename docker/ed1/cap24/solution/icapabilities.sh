@@ -18,8 +18,16 @@ dropall=$(docker run --rm --cap-drop ALL busybox sh -c 'ping -c1 -w2 127.0.0.1 >
 # TODO 3 (24.2): all dropped, only NET_RAW granted back - ping works, least privilege.
 dropadd=$(docker run --rm --cap-drop ALL --cap-add NET_RAW busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
 
+# TODO 4 (24.3): mounting a tmpfs requires CAP_SYS_ADMIN. It fails with the
+# normal container boundary and succeeds only in the explicitly observed
+# --privileged throwaway container; the mount exists inside that container only.
+mount_default=$(docker run --rm busybox sh -c 'mkdir -p /mnt/probe; mount -t tmpfs tmpfs /mnt/probe >/dev/null 2>&1 && echo OK || echo FAIL')
+mount_privileged=$(docker run --rm --privileged busybox sh -c 'mkdir -p /mnt/probe; mount -t tmpfs tmpfs /mnt/probe >/dev/null 2>&1 && umount /mnt/probe && echo OK || echo FAIL')
+
 {
   echo "default=$default"
   echo "dropall=$dropall"
   echo "dropadd=$dropadd"
+  echo "mount_default=$mount_default"
+  echo "mount_privileged=$mount_privileged"
 } > "$OUT/caps.txt"

@@ -33,7 +33,7 @@ process is PID 1 or ends up wrapped in a shell.
 In start/ you will find an incomplete Dockerfile and entry.sh, a script that prints
 its own PID and the arguments it received. The Dockerfile starts from busybox but
 does not load the script, does not name the captain and gives no default orders.
-You fill three gaps (TODO 1..3). Throwaway image, no privileges, the shared daemon
+You fill four gaps (TODO 1..4). Throwaway images, no privileges, the shared daemon
 is not touched.
 
 Prepare the environment:
@@ -70,17 +70,24 @@ run can override.
 
     CMD ["default"]
 
-Once the three TODOs are filled, run the test:
+Once the four TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
+
+### Phase 5 — Measuring SIGTERM (10.1 — TODO 4)
+
+Complete `Dockerfile.shell` and `Dockerfile.exec` with two CMD instructions that
+differ only in form. The test stops both with a two-second timeout: the shell
+does not forward SIGTERM and consumes it, while the exec-form app exits at once.
 
 ## "Done" criteria
 
 - The Dockerfile copies entry.sh into the image (TODO 1).
 - It declares ENTRYPOINT in exec form (TODO 2).
 - It gives default arguments with CMD (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It compares shell-form and exec-form CMD stop times (TODO 4).
+- run.sh prints OK 1..4 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -92,6 +99,8 @@ solution/run.sh builds the image and checks, point by point:
   "foo bar", args = foo bar and the captain is still entry.sh.
 - **OK 3** — exec form: the script is PID 1 (self_pid = 1), so it receives signals
   first-hand (chapter 7), with no shell wrapping it.
+- **OK 4** — with `docker stop -t 2`, shell form consumes approximately the
+  timeout while exec form delivers SIGTERM to the app and stops almost at once.
 
 ## Reflection questions
 

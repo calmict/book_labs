@@ -14,6 +14,12 @@
 
     owner_uid=$(stat -c '%u' "$HOSTDIR/ok" 2>/dev/null || echo NONE)
 
+**TODO 4 (15.3) — fix ownership, then drop privileges:**
+
+The Alpine-based entrypoint runs `chown "$TARGET_UID:$TARGET_GID" /data`, then
+`exec su-exec "$TARGET_UID:$TARGET_GID" "$@"`. `su-exec` is cleanly packaged
+for this base and replaces the setup process without adding a wrapper.
+
 ## Reflection questions
 
 **a. Why are permissions by numeric UID/GID, not by name?**

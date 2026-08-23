@@ -10,3 +10,9 @@ services:
     command: sleep 3600
     depends_on:
       - db
+    environment:
+      LAB_MODE: production
+  debug:
+    image: busybox
+    command: sleep 3600
+    profiles: [debug]

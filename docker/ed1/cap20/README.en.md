@@ -60,16 +60,23 @@ There is nothing to write: Compose automatically creates a network for the proje
 puts both services on it. There the embedded DNS resolves the service names, so web
 reaches db simply as "db" — never by IP.
 
-Once the three TODOs are filled, run the test:
+Once the five TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
+
+### Phase 4 — Profiles and override (20.5 — TODO 4, TODO 5)
+
+Add `debug` behind its namesake profile: it stays down with `up`, but starts
+with `--profile debug`. In `compose.override.yaml`, override `LAB_MODE` with
+`development`; Compose applies that file automatically during development.
 
 ## "Done" criteria
 
 - compose.yaml defines db and web with a command that keeps them alive (TODO 1, 2).
 - It declares that web depends on db (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- The debug service is profile-controlled and the override changes LAB_MODE.
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -80,6 +87,9 @@ solution/run.sh brings the application up and checks, point by point:
   embedded DNS.
 - **OK 3** — the file declares that web depends on db (the dependency graph), from a
   single declarative file.
+
+- **OK 4** — debug stays down normally and starts with `--profile debug`.
+- **OK 5** — the automatic override changes LAB_MODE from production to development.
 
 ## Reflection questions
 

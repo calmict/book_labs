@@ -14,6 +14,12 @@
 
     dropadd=$(docker run --rm --cap-drop ALL --cap-add NET_RAW busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
 
+**TODO 4 (24.3) — dangerous operation and privileged comparison:**
+
+Mount a tmpfs under `/mnt/probe` inside each throwaway container. The default
+capability set lacks CAP_SYS_ADMIN, so it fails; `--privileged` permits it. The
+successful case unmounts before exit and never references a host path.
+
 ## Reflection questions
 
 **a. Why is drop-all-then-add-one the purest least privilege?**

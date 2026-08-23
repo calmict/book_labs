@@ -35,9 +35,18 @@ default_name=""
 b_ip=""
 isolation=""
 
+# TODO 4 (17.4): publish identical HTTP services on dynamic host ports, bound
+# respectively to 127.0.0.1 and 0.0.0.0, then probe loopback and the host IP.
+loop_local=""
+loop_host=""
+all_host=""
+
 {
   echo "custom_name=$custom_name"
   echo "default_name=$default_name"
   echo "isolation=$isolation"
   echo "b_ip=$b_ip"
+  echo "loop_local=$loop_local"
+  echo "loop_host=$loop_host"
+  echo "all_host=$all_host"
 } > "$OUT/net.txt"

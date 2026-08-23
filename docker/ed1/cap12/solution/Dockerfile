@@ -1,19 +1,13 @@
-# cap12 solution - a production image: small base, non-root, least privilege.
-# A dedicated user runs the app; it owns only its app directory; and USER, written
-# in the image config, makes every container start unprivileged. Combined with the
-# Multi-Stage of chapter 11 (ship only the artifact) this is the production shape.
-FROM busybox
-
-# TODO 1 (12.2): a dedicated non-root user - the app never runs as root.
-RUN adduser -D appuser
-
-WORKDIR /app
+FROM alpine:3.22 AS build
+RUN adduser -D -u 10001 appuser && apk add --no-cache build-base
+COPY app.c /src/app.c
 COPY app.txt /app/app.txt
+RUN cc -Os -static -s -o /appbin /src/app.c && chown -R appuser /app
 
-# TODO 2 (12.3): the user owns its app directory, and only that.
-RUN chown -R appuser /app
-
-# TODO 3 (12.2): drop to the non-root user for every container from this image.
+FROM scratch
+COPY --from=build /appbin /appbin
+COPY --from=build --chown=10001:10001 /app/app.txt /app/app.txt
+COPY --from=build /etc/passwd /etc/passwd
 USER appuser
-
-CMD ["cat", "/app/app.txt"]
+HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
+ENTRYPOINT ["/appbin"]

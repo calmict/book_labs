@@ -33,7 +33,7 @@ attraversa il confine tale e quale: l'UID N dentro è l'UID N sull'host.
 
 In start/ trovi ipermessi.sh: uno script che prepara una cartella dell'host di tua
 proprietà, la monta in un container e dovrebbe mostrare il mismatch e la sua cura —
-ma le tre prove chiave mancano. Colmi tre lacune (TODO 1..3). Container usa-e-getta
+ma le prove chiave mancano. Colmi quattro lacune (TODO 1..4). Container usa-e-getta
 (--rm) e una cartella temporanea: nessun privilegio, il demone non si tocca.
 
 Prepara l'ambiente:
@@ -64,10 +64,16 @@ container. Non c'è traduzione: l'UID del container è lo stesso UID sull'host.
 
     owner_uid=$(stat -c '%u' "$HOSTDIR/ok" 2>/dev/null || echo NONE)
 
-Quando i tre TODO sono colmati, esegui il test:
+Quando i quattro TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
+
+### Fase 4 — Sistemare e cedere (15.3 — TODO 4)
+
+Completa `entrypoint.sh`: il processo iniziale corregge la proprietà del mount,
+poi usa `exec su-exec` per cedere all'applicazione con UID/GID non privilegiati.
+Alpine offre `su-exec` come pacchetto piccolo e diretto, quindi non serve gosu.
 
 ## Criteri di "fatto"
 
@@ -75,7 +81,8 @@ Quando i tre TODO sono colmati, esegui il test:
   (TODO 1).
 - Risolve facendo girare il container con l'UID proprietario (TODO 2).
 - Verifica dall'host la proprietà del file creato (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Verifica il terzo rimedio con chown nell'entrypoint e drop tramite su-exec (TODO 4).
+- run.sh stampa OK 1..4 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -87,6 +94,8 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
   WROTE).
 - **OK 3** — nessuna traduzione: il file creato dal container è di proprietà, sull'
   host, dello stesso UID con cui girava il container.
+- **OK 4** — l'entrypoint corregge la proprietà e l'app avviata con `su-exec`
+  crea un file appartenente all'UID dell'host.
 
 ## Domande di riflessione
 

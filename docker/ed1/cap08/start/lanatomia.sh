@@ -10,7 +10,7 @@ OUT="${1:?usage: lanatomia.sh OUTPUT_DIR}"
 mkdir -p "$OUT"
 TAG="cap08-$$"
 BASE="busybox"
-cleanup() { docker rmi -f "$TAG-child" "$TAG" >/dev/null 2>&1 || true; rm -f "$OUT/.p" "$OUT/.c"; }
+cleanup() { docker rmi -f "$TAG-child" "$TAG-same:latest" "$TAG-first" "$TAG" >/dev/null 2>&1 || true; rm -f "$OUT/.p" "$OUT/.c"; }
 trap cleanup EXIT
 
 docker build -q -t "$TAG" - >/dev/null <<EOF
@@ -46,6 +46,13 @@ top_layer=""
 child_layers=""
 shared=""
 
+# TODO 4 (8.3): build two different contents under "$TAG-same:latest". Record
+# the first ID, retain it with `docker tag`, overwrite the mutable tag with the
+# second build, then inspect the first image directly by its sha256 ID.
+first_id=""
+second_id=""
+immutable_id=""
+
 {
   echo "layers=$layers"
   echo "base_layers=$base_layers"
@@ -53,4 +60,7 @@ shared=""
   echo "top_layer=$top_layer"
   echo "child_layers=$child_layers"
   echo "shared=$shared"
+  echo "first_id=$first_id"
+  echo "second_id=$second_id"
+  echo "immutable_id=$immutable_id"
 } > "$OUT/image.txt"

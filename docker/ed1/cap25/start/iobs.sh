@@ -25,9 +25,23 @@ driver=""
 #     mem=$(docker stats --no-stream --format '{{.MemUsage}}' "$C")
 mem=""
 
+# TODO 4 (25.2): run identical chatty containers without rotation and with
+# max-size=10k,max-file=2; measure the total json-file bytes read-only.
+unrotated_bytes=""
+rotated_bytes=""
+
+# TODO 5 (25.3): apply --memory=64MiB and record both the LIMIT column from
+# docker stats and HostConfig.Memory in bytes.
+stats_limit=""
+configured_limit=""
+
 {
   echo "stdout_seen=$(printf '%s' "$logs" | grep -c 'hello-stdout' || true)"
   echo "stderr_seen=$(printf '%s' "$logs" | grep -c 'hello-stderr' || true)"
   echo "driver=$driver"
   echo "mem=$mem"
+  echo "unrotated_bytes=$unrotated_bytes"
+  echo "rotated_bytes=$rotated_bytes"
+  echo "stats_limit=$stats_limit"
+  echo "configured_limit=$configured_limit"
 } > "$OUT/obs.txt"

@@ -1,0 +1,4 @@
+FROM busybox
+COPY signal.sh /signal.sh
+RUN chmod +x /signal.sh
+CMD ["/signal.sh"]

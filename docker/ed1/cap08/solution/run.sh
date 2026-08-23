@@ -23,6 +23,9 @@ image_id=$(val "$WORK/image.txt" image_id)
 top_layer=$(val "$WORK/image.txt" top_layer)
 child_layers=$(val "$WORK/image.txt" child_layers)
 shared=$(val "$WORK/image.txt" shared)
+first_id=$(val "$WORK/image.txt" first_id)
+second_id=$(val "$WORK/image.txt" second_id)
+immutable_id=$(val "$WORK/image.txt" immutable_id)
 
 # 1. one layer per filesystem-changing instruction: base + 2 RUNs
 if [ "$layers" != "$(( base_layers + 2 ))" ]; then
@@ -40,6 +43,12 @@ if [ "$child_layers" != "$(( layers + 1 ))" ] || [ "$shared" != "$layers" ]; the
   echo "UNEXPECTED: child has $child_layers layers (want $(( layers + 1 ))) and shares $shared (want $layers)" >&2; exit 1
 fi
 echo "OK 3 - layers are shared: the child reuses all $shared and adds 1 ($child_layers total)"
+
+# 4. a mutable tag can move; the content digest still selects the first image
+if [ "$first_id" = "$second_id" ] || [ "$immutable_id" != "$first_id" ]; then
+  echo "UNEXPECTED: mutable tag or immutable digest check failed" >&2; exit 1
+fi
+echo "OK 4 - the tag moved to a different digest; the first sha256 ID still resolves unchanged"
 
 echo
 echo "ALL CHECKS PASSED"

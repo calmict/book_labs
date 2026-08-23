@@ -27,9 +27,18 @@ match=$(docker run --rm --user "$HOST_UID" -v "$HOSTDIR:/data" busybox sh -c 'to
 # TODO 3 (15.4):
 owner_uid=$(stat -c '%u' "$HOSTDIR/ok" 2>/dev/null || echo NONE)
 
+# D) An entrypoint may start as root only to fix mount ownership, then replace
+# itself with the application under the target UID using Alpine's su-exec.
+ENTRY_TAG="cap15-entry-$$"
+trap 'docker rmi -f "$ENTRY_TAG" >/dev/null 2>&1 || true' EXIT
+docker build -q -t "$ENTRY_TAG" -f "$(dirname "$0")/Dockerfile.entrypoint" "$(dirname "$0")" >/dev/null
+docker run --rm -e TARGET_UID="$HOST_UID" -e TARGET_GID="$(id -g)" -v "$HOSTDIR:/data" "$ENTRY_TAG" sh -c 'touch /data/entrypoint-ok'
+entry_owner_uid=$(stat -c '%u' "$HOSTDIR/entrypoint-ok" 2>/dev/null || echo NONE)
+
 {
   echo "host_uid=$HOST_UID"
   echo "mismatch=$mismatch"
   echo "match=$match"
   echo "owner_uid=$owner_uid"
+  echo "entry_owner_uid=$entry_owner_uid"
 } > "$OUT/perms.txt"

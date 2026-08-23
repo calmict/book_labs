@@ -59,17 +59,24 @@ the container has exactly one capability, not all of them — least privilege.
 
     dropadd=$(docker run --rm --cap-drop ALL --cap-add NET_RAW busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
 
-Once the three TODOs are filled, run the test:
+Once the four TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
+
+### Phase 4 — The dangerous key (24.3 — TODO 4)
+
+Try mounting a tmpfs exclusively inside a throwaway container: without
+CAP_SYS_ADMIN it fails. Repeat with `--privileged`, observe success and unmount
+immediately; no host path is involved.
 
 ## "Done" criteria
 
 - icapabilities.sh tries the ping with the default capabilities (TODO 1).
 - It retries it with --cap-drop ALL (TODO 2).
 - It retries it with --cap-drop ALL --cap-add NET_RAW (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It compares the normal internal mount and `--privileged` (TODO 4).
+- run.sh prints OK 1..4 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -80,6 +87,9 @@ solution/run.sh runs the scenario and checks, point by point:
   root.
 - **OK 3** — with --cap-drop ALL --cap-add NET_RAW the ping resumes: the container was
   given only the key it needs.
+
+- **OK 4** — the internal tmpfs mount fails normally and succeeds with
+  `--privileged`, showing how broad that bypass is.
 
 ## Reflection questions
 

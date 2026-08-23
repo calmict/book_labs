@@ -29,9 +29,14 @@ match=""
 #     owner_uid=$(stat -c '%u' "$HOSTDIR/ok" 2>/dev/null || echo NONE)
 owner_uid=""
 
+# TODO 4 (15.3): build Dockerfile.entrypoint, run it with TARGET_UID/TARGET_GID
+# and verify the file created after su-exec is owned by HOST_UID.
+entry_owner_uid=""
+
 {
   echo "host_uid=$HOST_UID"
   echo "mismatch=$mismatch"
   echo "match=$match"
   echo "owner_uid=$owner_uid"
+  echo "entry_owner_uid=$entry_owner_uid"
 } > "$OUT/perms.txt"

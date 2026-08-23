@@ -8,7 +8,12 @@ set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 TAG="cap10-$$"
-cleanup() { docker rmi -f "$TAG" >/dev/null 2>&1 || true; }
+SHELL_NAME="cap10-shell-$$"
+EXEC_NAME="cap10-exec-$$"
+cleanup() {
+  docker rm -f "$SHELL_NAME" "$EXEC_NAME" >/dev/null 2>&1 || true
+  docker rmi -f "$TAG-shell" "$TAG-exec" "$TAG" >/dev/null 2>&1 || true
+}
 trap cleanup EXIT
 
 command -v docker >/dev/null || { echo "ERROR: docker not found (see SETUP.md)" >&2; exit 1; }
@@ -36,6 +41,19 @@ if [ "$self_pid" != "1" ]; then
   echo "UNEXPECTED: script self_pid=$self_pid, expected 1 (exec form should be PID 1)" >&2; exit 1
 fi
 echo "OK 3 - exec form: the script is PID 1 (self_pid=$self_pid) - it receives SIGTERM directly"
+
+# 4. identical images except for CMD form: shell form consumes the stop timeout,
+# while exec form delivers SIGTERM directly to the trapping application.
+docker build -q -t "$TAG-shell" -f "$HERE/Dockerfile.shell" "$HERE" >/dev/null
+docker build -q -t "$TAG-exec" -f "$HERE/Dockerfile.exec" "$HERE" >/dev/null
+docker run -d --name "$SHELL_NAME" "$TAG-shell" >/dev/null
+docker run -d --name "$EXEC_NAME" "$TAG-exec" >/dev/null
+started=$(date +%s%N); docker stop -t 2 "$SHELL_NAME" >/dev/null; shell_ms=$(( ($(date +%s%N) - started) / 1000000 ))
+started=$(date +%s%N); docker stop -t 2 "$EXEC_NAME" >/dev/null; exec_ms=$(( ($(date +%s%N) - started) / 1000000 ))
+if [ "$shell_ms" -lt 1500 ] || [ "$exec_ms" -ge 1500 ]; then
+  echo "UNEXPECTED: stop times shell=${shell_ms}ms exec=${exec_ms}ms" >&2; exit 1
+fi
+echo "OK 4 - CMD signal delivery: shell form ${shell_ms}ms, exec form ${exec_ms}ms"
 
 echo
 echo "ALL CHECKS PASSED"

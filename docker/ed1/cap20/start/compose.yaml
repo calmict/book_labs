@@ -13,3 +13,6 @@ services:
     # TODO 3 (20.3): make web start after db:
     #   depends_on:
     #     - db
+    environment:
+      LAB_MODE: production
+  # TODO 4 (20.5): add a long-running debug service under profiles: [debug].

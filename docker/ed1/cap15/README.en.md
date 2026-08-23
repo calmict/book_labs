@@ -32,7 +32,7 @@ unchanged: UID N inside is UID N on the host.
 
 In start/ you will find ipermessi.sh: a script that prepares a host folder you own,
 mounts it in a container and should show the mismatch and its cure — but the three key
-proofs are missing. You fill three gaps (TODO 1..3). Throwaway containers (--rm) and a
+proofs are missing. You fill four gaps (TODO 1..4). Throwaway containers (--rm) and a
 temporary folder: no privileges, the daemon is not touched.
 
 Prepare the environment:
@@ -63,10 +63,16 @@ created. There is no translation: the container's UID is the same UID on the hos
 
     owner_uid=$(stat -c '%u' "$HOSTDIR/ok" 2>/dev/null || echo NONE)
 
-Once the three TODOs are filled, run the test:
+Once the four TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
+
+### Phase 4 — Fix and yield (15.3 — TODO 4)
+
+Complete `entrypoint.sh`: the initial process fixes mount ownership, then uses
+`exec su-exec` to yield to the application under an unprivileged UID/GID. Alpine
+packages `su-exec` cleanly, so gosu is unnecessary here.
 
 ## "Done" criteria
 
@@ -74,7 +80,8 @@ Once the three TODOs are filled, run the test:
   (TODO 1).
 - It fixes it by running the container with the owning UID (TODO 2).
 - It checks from the host the ownership of the created file (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It checks the third remedy: entrypoint chown followed by su-exec (TODO 4).
+- run.sh prints OK 1..4 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -85,6 +92,8 @@ solution/run.sh runs the scenario and checks, point by point:
 - **OK 2** — cure: the same container, with the owning UID, writes (result WROTE).
 - **OK 3** — no translation: the file created by the container is owned, on the host,
   by the same UID the container ran as.
+- **OK 4** — the entrypoint fixes ownership and the application started through
+  `su-exec` creates a file owned by the host UID.
 
 ## Reflection questions
 

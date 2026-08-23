@@ -1,18 +1,15 @@
-# cap12 start - a production image, to complete. Three gaps (TODO 1..3). As
-# written the image works but runs as ROOT: no user, no ownership, no dropped
-# privileges. The test fails.
-FROM busybox
-
-# TODO 1 (12.2): create a non-root user to run the app:
-#     RUN adduser -D appuser
-
-WORKDIR /app
+FROM alpine:3.22 AS build
+RUN adduser -D -u 10001 appuser && apk add --no-cache build-base
+COPY app.c /src/app.c
 COPY app.txt /app/app.txt
+RUN cc -Os -static -s -o /appbin /src/app.c && chown -R appuser /app
 
-# TODO 2 (12.3): give that user ownership of its app directory (least privilege):
-#     RUN chown -R appuser /app
+FROM scratch
+COPY --from=build /appbin /appbin
+COPY --from=build --chown=10001:10001 /app/app.txt /app/app.txt
+COPY --from=build /etc/passwd /etc/passwd
 
-# TODO 3 (12.2): drop privileges - run as the non-root user, written in the image:
-#     USER appuser
-
-CMD ["cat", "/app/app.txt"]
+# TODO 1 (12.2): declare the dedicated non-root account: USER appuser
+# TODO 2 (12.4): declare the real health probe:
+#   HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
+ENTRYPOINT ["/appbin"]

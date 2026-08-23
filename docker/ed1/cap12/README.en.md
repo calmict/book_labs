@@ -28,8 +28,8 @@ must not.
 ## The scenario
 
 In start/ you will find an incomplete Dockerfile and app.txt. The Dockerfile builds
-an image that works, but runs as root: it creates no user, assigns no ownership and
-drops no privileges. You fill three gaps (TODO 1..3) to make the image
+an image with a static application in a final `scratch` stage, but it does not drop
+privileges or declare a health check. You fill two gaps (TODO 1..2) to make it
 production-grade. Throwaway image, no privileges on the host, the shared daemon is
 not touched.
 
@@ -50,33 +50,34 @@ user, and own only what you need.
 Open start/Dockerfile and complete **TODO 1**: create a non-root user that will run
 the app.
 
-    RUN adduser -D appuser
-
-### Phase 3 — Minimal ownership (12.3 — TODO 2)
-
-Complete **TODO 2**: give that user ownership of the app directory, so it can write
-there and only there.
-
-    RUN chown -R appuser /app
-
-### Phase 4 — Dropping privileges (12.2 — TODO 3)
-
-Complete **TODO 3**: declare USER, so every container born from the image starts as
-the unprivileged user — not at runtime, but written into the image.
-
     USER appuser
 
-Once the three TODOs are filled, run the test:
+### Phase 3 — Minimal ownership (12.3)
+
+The build stage creates `appuser`; `COPY --chown` gives that user ownership of the
+app directory, so it can write there and only there.
+
+    COPY --from=build --chown=10001:10001 /app/app.txt /app/app.txt
+
+### Phase 4 — Minimal image and health (12.4 — TODO 2)
+
+The final `scratch` stage contains neither a shell nor a package manager. Complete
+**TODO 2** by declaring the application's real probe, which Docker takes to
+`healthy`.
+
+    HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
+
+Once the two TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
 
 ## "Done" criteria
 
-- The Dockerfile creates a non-root user (TODO 1).
-- It assigns that user ownership of the app directory (TODO 2).
-- It declares USER to run non-root (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- The Dockerfile declares USER to run non-root (TODO 1).
+- It declares a real HEALTHCHECK (TODO 2).
+- The final stage contains neither a shell nor a package manager.
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -87,6 +88,9 @@ solution/run.sh builds the image and checks, point by point:
   it applies to every container without passing it at runtime.
 - **OK 3** — least privilege: the user can write in its own /app, but is denied when
   it tries to write in /, owned by root.
+- **OK 4** — the declared health check reaches `healthy`.
+- **OK 5** — no shell or common package manager is executable in the final
+  `scratch` stage.
 
 ## Reflection questions
 

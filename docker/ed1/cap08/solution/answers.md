@@ -23,6 +23,12 @@
     docker image inspect -f '{{range .RootFS.Layers}}{{println .}}{{end}}' "$TAG-child" | grep '^sha256' | sort > "$OUT/.c"
     shared=$(comm -12 "$OUT/.p" "$OUT/.c" | grep -c .)
 
+**TODO 4 (8.3) — move a tag without changing content-addressed identity:**
+
+Build two different images as `"$TAG-same:latest"`, save `first_id` before the
+second build, and verify with `docker image inspect "$first_id"` that the saved
+sha256 identity still selects the original image after the tag has moved.
+
 ## Reflection questions
 
 **a. Why does every filesystem-changing instruction create a layer, and in what

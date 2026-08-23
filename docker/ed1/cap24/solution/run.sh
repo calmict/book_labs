@@ -19,6 +19,8 @@ val() { grep "^$2=" "$1" | cut -d= -f2-; }
 default=$(val "$WORK/caps.txt" default)
 dropall=$(val "$WORK/caps.txt" dropall)
 dropadd=$(val "$WORK/caps.txt" dropadd)
+mount_default=$(val "$WORK/caps.txt" mount_default)
+mount_privileged=$(val "$WORK/caps.txt" mount_privileged)
 
 # 1. default capabilities: ping works (NET_RAW granted)
 if [ "$default" != "OK" ]; then
@@ -37,6 +39,12 @@ if [ "$dropadd" != "OK" ]; then
   echo "UNEXPECTED: ping failed with only NET_RAW added back (dropadd=$dropadd)" >&2; exit 1
 fi
 echo "OK 3 - --cap-drop ALL --cap-add NET_RAW: ping works (only the needed key)"
+
+# 4. a dangerous mount fails normally and succeeds with --privileged.
+if [ "$mount_default" != FAIL ] || [ "$mount_privileged" != OK ]; then
+  echo "UNEXPECTED: mount default=$mount_default privileged=$mount_privileged" >&2; exit 1
+fi
+echo "OK 4 - internal tmpfs mount fails by default and succeeds with --privileged"
 
 echo
 echo "ALL CHECKS PASSED"

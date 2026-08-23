@@ -21,6 +21,9 @@ custom_name=$(val "$WORK/net.txt" custom_name)
 default_name=$(val "$WORK/net.txt" default_name)
 isolation=$(val "$WORK/net.txt" isolation)
 b_ip=$(val "$WORK/net.txt" b_ip)
+loop_local=$(val "$WORK/net.txt" loop_local)
+loop_host=$(val "$WORK/net.txt" loop_host)
+all_host=$(val "$WORK/net.txt" all_host)
 
 # 1. on the custom network, name resolution works (embedded DNS)
 if [ "$custom_name" != "OK" ]; then
@@ -39,6 +42,12 @@ if [ "$isolation" != "BLOCKED" ]; then
   echo "UNEXPECTED: a container off the network reached B at $b_ip (isolation=$isolation)" >&2; exit 1
 fi
 echo "OK 3 - isolation: a container off the network cannot reach B at $b_ip (BLOCKED)"
+
+# 4. publication address changes observed exposure.
+if [ "$loop_local" != REACHED ] || [ "$loop_host" != BLOCKED ] || [ "$all_host" != REACHED ]; then
+  echo "UNEXPECTED: publication results local=$loop_local loop-via-host=$loop_host all-via-host=$all_host" >&2; exit 1
+fi
+echo "OK 4 - exposure: 127.0.0.1 is loopback-only; 0.0.0.0 is reachable via the host interface"
 
 echo
 echo "ALL CHECKS PASSED"

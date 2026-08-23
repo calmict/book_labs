@@ -2,17 +2,17 @@
 
 ## The completed TODOs
 
-**TODO 1 (12.2) — a dedicated non-root user:**
-
-    RUN adduser -D appuser
-
-**TODO 2 (12.3) — the user owns its app directory:**
-
-    RUN chown -R appuser /app
-
-**TODO 3 (12.2) — drop to the non-root user:**
+**TODO 1 (12.2) — run as the dedicated non-root user:**
 
     USER appuser
+
+**TODO 2 (12.4) — declare the application health probe:**
+
+    HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
+
+The build stage creates `appuser`; the final `scratch` stage receives only the
+static application, its data and `/etc/passwd`. `COPY --chown` gives the user
+only `/app`, while omitting every shell and package manager.
 
 ## Reflection questions
 

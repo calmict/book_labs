@@ -56,17 +56,24 @@ consumi in tempo reale; con --no-stream ne prendi un'istantanea.
 
     mem=$(docker stats --no-stream --format '{{.MemUsage}}' "$C")
 
-Quando i tre TODO sono colmati, esegui il test:
+Quando i cinque TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
+
+### Fase 4 — Rotazione e limite (25.2, 25.3 — TODO 4, TODO 5)
+
+Confronta due workload chiacchieroni identici: senza opzioni il file cresce oltre
+50 kB; con `max-size=10k,max-file=2` resta sotto 50 kB. Imposta inoltre 64 MiB
+di memoria e collega il campo LIMIT di `docker stats` ai 67.108.864 byte configurati.
 
 ## Criteri di "fatto"
 
 - iobs.sh legge i log del container (stdout e stderr) (TODO 1).
 - Legge il logging driver (TODO 2).
 - Legge l'uso di memoria con docker stats (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Confronta direttamente i file senza/con rotazione e collega LIMIT a --memory.
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -75,6 +82,9 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
 - **OK 1** — docker logs recupera sia la riga scritta su stdout sia quella su stderr.
 - **OK 2** — il logging driver del container è json-file (dove i log sono conservati).
 - **OK 3** — docker stats riporta una metrica dal vivo: l'uso di memoria del container.
+
+- **OK 4** — il log non ruotato supera la soglia, quello ruotato resta limitato.
+- **OK 5** — il LIMIT di stats corrisponde ai 64 MiB passati a Docker.
 
 ## Domande di riflessione
 

@@ -59,16 +59,23 @@ Non c'è nulla da scrivere: Compose crea automaticamente una rete per il progett
 mette entrambi i servizi. Lì il DNS integrato risolve i nomi dei servizi, quindi web
 raggiunge db semplicemente come «db» — mai per IP.
 
-Quando i tre TODO sono colmati, esegui il test:
+Quando i cinque TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
+
+### Fase 4 — Profili e override (20.5 — TODO 4, TODO 5)
+
+Aggiungi `debug` dietro il profilo omonimo: non parte con `up`, ma parte con
+`--profile debug`. In `compose.override.yaml` sovrascrivi `LAB_MODE` con
+`development`; Compose applica automaticamente questo file in sviluppo.
 
 ## Criteri di "fatto"
 
 - compose.yaml definisce db e web con un comando che li tiene in vita (TODO 1, 2).
 - Dichiara che web dipende da db (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Il servizio debug è controllato dal profilo e l'override modifica LAB_MODE.
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -79,6 +86,9 @@ solution/run.sh porta su l'applicazione e verifica, punto per punto:
   il DNS integrato.
 - **OK 3** — il file dichiara che web dipende da db (grafo delle dipendenze), da un
   solo file dichiarativo.
+
+- **OK 4** — debug non parte normalmente e parte con `--profile debug`.
+- **OK 5** — l'override automatico porta LAB_MODE da production a development.
 
 ## Domande di riflessione
 

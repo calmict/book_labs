@@ -53,5 +53,14 @@ if [ "$deps_cached" != "yes" ] || [ "$src_cached" = "yes" ]; then
 fi
 echo "OK 3 - strategic cache: dependency step CACHED, source rebuilt (order pays off)"
 
+# 4. calibrated from the actual busybox + artifact image (~2.23 MB): leave
+# sensible headroom for base-image metadata changes, but reject a bloated result.
+size=$(docker image inspect -f '{{.Size}}' "$TAG")
+max_size=$((3 * 1024 * 1024))
+if [ "$size" -ge "$max_size" ]; then
+  echo "UNEXPECTED: final image is $size bytes, threshold is $max_size" >&2; exit 1
+fi
+echo "OK 4 - final image size $size bytes is below the calibrated 3 MiB threshold"
+
 echo
 echo "ALL CHECKS PASSED"

@@ -1,0 +1,5 @@
+services:
+  web:
+    environment:
+      # TODO 5 (20.5): override production with development.
+      LAB_MODE: production

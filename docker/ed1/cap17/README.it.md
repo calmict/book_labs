@@ -64,10 +64,16 @@ l'IP passa.
     b_ip=$(docker exec "$B" sh -c 'ip addr show eth0 | grep -w inet | grep -oE "[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+" | head -1')
     isolation=$(docker exec "$DA" sh -c "ping -c1 -w2 $b_ip >/dev/null 2>&1 && echo REACHED || echo BLOCKED")
 
-Quando i tre TODO sono colmati, esegui il test:
+Quando i quattro TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
+
+### Fase 4 — La porta giusta (17.4 — TODO 4)
+
+Pubblica due servizi su porte libere scelte da Docker: uno su `127.0.0.1`, uno
+su `0.0.0.0`. Verifica dal loopback e dall'IP reale dell'host che solo il secondo
+sia esposto sull'interfaccia, senza accesso privilegiato a iptables.
 
 ## Criteri di "fatto"
 
@@ -75,7 +81,8 @@ Quando i tre TODO sono colmati, esegui il test:
 - Verifica che sul bridge di default il nome non si risolve (TODO 2).
 - Verifica che un container fuori dalla rete non raggiunge B, neppure per IP
   (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Confronta l'esposizione di 127.0.0.1 e 0.0.0.0 (TODO 4).
+- run.sh stampa OK 1..4 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -87,6 +94,9 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
   (risultato FAIL).
 - **OK 3** — isolamento: un container fuori dalla rete custom non raggiunge B
   neppure per IP (risultato BLOCKED).
+
+- **OK 4** — il binding loopback risponde solo su loopback, mentre quello su
+  tutte le interfacce risponde anche all'IP reale dell'host.
 
 ## Domande di riflessione
 

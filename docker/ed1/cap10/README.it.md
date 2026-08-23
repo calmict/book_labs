@@ -32,8 +32,8 @@ scrivi decide se il tuo processo è PID 1 o finisce avvolto in una shell.
 
 In start/ trovi un Dockerfile incompleto e entry.sh, uno script che stampa il
 proprio PID e gli argomenti ricevuti. Il Dockerfile parte da busybox ma non imbarca
-lo script, non nomina il comandante e non dà ordini di default. Colmi tre lacune
-(TODO 1..3). Immagine usa-e-getta, nessun privilegio, il demone condiviso non si
+lo script, non nomina il comandante e non dà ordini di default. Colmi quattro lacune
+(TODO 1..4). Immagini usa-e-getta, nessun privilegio, il demone condiviso non si
 tocca.
 
 Prepara l'ambiente:
@@ -70,17 +70,24 @@ docker run può sovrascrivere.
 
     CMD ["default"]
 
-Quando i tre TODO sono colmati, esegui il test:
+Quando i quattro TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
+
+### Fase 5 — Misurare SIGTERM (10.1 — TODO 4)
+
+Completa `Dockerfile.shell` e `Dockerfile.exec` con due CMD che differiscono solo
+per la forma. Il test arresta entrambi con due secondi di timeout: la shell non
+inoltra SIGTERM e consuma il timeout, mentre l'app in forma exec termina subito.
 
 ## Criteri di "fatto"
 
 - Il Dockerfile copia entry.sh nell'immagine (TODO 1).
 - Dichiara ENTRYPOINT in forma exec (TODO 2).
 - Dà argomenti di default con CMD (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Confronta i tempi di arresto delle forme shell ed exec di CMD (TODO 4).
+- run.sh stampa OK 1..4 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -92,6 +99,8 @@ solution/run.sh costruisce l'immagine e verifica, punto per punto:
   avviando con «foo bar», args = foo bar e il comandante resta entry.sh.
 - **OK 3** — forma exec: lo script è PID 1 (self_pid = 1), quindi riceve i segnali
   in prima persona (capitolo 7), senza una shell che lo avvolge.
+- **OK 4** — con `docker stop -t 2` la forma shell consuma circa il timeout,
+  mentre la forma exec consegna SIGTERM all'app e termina quasi subito.
 
 ## Domande di riflessione
 

@@ -64,17 +64,24 @@ even the IP gets through.
     b_ip=$(docker exec "$B" sh -c 'ip addr show eth0 | grep -w inet | grep -oE "[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+" | head -1')
     isolation=$(docker exec "$DA" sh -c "ping -c1 -w2 $b_ip >/dev/null 2>&1 && echo REACHED || echo BLOCKED")
 
-Once the three TODOs are filled, run the test:
+Once the four TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
+
+### Phase 4 — The right port (17.4 — TODO 4)
+
+Publish two services on free ports selected by Docker: one on `127.0.0.1`, one
+on `0.0.0.0`. Check through loopback and the host's real IP that only the latter
+is exposed on the interface, without privileged iptables access.
 
 ## "Done" criteria
 
 - irete.sh checks name resolution on the custom network (TODO 1).
 - It checks that on the default bridge the name does not resolve (TODO 2).
 - It checks that a container off the network cannot reach B, not even by IP (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It compares 127.0.0.1 and 0.0.0.0 exposure (TODO 4).
+- run.sh prints OK 1..4 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -86,6 +93,9 @@ solution/run.sh runs the scenario and checks, point by point:
   (result FAIL).
 - **OK 3** — isolation: a container off the custom network cannot reach B even by IP
   (result BLOCKED).
+
+- **OK 4** — the loopback binding responds only through loopback, while the
+  all-interface binding also responds through the host's real IP.
 
 ## Reflection questions
 

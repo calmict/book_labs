@@ -20,8 +20,15 @@ dropall=""
 #     dropadd=$(docker run --rm --cap-drop ALL --cap-add NET_RAW busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
 dropadd=""
 
+# TODO 4 (24.3): attempt an internal tmpfs mount normally (must fail), then in
+# an explicitly throwaway --privileged container (must succeed and unmount).
+mount_default=""
+mount_privileged=""
+
 {
   echo "default=$default"
   echo "dropall=$dropall"
   echo "dropadd=$dropadd"
+  echo "mount_default=$mount_default"
+  echo "mount_privileged=$mount_privileged"
 } > "$OUT/caps.txt"

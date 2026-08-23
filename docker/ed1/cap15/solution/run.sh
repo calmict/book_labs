@@ -21,6 +21,7 @@ host_uid=$(val "$WORK/perms.txt" host_uid)
 mismatch=$(val "$WORK/perms.txt" mismatch)
 match=$(val "$WORK/perms.txt" match)
 owner_uid=$(val "$WORK/perms.txt" owner_uid)
+entry_owner_uid=$(val "$WORK/perms.txt" entry_owner_uid)
 
 # 1. mismatch: a UID that does not own the folder cannot write
 if [ "$mismatch" != "DENIED" ]; then
@@ -39,6 +40,12 @@ if [ "$owner_uid" != "$host_uid" ]; then
   echo "UNEXPECTED: the file is owned by UID $owner_uid, expected $host_uid" >&2; exit 1
 fi
 echo "OK 3 - no translation: the file is owned on the host by UID $owner_uid (= container UID)"
+
+# 4. entrypoint fixes ownership, then su-exec drops to the host UID.
+if [ "$entry_owner_uid" != "$host_uid" ]; then
+  echo "UNEXPECTED: entrypoint-created file owner is $entry_owner_uid, expected $host_uid" >&2; exit 1
+fi
+echo "OK 4 - entrypoint chown + su-exec: application file is owned by host UID $entry_owner_uid"
 
 echo
 echo "ALL CHECKS PASSED"
