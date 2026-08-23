@@ -71,8 +71,8 @@ Quando i quattro TODO sono colmati, esegui il test:
 
 ### Fase 4 — La porta giusta (17.4 — TODO 4)
 
-Pubblica due servizi su porte libere scelte da Docker: uno su `127.0.0.1`, uno
-su `0.0.0.0`. Verifica dal loopback e dall'IP reale dell'host che solo il secondo
+Pubblica due servizi su porte libere scelte da Docker: uno su 127.0.0.1, uno
+su 0.0.0.0. Verifica dal loopback e dall'IP reale dell'host che solo il secondo
 sia esposto sull'interfaccia, senza accesso privilegiato a iptables.
 
 ## Criteri di "fatto"

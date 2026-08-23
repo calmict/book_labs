@@ -67,9 +67,9 @@ Once the five TODOs are filled, run the test:
 
 ### Phase 4 — Profiles and override (20.5 — TODO 4, TODO 5)
 
-Add `debug` behind its namesake profile: it stays down with `up`, but starts
-with `--profile debug`. In `compose.override.yaml`, override `LAB_MODE` with
-`development`; Compose applies that file automatically during development.
+Add debug behind its namesake profile: it stays down with up, but starts
+with --profile debug. In compose.override.yaml, override LAB_MODE with
+development; Compose applies that file automatically during development.
 
 ## "Done" criteria
 
@@ -88,7 +88,7 @@ solution/run.sh brings the application up and checks, point by point:
 - **OK 3** — the file declares that web depends on db (the dependency graph), from a
   single declarative file.
 
-- **OK 4** — debug stays down normally and starts with `--profile debug`.
+- **OK 4** — debug stays down normally and starts with --profile debug.
 - **OK 5** — the automatic override changes LAB_MODE from production to development.
 
 ## Reflection questions

@@ -10,9 +10,9 @@
 
     HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
 
-The build stage creates `appuser`; the final `scratch` stage receives only the
-static application, its data and `/etc/passwd`. `COPY --chown` gives the user
-only `/app`, while omitting every shell and package manager.
+The build stage creates appuser; the final scratch stage receives only the
+static application, its data and /etc/passwd. COPY --chown gives the user
+only /app, while omitting every shell and package manager.
 
 ## Reflection questions
 

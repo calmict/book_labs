@@ -29,7 +29,7 @@ serve — e verifichi, permesso alla mano, che non può scrivere dove non deve.
 ## Lo scenario
 
 In start/ trovi un Dockerfile incompleto e app.txt. Il Dockerfile costruisce
-un'immagine finale `scratch` con un'app statica, ma non abbassa i privilegi e non
+un'immagine finale scratch con un'app statica, ma non abbassa i privilegi e non
 dichiara il controllo di salute. Colmi due lacune (TODO 1..2) perché l'immagine
 sia da produzione. Immagine usa-e-getta, nessun privilegio sull'host, il demone
 condiviso non si tocca.
@@ -55,15 +55,15 @@ girare l'app.
 
 ### Fase 3 — Proprietà minima (12.3)
 
-Il build stage crea `appuser`; `COPY --chown` assegna la directory dell'app a
+Il build stage crea appuser; COPY --chown assegna la directory dell'app a
 quell'utente, così potrà scrivere lì e solo lì.
 
     COPY --from=build --chown=10001:10001 /app/app.txt /app/app.txt
 
 ### Fase 4 — Immagine minimale e salute (12.4 — TODO 2)
 
-Il final stage `scratch` non contiene shell né gestore di pacchetti. Completa il
-**TODO 2** dichiarando il probe reale dell'app, che Docker porterà a `healthy`.
+Il final stage scratch non contiene shell né gestore di pacchetti. Completa il
+**TODO 2** dichiarando il probe reale dell'app, che Docker porterà a healthy.
 
     HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
 
@@ -88,8 +88,8 @@ solution/run.sh costruisce l'immagine e verifica, punto per punto:
   quindi vale per ogni container senza doverlo passare a runtime.
 - **OK 3** — privilegio minimo: l'utente può scrivere nella sua directory /app, ma
   è respinto quando prova a scrivere in /, di proprietà di root.
-- **OK 4** — il controllo dichiarato raggiunge lo stato `healthy`.
-- **OK 5** — nel final stage `scratch` non sono eseguibili shell né gestori di
+- **OK 4** — il controllo dichiarato raggiunge lo stato healthy.
+- **OK 5** — nel final stage scratch non sono eseguibili shell né gestori di
   pacchetti comuni.
 
 ## Domande di riflessione
@@ -113,7 +113,8 @@ superficie d'attacco e meno CVE da inseguire?
 
 Niente da smontare a mano: l'immagine di prova è rimossa dallo script (docker rmi,
 più un trap di sicurezza) a fine esecuzione; il test non lascia container.
-L'immagine base busybox resta in cache (condivisa). Il demone non viene mai
+L'immagine di build alpine resta in cache (condivisa); il final stage scratch
+non ne lascia nessuna, perché non contiene altro che il binario. Il demone non viene mai
 riavviato.
 
 ## Dove porta

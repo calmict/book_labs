@@ -94,7 +94,7 @@ solution/run.sh costruisce l'immagine e verifica, punto per punto:
 - **OK 3** — cache strategica: modificando solo la sorgente e ricostruendo, il
   passo di installazione delle dipendenze resta CACHED, mentre la sorgente viene
   ricostruita.
-- **OK 4** — `docker image inspect` misura la dimensione finale e verifica che
+- **OK 4** — docker image inspect misura la dimensione finale e verifica che
   sia inferiore a 3 MiB (l'immagine reale misura circa 2,23 MB).
 
 ## Domande di riflessione

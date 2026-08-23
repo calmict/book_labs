@@ -17,8 +17,8 @@
 
 **TODO 4 (17.4) — compare published-address exposure:**
 
-Bind identical throwaway HTTP services to dynamic ports on `127.0.0.1` and
-`0.0.0.0`; probe them through loopback and the host's real IP. This observes the
+Bind identical throwaway HTTP services to dynamic ports on 127.0.0.1 and
+0.0.0.0; probe them through loopback and the host's real IP. This observes the
 effective connectivity without privileged access to DNAT rules.
 
 ## Reflection questions

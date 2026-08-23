@@ -71,9 +71,9 @@ Quando i quattro TODO sono colmati, esegui il test:
 
 ### Fase 4 — Sistemare e cedere (15.3 — TODO 4)
 
-Completa `entrypoint.sh`: il processo iniziale corregge la proprietà del mount,
-poi usa `exec su-exec` per cedere all'applicazione con UID/GID non privilegiati.
-Alpine offre `su-exec` come pacchetto piccolo e diretto, quindi non serve gosu.
+Completa entrypoint.sh: il processo iniziale corregge la proprietà del mount,
+poi usa exec su-exec per cedere all'applicazione con UID/GID non privilegiati.
+Alpine offre su-exec come pacchetto piccolo e diretto, quindi non serve gosu.
 
 ## Criteri di "fatto"
 
@@ -94,7 +94,7 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
   WROTE).
 - **OK 3** — nessuna traduzione: il file creato dal container è di proprietà, sull'
   host, dello stesso UID con cui girava il container.
-- **OK 4** — l'entrypoint corregge la proprietà e l'app avviata con `su-exec`
+- **OK 4** — l'entrypoint corregge la proprietà e l'app avviata con su-exec
   crea un file appartenente all'UID dell'host.
 
 ## Domande di riflessione

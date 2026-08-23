@@ -67,7 +67,7 @@ Once the four TODOs are filled, run the test:
 ### Phase 4 — The dangerous key (24.3 — TODO 4)
 
 Try mounting a tmpfs exclusively inside a throwaway container: without
-CAP_SYS_ADMIN it fails. Repeat with `--privileged`, observe success and unmount
+CAP_SYS_ADMIN it fails. Repeat with --privileged, observe success and unmount
 immediately; no host path is involved.
 
 ## "Done" criteria
@@ -75,7 +75,7 @@ immediately; no host path is involved.
 - icapabilities.sh tries the ping with the default capabilities (TODO 1).
 - It retries it with --cap-drop ALL (TODO 2).
 - It retries it with --cap-drop ALL --cap-add NET_RAW (TODO 3).
-- It compares the normal internal mount and `--privileged` (TODO 4).
+- It compares the normal internal mount and --privileged (TODO 4).
 - run.sh prints OK 1..4 and ALL CHECKS PASSED.
 
 ## How it is verified
@@ -89,7 +89,7 @@ solution/run.sh runs the scenario and checks, point by point:
   given only the key it needs.
 
 - **OK 4** — the internal tmpfs mount fails normally and succeeds with
-  `--privileged`, showing how broad that bypass is.
+  --privileged, showing how broad that bypass is.
 
 ## Reflection questions
 

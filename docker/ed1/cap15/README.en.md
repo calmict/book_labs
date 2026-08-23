@@ -70,9 +70,9 @@ Once the four TODOs are filled, run the test:
 
 ### Phase 4 — Fix and yield (15.3 — TODO 4)
 
-Complete `entrypoint.sh`: the initial process fixes mount ownership, then uses
-`exec su-exec` to yield to the application under an unprivileged UID/GID. Alpine
-packages `su-exec` cleanly, so gosu is unnecessary here.
+Complete entrypoint.sh: the initial process fixes mount ownership, then uses
+exec su-exec to yield to the application under an unprivileged UID/GID. Alpine
+packages su-exec cleanly, so gosu is unnecessary here.
 
 ## "Done" criteria
 
@@ -93,7 +93,7 @@ solution/run.sh runs the scenario and checks, point by point:
 - **OK 3** — no translation: the file created by the container is owned, on the host,
   by the same UID the container ran as.
 - **OK 4** — the entrypoint fixes ownership and the application started through
-  `su-exec` creates a file owned by the host UID.
+  su-exec creates a file owned by the host UID.
 
 ## Reflection questions
 

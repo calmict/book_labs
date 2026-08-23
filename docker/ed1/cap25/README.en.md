@@ -64,7 +64,7 @@ Once the five TODOs are filled, run the test:
 ### Phase 4 — Rotation and limit (25.2, 25.3 — TODO 4, TODO 5)
 
 Compare two identical chatty workloads: without options the file grows beyond
-50 kB; with `max-size=10k,max-file=2` it remains below 50 kB. Also set 64 MiB
+50 kB; with max-size=10k,max-file=2 it remains below 50 kB. Also set 64 MiB
 of memory and link docker stats' LIMIT field to the configured 67,108,864 bytes.
 
 ## "Done" criteria

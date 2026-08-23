@@ -16,8 +16,8 @@
 
 **TODO 4 (15.3) — fix ownership, then drop privileges:**
 
-The Alpine-based entrypoint runs `chown "$TARGET_UID:$TARGET_GID" /data`, then
-`exec su-exec "$TARGET_UID:$TARGET_GID" "$@"`. `su-exec` is cleanly packaged
+The Alpine-based entrypoint runs chown "$TARGET_UID:$TARGET_GID" /data, then
+exec su-exec "$TARGET_UID:$TARGET_GID" "$@". su-exec is cleanly packaged
 for this base and replaces the setup process without adding a wrapper.
 
 ## Reflection questions

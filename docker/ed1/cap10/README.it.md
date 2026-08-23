@@ -77,7 +77,7 @@ Quando i quattro TODO sono colmati, esegui il test:
 
 ### Fase 5 — Misurare SIGTERM (10.1 — TODO 4)
 
-Completa `Dockerfile.shell` e `Dockerfile.exec` con due CMD che differiscono solo
+Completa Dockerfile.shell e Dockerfile.exec con due CMD che differiscono solo
 per la forma. Il test arresta entrambi con due secondi di timeout: la shell non
 inoltra SIGTERM e consuma il timeout, mentre l'app in forma exec termina subito.
 
@@ -99,7 +99,7 @@ solution/run.sh costruisce l'immagine e verifica, punto per punto:
   avviando con «foo bar», args = foo bar e il comandante resta entry.sh.
 - **OK 3** — forma exec: lo script è PID 1 (self_pid = 1), quindi riceve i segnali
   in prima persona (capitolo 7), senza una shell che lo avvolge.
-- **OK 4** — con `docker stop -t 2` la forma shell consuma circa il timeout,
+- **OK 4** — con docker stop -t 2 la forma shell consuma circa il timeout,
   mentre la forma exec consegna SIGTERM all'app e termina quasi subito.
 
 ## Domande di riflessione

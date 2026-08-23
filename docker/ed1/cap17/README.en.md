@@ -71,8 +71,8 @@ Once the four TODOs are filled, run the test:
 
 ### Phase 4 — The right port (17.4 — TODO 4)
 
-Publish two services on free ports selected by Docker: one on `127.0.0.1`, one
-on `0.0.0.0`. Check through loopback and the host's real IP that only the latter
+Publish two services on free ports selected by Docker: one on 127.0.0.1, one
+on 0.0.0.0. Check through loopback and the host's real IP that only the latter
 is exposed on the interface, without privileged iptables access.
 
 ## "Done" criteria

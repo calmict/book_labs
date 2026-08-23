@@ -16,7 +16,7 @@
 
 **TODO 4/5 (25.2, 25.3) — rotation and memory LIMIT:**
 
-Run identical chatty containers, setting `max-size=10k,max-file=2` only on one,
+Run identical chatty containers, setting max-size=10k,max-file=2 only on one,
 and measure their daemon-managed json files through a read-only helper mount.
 Then set 64 MiB and compare stats' displayed LIMIT with HostConfig.Memory
 (67,108,864 bytes), allowing Docker's display-unit rounding.

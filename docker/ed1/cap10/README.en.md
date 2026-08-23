@@ -77,7 +77,7 @@ Once the four TODOs are filled, run the test:
 
 ### Phase 5 — Measuring SIGTERM (10.1 — TODO 4)
 
-Complete `Dockerfile.shell` and `Dockerfile.exec` with two CMD instructions that
+Complete Dockerfile.shell and Dockerfile.exec with two CMD instructions that
 differ only in form. The test stops both with a two-second timeout: the shell
 does not forward SIGTERM and consumes it, while the exec-form app exits at once.
 
@@ -99,7 +99,7 @@ solution/run.sh builds the image and checks, point by point:
   "foo bar", args = foo bar and the captain is still entry.sh.
 - **OK 3** — exec form: the script is PID 1 (self_pid = 1), so it receives signals
   first-hand (chapter 7), with no shell wrapping it.
-- **OK 4** — with `docker stop -t 2`, shell form consumes approximately the
+- **OK 4** — with docker stop -t 2, shell form consumes approximately the
   timeout while exec form delivers SIGTERM to the app and stops almost at once.
 
 ## Reflection questions

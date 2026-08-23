@@ -92,7 +92,7 @@ solution/run.sh builds the image and checks, point by point:
   stage's files (deps.txt, the dependency artifact): it is light and clean.
 - **OK 3** — strategic cache: changing only the source and rebuilding, the
   dependency-install step stays CACHED, while the source is rebuilt.
-- **OK 4** — `docker image inspect` measures the final size and checks it is
+- **OK 4** — docker image inspect measures the final size and checks it is
   below 3 MiB (the actual image is approximately 2.23 MB).
 
 ## Reflection questions

@@ -25,8 +25,8 @@
 
 **TODO 4 (8.3) — move a tag without changing content-addressed identity:**
 
-Build two different images as `"$TAG-same:latest"`, save `first_id` before the
-second build, and verify with `docker image inspect "$first_id"` that the saved
+Build two different images as "$TAG-same:latest", save first_id before the
+second build, and verify with docker image inspect "$first_id" that the saved
 sha256 identity still selects the original image after the tag has moved.
 
 ## Reflection questions

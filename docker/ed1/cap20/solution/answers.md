@@ -29,9 +29,9 @@ The complete compose.yaml:
 
 **TODO 4/5 (20.5) — profiles and development override:**
 
-The `debug` service declares `profiles: [debug]`. The base web environment is
-`production`; `compose.override.yaml`, loaded automatically, changes it to
-`development` without modifying the base topology.
+The debug service declares profiles: [debug]. The base web environment is
+production; compose.override.yaml, loaded automatically, changes it to
+development without modifying the base topology.
 
 ## Reflection questions
 

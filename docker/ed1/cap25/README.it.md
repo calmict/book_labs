@@ -64,8 +64,8 @@ Quando i cinque TODO sono colmati, esegui il test:
 ### Fase 4 — Rotazione e limite (25.2, 25.3 — TODO 4, TODO 5)
 
 Confronta due workload chiacchieroni identici: senza opzioni il file cresce oltre
-50 kB; con `max-size=10k,max-file=2` resta sotto 50 kB. Imposta inoltre 64 MiB
-di memoria e collega il campo LIMIT di `docker stats` ai 67.108.864 byte configurati.
+50 kB; con max-size=10k,max-file=2 resta sotto 50 kB. Imposta inoltre 64 MiB
+di memoria e collega il campo LIMIT di docker stats ai 67.108.864 byte configurati.
 
 ## Criteri di "fatto"
 
