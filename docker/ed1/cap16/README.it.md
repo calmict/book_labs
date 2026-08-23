@@ -9,8 +9,9 @@ kernel Linux. Ogni container riceve il proprio network namespace — uno stack d
 rete tutto suo, con le sue interfacce, il suo IP, la sua tabella di routing — e
 viene collegato al mondo da un cavo virtuale, la veth pair: un'estremità dentro il
 container (eth0), l'altra sull'host, attaccata alla centralina condivisa, il bridge
-docker0. In questo laboratorio lo verifichi con mano: due container, due stack, due
-indirizzi, ciascuno col suo cavo.
+docker0. In questo laboratorio prima lo osservi su due container reali, poi lo
+ricostruisci a mano in un ambiente isolato e aggiungi il NAT verso una rete esterna
+simulata.
 
 ## Obiettivi
 
@@ -21,12 +22,18 @@ indirizzi, ciascuno col suo cavo.
 - Capire che eth0 è un'estremità di una veth pair: il suo peer sta dall'altra parte,
   sull'host (16.2).
 - Collegare il tutto al bridge docker0 come centralina condivisa (16.3).
+- Costruire namespace, veth e bridge a mano senza privilegi reali.
+- Applicare una regola MASQUERADE e provarla con traffico end-to-end verso una rete
+  esterna simulata.
+- Confrontare la topologia costruita con quella del bridge Docker reale, in sola
+  lettura.
 
 ## Prerequisiti
 
 - Un Linux con Docker Engine attivo (vedi SETUP.md). Il tuo utente deve poter usare
   Docker.
 - Il capitolo 2 (i namespace): qui incontri quello di rete, il network namespace.
+- I comandi unshare, ip, bridge, iptables, ping, sysctl, mount e umount.
 
 ## Lo scenario
 
@@ -35,6 +42,11 @@ stack di rete — namespace, indirizzo, cavo — ma le tre letture chiave mancan
 tre lacune (TODO 1..3). I due container girano contemporaneamente (così ciascuno
 tiene il suo indirizzo) e sono rimossi alla fine; si usa il bridge di default, senza
 crearne o toccarne altri; il demone non si tocca.
+
+In start/ trovi anche ilcablaggio.sh. I TODO 4..6 ricostruiscono il percorso completo
+in un user e network namespace effimero: nessuna interfaccia o regola viene creata
+nella rete reale dell'host. La rete esterna è simulata localmente, perciò la prova
+non dipende dall'accesso a Internet del lettore.
 
 Prepara l'ambiente:
 
@@ -66,7 +78,29 @@ cavo sta in un'altra rete — sull'host, attaccata a docker0.
     c1_ifindex=$(docker exec "$C1" cat /sys/class/net/eth0/ifindex)
     c1_iflink=$(docker exec "$C1" cat /sys/class/net/eth0/iflink)
 
-Quando i tre TODO sono colmati, esegui il test:
+### Fase 4 — Cablaggio manuale (16.1+16.2 — TODO 4)
+
+In start/ilcablaggio.sh crea il namespace contenitore, il bridge br-cap16 e una
+coppia veth. Sposta un capo nel namespace, rinominalo eth0, assegna 10.16.0.2/24 e
+collega l'altro capo al bridge con indirizzo 10.16.0.1/24. Porta su interfacce e
+loopback e aggiungi la route predefinita del contenitore.
+
+### Fase 5 — Un mondo esterno controllato (16.3 — TODO 5)
+
+Crea un secondo namespace collegato al router isolato sulla subnet 192.0.2.0/24.
+Abilita l'inoltro IPv4 solo dentro l'ambiente effimero e aggiungi una regola
+POSTROUTING MASQUERADE limitata alla sorgente 10.16.0.0/24 e all'interfaccia esterna.
+Non usare Internet e non scrivere regole sull'host reale.
+
+### Fase 6 — Prova e confronto (TODO 6)
+
+Invia un ping da 10.16.0.2 a 192.0.2.2. Registra l'appartenenza della veth al bridge
+e il contatore della regola MASQUERADE dopo il traffico: deve essere maggiore di
+zero. Il test osserva inoltre docker0 e bridge link sull'host in sola lettura per
+confrontare bridge, veth e subnet privata; non prova a leggere le regole iptables
+di Docker, che richiederebbero privilegi reali.
+
+Quando i sei TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -76,7 +110,10 @@ Quando i tre TODO sono colmati, esegui il test:
 - irete.sh legge il network namespace del container (TODO 1).
 - Legge l'IP di eth0 di entrambi i container (TODO 2).
 - Legge gli indici della veth (ifindex e iflink) (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- ilcablaggio.sh costruisce namespace, veth e bridge dentro unshare -Urnm (TODO 4).
+- Il traffico raggiunge la rete esterna simulata attraverso MASQUERADE (TODO 5).
+- La struttura viene confrontata con docker0 senza modificare la rete reale (TODO 6).
+- run.sh stampa OK 1..6 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -88,6 +125,12 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
   ciascuno il suo stack.
 - **OK 3** — veth pair: l'indice locale di eth0 e quello del peer differiscono —
   eth0 è un'estremità di un cavo la cui altra estremità sta sull'host.
+- **OK 4** — cablaggio manuale: eth0 del namespace è collegata tramite veth al
+  bridge privato br-cap16.
+- **OK 5** — NAT end-to-end: il ping raggiunge il namespace esterno e incrementa il
+  contatore della regola MASQUERADE realmente attraversata.
+- **OK 6** — confronto Docker: docker0 è visibile in sola lettura e presenta lo
+  stesso modello concettuale di bridge, veth e subnet privata.
 
 ## Domande di riflessione
 
@@ -109,9 +152,10 @@ masquerade) con l'indirizzo dell'host. In che modo questo prepara i capitoli 17
 ## Pulizia
 
 Niente da smontare a mano: i due container sono rimossi dallo script (docker rm -f,
-più un trap di sicurezza) a fine esecuzione; si usa solo il bridge di default, mai
-creato né rimosso. L'immagine base busybox resta in cache. Il demone non viene mai
-riavviato.
+più un trap di sicurezza). Il secondo script elimina esplicitamente namespace,
+bridge, veth e mount temporaneo con un trap; l'intero cablaggio vive comunque in un
+user, mount e network namespace effimero. docker0 viene soltanto osservato. L'immagine
+base busybox resta in cache e il demone non viene mai riavviato.
 
 ## Dove porta
 

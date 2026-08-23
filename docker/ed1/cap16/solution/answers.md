@@ -16,6 +16,37 @@
     c1_ifindex=$(docker exec "$C1" cat /sys/class/net/eth0/ifindex)
     c1_iflink=$(docker exec "$C1" cat /sys/class/net/eth0/iflink)
 
+**TODO 4 (16.1+16.2) — the hand-built cable and bridge:**
+
+The solution enters an unprivileged user, mount and network namespace, creates the
+container network namespace and joins its eth0 to br-cap16 with a veth pair. The
+bridge is the gateway for the private 10.16.0.0/24 subnet:
+
+    ip netns add "$NS_CONTAINER"
+    ip link add "$BRIDGE" type bridge
+    ip addr add 10.16.0.1/24 dev "$BRIDGE"
+    ip link add "$VETH_BRIDGE" type veth peer name "$VETH_CONTAINER"
+    ip link set "$VETH_BRIDGE" master "$BRIDGE"
+    ip link set "$VETH_CONTAINER" netns "$NS_CONTAINER"
+    ip -n "$NS_CONTAINER" link set "$VETH_CONTAINER" name eth0
+    ip -n "$NS_CONTAINER" addr add 10.16.0.2/24 dev eth0
+
+**TODO 5 (16.3) — the simulated outside and NAT:**
+
+The second namespace represents a different, external subnet. Forwarding and the
+MASQUERADE rule exist only in the throwaway network namespace:
+
+    sysctl -q -w net.ipv4.ip_forward=1
+    iptables -t nat -A POSTROUTING -s 10.16.0.0/24 -o "$VETH_EXTERNAL" -j MASQUERADE
+
+**TODO 6 — proof and comparison:**
+
+A ping from the container to 192.0.2.2 must succeed. The solution then reads the
+POSTROUTING packet counter and requires it to be greater than zero: the rule was not
+merely present, it processed real traffic. run.sh reads ip addr show docker0 and
+bridge link on the host only to compare the topology. It deliberately does not read
+Docker's host iptables rules, because an unprivileged user cannot do so.
+
 ## Reflection questions
 
 **a. Why does the container's eth0 not appear on the host, and what does the

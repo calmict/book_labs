@@ -9,8 +9,8 @@ kernel building blocks. Every container gets its own network namespace — a net
 stack all of its own, with its interfaces, its IP, its routing table — and is joined
 to the world by a virtual cable, the veth pair: one end inside the container (eth0),
 the other on the host, attached to the shared switchboard, the docker0 bridge. In
-this lab you verify it first-hand: two containers, two stacks, two addresses, each
-with its own cable.
+this lab you first inspect it on two real containers, then rebuild it by hand in an
+isolated environment and add NAT towards a simulated external network.
 
 ## Objectives
 
@@ -21,12 +21,17 @@ with its own cable.
 - Understand that eth0 is one end of a veth pair: its peer is on the other side, on
   the host (16.2).
 - Connect it all to the docker0 bridge as the shared switchboard (16.3).
+- Build namespaces, veth and a bridge by hand without real privileges.
+- Apply a MASQUERADE rule and prove it with end-to-end traffic to a simulated
+  external network.
+- Compare the hand-built topology with Docker's real bridge, read-only.
 
 ## Prerequisites
 
 - A Linux with Docker Engine running (see SETUP.md). Your user must be able to use
   Docker.
 - Chapter 2 (namespaces): here you meet the network one, the network namespace.
+- The unshare, ip, bridge, iptables, ping, sysctl, mount and umount commands.
 
 ## The scenario
 
@@ -35,6 +40,11 @@ their network stack — namespace, address, cable — but the three key reads ar
 missing. You fill three gaps (TODO 1..3). The two containers run at the same time (so
 each holds its own address) and are removed at the end; the default bridge is used,
 with none other created or touched; the daemon is not touched.
+
+You will also find ilcablaggio.sh in start/. TODO 4..6 rebuild the complete path in
+an ephemeral user and network namespace: no interface or rule is created in the
+host's real network. The external network is simulated locally, so the proof does
+not depend on the reader's Internet access.
 
 Prepare the environment:
 
@@ -67,7 +77,29 @@ network — on the host, attached to docker0.
     c1_ifindex=$(docker exec "$C1" cat /sys/class/net/eth0/ifindex)
     c1_iflink=$(docker exec "$C1" cat /sys/class/net/eth0/iflink)
 
-Once the three TODOs are filled, run the test:
+### Phase 4 — Hand-built wiring (16.1+16.2 — TODO 4)
+
+In start/ilcablaggio.sh create the container namespace, the br-cap16 bridge and a
+veth pair. Move one end into the namespace, rename it eth0, assign 10.16.0.2/24 and
+attach the other end to the bridge at 10.16.0.1/24. Bring interfaces and loopback up
+and add the container's default route.
+
+### Phase 5 — A controlled outside world (16.3 — TODO 5)
+
+Create a second namespace connected to the isolated router on 192.0.2.0/24. Enable
+IPv4 forwarding only inside the ephemeral environment and add a POSTROUTING
+MASQUERADE rule scoped to source 10.16.0.0/24 and the external interface. Do not use
+the Internet or write rules on the real host.
+
+### Phase 6 — Proof and comparison (TODO 6)
+
+Send one ping from 10.16.0.2 to 192.0.2.2. Record veth bridge membership and the
+MASQUERADE rule counter after the traffic: it must be greater than zero. The test
+also observes docker0 and bridge link on the host read-only to compare bridge, veth
+and private subnet; it does not try to read Docker's iptables rules, which would
+require real privileges.
+
+Once the six TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -77,7 +109,10 @@ Once the three TODOs are filled, run the test:
 - irete.sh reads the container's network namespace (TODO 1).
 - It reads the eth0 IP of both containers (TODO 2).
 - It reads the veth indices (ifindex and iflink) (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- ilcablaggio.sh builds namespaces, veth and a bridge inside unshare -Urnm (TODO 4).
+- Traffic reaches the simulated external network through MASQUERADE (TODO 5).
+- The structure is compared with docker0 without changing the real network (TODO 6).
+- run.sh prints OK 1..6 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -89,6 +124,12 @@ solution/run.sh runs the scenario and checks, point by point:
   each its own stack.
 - **OK 3** — veth pair: eth0's local index and its peer's index differ — eth0 is one
   end of a cable whose other end is on the host.
+- **OK 4** — hand-built wiring: the namespace's eth0 is connected by veth to the
+  private br-cap16 bridge.
+- **OK 5** — end-to-end NAT: the ping reaches the external namespace and increments
+  the counter of the MASQUERADE rule it actually crossed.
+- **OK 6** — Docker comparison: docker0 is visible read-only and presents the same
+  conceptual model of bridge, veth and private subnet.
 
 ## Reflection questions
 
@@ -110,8 +151,10 @@ bridges) and 18 (host, none and choosing the driver)?
 ## Cleanup
 
 Nothing to tear down by hand: the two containers are removed by the script (docker
-rm -f, plus a safety trap) at the end; only the default bridge is used, never created
-nor removed. The busybox base image stays in cache. The daemon is never restarted.
+rm -f, plus a safety trap). The second script explicitly removes namespaces, bridge,
+veth and its temporary mount with a trap; all wiring lives inside an ephemeral user,
+mount and network namespace anyway. docker0 is only observed. The busybox base image
+stays in cache and the daemon is never restarted.
 
 ## Where it leads
 
