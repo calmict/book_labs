@@ -1,0 +1,7 @@
+# cap09 start - compare cleanup in a later layer with cleanup in the same layer.
+FROM busybox AS layers-separate
+
+# TODO 4 (9.2): create an 8 MiB payload in one RUN and remove it in a later RUN.
+# Then define a second stage from busybox that creates and removes the same
+# payload in one concatenated RUN.
+

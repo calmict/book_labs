@@ -1,0 +1,7 @@
+# cap09 solution - the same payload, with separate and concatenated RUN steps.
+FROM busybox AS layers-separate
+RUN dd if=/dev/urandom of=/payload.bin bs=1M count=8
+RUN rm /payload.bin
+
+FROM busybox AS layers-joined
+RUN dd if=/dev/urandom of=/payload.bin bs=1M count=8 && rm /payload.bin

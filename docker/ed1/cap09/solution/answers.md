@@ -14,6 +14,33 @@
 
     CMD ["sh", "/app/greet.sh"]
 
+**TODO 4 (9.2) — separate cleanup from same-layer cleanup:**
+
+    FROM busybox AS layers-separate
+    RUN dd if=/dev/urandom of=/payload.bin bs=1M count=8
+    RUN rm /payload.bin
+
+    FROM busybox AS layers-joined
+    RUN dd if=/dev/urandom of=/payload.bin bs=1M count=8 && rm /payload.bin
+
+The separate variant still carries the 8 MiB payload in its lower layer. The
+later deletion adds a filesystem change but cannot rewrite that immutable layer.
+The concatenated variant removes the file before the RUN result is committed, so
+the payload does not become part of the resulting layer. docker image inspect
+makes the difference measurable without a network-dependent package install.
+
+**TODO 5 (9.4) — use an ARG without promoting it to ENV:**
+
+    ARG SECRET_TOKEN
+    RUN echo "$SECRET_TOKEN" > /dev/null
+
+ARG exists only while the image is built and is not automatically copied into a
+container's environment. However, using its value in RUN records enough build
+metadata for docker history --no-trunc to reveal it. ARG is therefore not a safe
+way to pass a password or token. ENV has the opposite runtime behavior:
+GREETING=ciao is stored in the image config and is present in containers created
+from that image.
+
 ## Reflection questions
 
 **a. Why order rarely-changing instructions before often-changing ones?**

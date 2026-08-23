@@ -1,0 +1,5 @@
+# cap09 solution - ARG is used during build and is not promoted to ENV.
+FROM busybox
+ARG SECRET_TOKEN
+RUN echo "$SECRET_TOKEN" > /dev/null
+CMD ["env"]

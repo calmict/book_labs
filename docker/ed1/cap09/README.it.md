@@ -19,6 +19,10 @@ impostata, il comando di default che parte da solo.
   (9.4).
 - Dichiarare il comando di default con CMD, e vedere che parte quando avvii il
   container senza argomenti (9.5).
+- Confrontare il peso prodotto da RUN separati con quello di un RUN concatenato
+  che elimina i dati nello stesso layer (9.2).
+- Verificare che ARG sia build-time, non arrivi nell'ambiente runtime, ma che il
+  valore usato durante la build resti leggibile nella history (9.4).
 
 ## Prerequisiti
 
@@ -33,8 +37,9 @@ In start/ trovi un Dockerfile incompleto e greet.sh, una piccola app che stampa 
 saluto letto da una variabile d'ambiente. Il Dockerfile parte da busybox, fissa
 WORKDIR /app e crea un file con RUN, ma non imbarca l'app, non imposta il saluto e
 non ha un comando di default. Colmi tre lacune (TODO 1..3) perché l'immagine sia
-completa. Immagine usa-e-getta, nessun privilegio, il demone condiviso non si
-tocca.
+completa. Due Dockerfile dedicati estendono poi il laboratorio con TODO 4 e TODO
+5: il peso dei layer RUN e il confine tra ARG ed ENV. Immagini usa-e-getta,
+nessun privilegio, il demone condiviso non si tocca.
 
 Prepara l'ambiente:
 
@@ -71,7 +76,23 @@ CMD non esegue nulla ora: è solo metadato, il comando che partirà a runtime.
 
     CMD ["sh", "/app/greet.sh"]
 
-Quando i tre TODO sono colmati, esegui il test:
+### Fase 5 — Cleanup e peso dei layer RUN (9.2 — TODO 4)
+
+Apri start/Dockerfile.layers. Nel primo stage crea con dd un file da 8 MiB in
+una RUN e cancellalo in una RUN successiva. Nel secondo stage, che riparte dalla
+stessa immagine base, crea e cancella lo stesso file in una sola RUN concatenata.
+La cancellazione successiva nasconde il file, ma non lo rimuove dal layer che lo
+ha introdotto; nello stesso layer, invece, il file non entra nel risultato.
+
+### Fase 6 — ARG nella history (9.4 — TODO 5)
+
+Apri start/Dockerfile.arg. Dichiara ARG SECRET_TOKEN e usalo in una RUN, senza
+trasformarlo in ENV. Il test passa un valore con --build-arg, lo cerca con docker
+history --no-trunc e verifica che docker run con env non esponga SECRET_TOKEN.
+Confronta questo risultato con GREETING, che essendo ENV resta disponibile a
+runtime.
+
+Quando i cinque TODO sono colmati, esegui il test dalla copia completa:
 
     cd ../solution
     ./run.sh
@@ -81,7 +102,11 @@ Quando i tre TODO sono colmati, esegui il test:
 - Il Dockerfile copia greet.sh nella WORKDIR (TODO 1).
 - Imposta la variabile d'ambiente GREETING (TODO 2).
 - Dichiara il comando di default con CMD (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Le due varianti RUN producono immagini con una differenza di peso misurabile
+  (TODO 4).
+- Il valore di ARG è leggibile nella history ma non compare nell'ambiente
+  runtime, mentre GREETING impostata con ENV compare (TODO 5).
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -92,6 +117,11 @@ solution/run.sh costruisce l'immagine e verifica, punto per punto:
 - **OK 2** — ENV: la config dell'immagine contiene GREETING=ciao.
 - **OK 3** — CMD: avviando il container senza argomenti, il comando di default
   esegue greet.sh e stampa «ciao mondo», usando la variabile impostata.
+- **OK 4** — RUN e layer: confronta con docker image inspect le dimensioni delle
+  immagini con cleanup separato e concatenato; la differenza deve essere almeno
+  il 75% del file da 8 MiB.
+- **OK 5** — ARG ed ENV: docker history --no-trunc espone il valore passato con
+  --build-arg, SECRET_TOKEN non appare nell'ambiente runtime e GREETING sì.
 
 ## Domande di riflessione
 
@@ -111,10 +141,10 @@ WORKDIR è preferibile a un «cd» dentro una RUN?
 
 ## Pulizia
 
-Niente da smontare a mano: l'immagine di prova è rimossa dallo script (docker rmi,
-più un trap di sicurezza) a fine esecuzione; il test lavora nel proprio contesto e
-non lascia container. L'immagine base busybox resta in cache (condivisa). Il
-demone non viene mai riavviato.
+Niente da smontare a mano: le immagini di prova sono rimosse dallo script (docker
+rmi, più un trap di sicurezza) a fine esecuzione; il test usa tag unici basati sul
+PID, lavora nel proprio contesto e non lascia container. L'immagine base busybox
+resta in cache (condivisa). Il demone non viene mai riavviato.
 
 ## Dove porta
 

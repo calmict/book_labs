@@ -1,0 +1,7 @@
+# cap09 start - demonstrate that ARG is build-time data, not a secret channel.
+FROM busybox
+
+# TODO 5 (9.4): declare SECRET_TOKEN as an ARG and use it in a RUN instruction.
+
+CMD ["env"]
+
