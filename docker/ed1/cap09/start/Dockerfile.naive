@@ -1,0 +1,9 @@
+# cap09 - the naive counterpart, given complete: it is the term of comparison,
+# not an exercise. It does the same work as TODO 1 of the main Dockerfile, but in
+# TWO RUN instructions instead of one. The payload is created in one layer and
+# deleted in the next, so the image still carries its weight: a layer can add,
+# never subtract from the one below it (chapter 8).
+FROM busybox
+WORKDIR /app
+RUN dd if=/dev/urandom of=/tmp/payload.bin bs=1M count=8 2>/dev/null
+RUN rm -f /tmp/payload.bin

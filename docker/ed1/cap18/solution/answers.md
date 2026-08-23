@@ -16,6 +16,48 @@
     bridge_ns=$(docker run --rm busybox readlink /proc/self/ns/net)
     bridge_eth0=$(docker run --rm busybox sh -c '[ -e /sys/class/net/eth0 ] && echo yes || echo no')
 
+**TODO 4 (18.1) — the port that host mode throws away:**
+
+    hostmode_cid=$(docker run -d --network host -p "$PORT:80" busybox sleep 15 2>/dev/null)
+    hostmode_ports=$(docker port "$hostmode_cid" | tr '\n' ' ')
+    docker rm -f "$hostmode_cid" >/dev/null 2>&1
+
+docker port prints nothing. Publishing means writing a DNAT rule from a host port to
+a container port; in host mode the container is already on the host's stack, there is
+no boundary and therefore no rule to write. Docker accepts the flag and discards it,
+which is why the mistake is easy to make: nothing fails, the service is simply
+reachable on whatever port it actually binds, not on the one you asked for.
+
+**TODO 5 (18.1) — two containers, one port:**
+
+    first_cid=$(docker run -d --network host busybox nc -l -p "$PORT")
+    sleep 1
+    first_state=$(docker inspect -f '{{.State.Running}}' "$first_cid")
+    second_cid=$(docker run -d --network host busybox nc -l -p "$PORT")
+    sleep 1
+    second_state=$(docker inspect -f '{{.State.Running}}' "$second_cid")
+    second_log=$(docker logs "$second_cid" 2>&1 | tr -d '\n')
+    docker rm -f "$first_cid" "$second_cid" >/dev/null 2>&1
+
+The second container dies with "nc: bind: Address already in use". On a bridge the
+two would coexist happily, each with its own port 80 inside its own stack, and NAT
+would give them different ports outside. Host mode removes that separation: the port
+space is the machine's, and two services that want the same number cannot both run.
+It is the price of the speed - no NAT to cross also means no NAT to hide behind.
+
+**TODO 6 (18.4) — the name that does not resolve:**
+
+    docker run -d --name "$PROBE" busybox sleep 15 >/dev/null
+    dns=$(docker run --rm busybox sh -c "ping -c1 -W1 $PROBE >/dev/null 2>&1 && echo RESOLVED || echo FAILED")
+    cleanup_probe
+
+FAILED, and the reason is not a broken network: the containers can reach each other
+by IP perfectly well. Docker's embedded DNS resolver, which turns a container name
+into its address, is attached to user-defined networks only; the default bridge never
+had it. The diagnosis to remember is the shape of the failure - a name that does not
+resolve while the address works is almost always the default bridge, and the cure is
+a user-defined network (chapter 17), not a DNS setting.
+
 ## Reflection questions
 
 **a. Benefits and risks of the host driver, and when to use it.**

@@ -1,0 +1,7 @@
+# cap15 - soluzione 1 (15.2): l'identita' e' dichiarata nell'immagine. USER fissa
+# l'UID con cui parte ogni container che ne nasce, senza bisogno di --user al
+# lancio. L'UID e' un parametro di build perche' deve coincidere con quello di
+# chi possiede la cartella sull'host: al kernel importano i numeri (15.1).
+FROM busybox
+ARG APP_UID=12345
+USER ${APP_UID}
