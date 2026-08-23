@@ -28,28 +28,16 @@ changes, only the orders (the arguments) do. This is why an "executable" image
 usually pairs ENTRYPOINT (the tool) with CMD (a sensible default argument), and why
 --entrypoint exists for the rare case you must replace the captain itself.
 
-**b. What really tells the slow case apart, and why does PID 1 survive SIGTERM?**
+**b. Why does exec form make your process PID 1, while shell form does not?**
 
-Phase 5 measures it instead of assuming it. In exec form Docker execs your program
-directly: the script is PID 1, its SIGTERM handler runs, the container is gone in
-about a second with exit code 0. In shell form Docker runs /bin/sh -c "..." — but
-what happens next depends on what the shell was given. With something after the
-script (CMD /entry.sh serve; echo stopped) the shell must stay to run the rest, so
-it keeps PID 1 and the script runs beside it as PID 7: docker stop signals PID 1,
-the shell has no handler for it, nothing is forwarded, the grace period expires and
-the container is killed — exit 137. With the script as the shell's only command
-(CMD /entry.sh serve) busybox's shell does not wait around: it replaces itself with
-the script, PID 1 is the script again, and the shutdown is prompt once more. So the
-form of the CMD is not the cause; a shell left in the middle is. Exec form is worth
-preferring because it removes the question altogether, not because shell form is
-slow by nature.
-
-The second half of the question is the reason the slow case is so slow. The kernel
-gives PID 1 no default action for signals: a normal process with no handler for
-SIGTERM is terminated by the kernel, but PID 1 with no handler simply ignores it.
-That is why the wrapping shell neither dies nor forwards, and why the only way out
-is SIGKILL when the grace period ends (chapter 7). Exec form, plus a real init when
-you need one (--init, chapter 7), is how you avoid that.
+In exec form (ENTRYPOINT ["/entry.sh"]) Docker execs your program directly, so it
+is the container's PID 1. In shell form (ENTRYPOINT /entry.sh) Docker runs
+/bin/sh -c "/entry.sh": now the shell is PID 1 and your program runs under it. This
+matters because of chapter 7: docker stop sends SIGTERM to PID 1. If PID 1 is your
+app (exec form), it receives the signal and can shut down cleanly; if PID 1 is a
+shell that does not forward signals, your app never hears SIGTERM, the grace period
+elapses, and the container is SIGKILLed after "ten seconds" (exit 137). Exec form,
+plus a real init when you need one (--init, chapter 7), is how you avoid that.
 
 **c. When CMD alone, ENTRYPOINT alone, or both?**
 

@@ -1,6 +1,0 @@
-# cap15 - soluzione 2 (15.3): l'entrypoint che sistema e cede. L'immagine parte
-# come root - le serve, per poter fare chown - e affida tutto a uno script che
-# lascia i privilegi prima di eseguire il comando.
-FROM busybox
-COPY fixperms.sh /fixperms.sh
-ENTRYPOINT ["/fixperms.sh"]

@@ -1,9 +1,0 @@
-# cap10 - shell form, the shell that stays. Given complete: it is a term of
-# comparison, not an exercise. The CMD is not a JSON array, so Docker wraps it in
-# /bin/sh -c "..." - and because something follows the script, the shell cannot
-# step aside: it stays as PID 1. SIGTERM reaches the shell, which has no handler
-# for it, and PID 1 ignores signals it has no handler for: the grace period
-# expires and the container is killed (chapter 7).
-FROM busybox
-COPY entry.sh /entry.sh
-CMD /entry.sh serve; echo stopped

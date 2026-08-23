@@ -10,57 +10,9 @@
 
     match=$(docker run --rm --user "$HOST_UID" -v "$HOSTDIR:/data" busybox sh -c 'touch /data/ok 2>/dev/null && echo WROTE || echo DENIED')
 
-**TODO 3 (15.1) — the UID crosses the boundary unchanged:**
+**TODO 3 (15.4) — the UID crosses the boundary unchanged:**
 
     owner_uid=$(stat -c '%u' "$HOSTDIR/ok" 2>/dev/null || echo NONE)
-
-**TODO 4 (15.1) — the root problem, reproduced:**
-
-    ROOTDIR="$HOSTDIR/state"
-    docker run --rm -v "$HOSTDIR:/data" busybox sh -c 'mkdir -p /data/state && echo seed > /data/state/f'
-    root_owner=$(stat -c '%u' "$ROOTDIR/f")
-    rm -rf "$ROOTDIR" 2>/dev/null && host_cleanup=REMOVED || host_cleanup=DENIED
-
-The tree belongs to UID 0, and the removal is DENIED. Note where the refusal comes
-from: deleting a file requires write permission on the folder that contains it, not
-on the file. The file alone, sitting in a folder of yours, you could still delete —
-what locks you out is the folder root created inside the mount.
-
-**TODO 5 (15.2) — cure 1: the identity declared in the image:**
-
-    docker build -q -t "$IMG_USER" --build-arg "APP_UID=$HOST_UID" -f "$HERE/Dockerfile.user" "$HERE" >/dev/null
-    user_write=$(docker run --rm -v "$HOSTDIR:/data" "$IMG_USER" sh -c 'touch /data/by-user 2>/dev/null && echo WROTE || echo DENIED')
-    user_owner=$(stat -c '%u' "$HOSTDIR/by-user" 2>/dev/null || echo NONE)
-
-Same effect as --user, but the number travels with the image instead of with the
-command line: nobody can forget the flag. The price is that the UID is baked in at
-build time, so the image is tied to the host that owns the data — fine for an
-application image built for its deployment, awkward for an image passed around
-between machines whose users have different numbers.
-
-**TODO 6 (15.3) — cure 2: fix the ownership, then hand over:**
-
-    docker build -q -t "$IMG_ENTRY" -f "$HERE/Dockerfile.entrypoint" "$HERE" >/dev/null
-    entry_uid=$(docker run --rm -e "TARGET_UID=$HOST_UID" -v "$HOSTDIR:/data" "$IMG_ENTRY" 'id -u; echo done > /data/state/written' | head -1)
-    entry_owner=$(stat -c '%u' "$ROOTDIR/written" 2>/dev/null || echo NONE)
-    rm -rf "$ROOTDIR" 2>/dev/null && after_cure=REMOVED || after_cure=DENIED
-
-This is the pattern real images use: start as root because chown needs root, put the
-mount right, then stop being root for the whole life of the process. The handover is
-the important half. In fixperms.sh it is written
-
-    exec su app -c "$*"
-
-and the exec is what makes it a handover rather than a supervision: the shell is
-replaced by the command, which stays PID 1 and receives signals first-hand (chapter
-10). On a full base image the same line is written with gosu (Debian) or su-exec
-(Alpine), tools that exist precisely to do this without dragging in a login session;
-busybox's su already execs, so here it is enough.
-
-The lab stops at these two cures. The third solution of the chapter, userns-remap
-(15.4), is not reproduced: it is configured in the daemon and needs a restart of it,
-which this lab never does — the daemon is shared, and other containers are running on
-it.
 
 ## Reflection questions
 

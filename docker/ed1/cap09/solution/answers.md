@@ -2,36 +2,15 @@
 
 ## The completed TODOs
 
-**TODO 1 (9.2) — create and delete inside a single RUN, so the layer stays empty:**
-
-    RUN dd if=/dev/urandom of=/tmp/payload.bin bs=1M count=8 2>/dev/null && rm -f /tmp/payload.bin
-
-Dockerfile.naive does the same work in two instructions. There the payload is
-written into one layer and removed in the next, and since a layer can only add to
-the one below, the eight megabytes stay in the image forever: the file is invisible
-in the container, and fully paid for on disk and on every pull. Written as one RUN,
-the layer that produced and removed it weighs 0 B.
-
-**TODO 2 (9.3) — load the app from the build context:**
+**TODO 1 (9.3) — load the app from the build context:**
 
     COPY greet.sh /app/greet.sh
 
-**TODO 3 (9.4) — the build-time parameter stamped into the build file:**
-
-    ARG BUILD_TOKEN=changeme
-
-Passed at build with --build-arg. It is not an environment variable of the
-container: run env inside the container and it is not there. But docker history
-shows it twice — in the ARG instruction and in the RUN that used it — so a secret
-passed this way is readable by anyone who has the image, and no later instruction
-can take it back. Build secrets have a dedicated BuildKit mechanism instead
-(chapter 11).
-
-**TODO 4 (9.4) — the greeting as an environment variable:**
+**TODO 2 (9.4) — the greeting as an environment variable:**
 
     ENV GREETING=ciao
 
-**TODO 5 (9.5) — the default command run at startup:**
+**TODO 3 (9.5) — the default command run at startup:**
 
     CMD ["sh", "/app/greet.sh"]
 

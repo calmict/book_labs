@@ -9,23 +9,16 @@ and coordinating it by hand, command after command, is fragile and unrepeatable.
 In one file you declare the services, and Compose does the rest — it creates for you an
 application network where services find each other by name (like the custom bridge of
 chapter 17, but without writing it), respects dependencies, and starts or stops
-everything with one command. In this lab you translate three docker run into a single
-file: three services talking by name on a declared network, with a named volume for
-the state, a fourth service that stays out of the startup because it belongs to a
-profile, and an override file that changes web alone when you pass it.
+everything with one command. In this lab you design a two-service app and verify that
+they talk by name and start in the right order.
 
 ## Objectives
 
 - Describe a multi-service application in a single Compose file (20.1).
-- Define the services with an image and a command (20.2).
+- Define two services with an image and a command (20.2).
 - Declare a dependency between services with depends_on (20.3).
-- See that the services resolve by name on the application network (20.3).
-- Translate three docker run into one file: three services, a declared network and a
-  named volume instead of three separate commands (20.3).
-- Keep a service out of the default startup with profiles, and start it only when it
-  is needed (20.4).
-- Layer a development compose.override.yaml onto the base file, and see that it
-  changes only what it declares (20.4).
+- See that Compose gives the services an app network where they resolve by name
+  (20.4).
 
 ## Prerequisites
 
@@ -36,15 +29,10 @@ profile, and an override file that changes web alone when you pass it.
 
 ## The scenario
 
-In start/ you will find compose.yaml: it describes db and web, but with no command to
-keep them alive, no dependency, no network or volume, no third service and no
-profiled one — so the app does not stay up and half the file is missing. You fill six
-gaps (TODO 1..6).
-
-Next to it there is compose.override.yaml, already complete: it is not a separate
-application, it is the layer Compose merges onto the base file when you pass both.
-The Compose project has a unique name and is removed at the end (down, profiles
-included); the daemon is not touched nor restarted.
+In start/ you will find compose.yaml: it describes two services, db and web, but with
+no command to keep them alive and no dependency — so the app does not stay up. You fill
+three gaps (TODO 1..3). The Compose project has a unique name and is removed at the end
+(down); the daemon is not touched nor restarted.
 
 Prepare the environment:
 
@@ -66,71 +54,13 @@ start db first.
     depends_on:
       - db
 
-### Phase 3 — The network and the state, declared (20.3 — TODO 4)
+### Phase 3 — The app network (20.4)
 
-Complete **TODO 4**: declare the application network and the named volume, and put
-the services on them. Compose creates a network anyway, even if you do not write it:
-the difference is that by declaring it you decide what it is called and who is on it,
-instead of inheriting a default. The named volume is db's state, and it outlives the
-container (chapter 13).
+There is nothing to write: Compose automatically creates a network for the project and
+puts both services on it. There the embedded DNS resolves the service names, so web
+reaches db simply as "db" — never by IP.
 
-    networks:
-      - appnet
-    volumes:
-      - dbdata:/var/lib/db
-
-and, at the bottom of the file, the two declarations the services refer to:
-
-    networks:
-      appnet:
-
-    volumes:
-      dbdata:
-
-On that network the embedded DNS resolves the service names, so web reaches db simply
-as "db" — never by IP.
-
-### Phase 4 — The third service (20.3 — TODO 5)
-
-Complete **TODO 5**: add cache, the fleet's third ship. This is the point of the
-chapter: three separate docker run, with their own networks and their own names to
-remember, become three blocks inside the same sheet.
-
-    cache:
-      image: busybox
-      command: sleep 3600
-      networks:
-        - appnet
-
-### Phase 5 — The service that does not start (20.4 — TODO 6)
-
-Complete **TODO 6**: declare tools inside a profile. A service with profiles exists
-in the file but stays out of docker compose up: it starts only if you ask for it
-explicitly, with --profile tools. It is how you keep in the same sheet the things you
-rarely need — a debug service, a maintenance job — without having them started every
-time.
-
-    tools:
-      image: busybox
-      command: sleep 3600
-      networks:
-        - appnet
-      profiles:
-        - tools
-
-### Phase 6 — The development layer (20.4)
-
-Nothing to write here: compose.override.yaml is ready. It holds only what changes on
-your machine — one variable for web — and repeats nothing else. Compose merges it onto
-the base file service by service, but only if you pass it:
-
-    docker compose -f compose.yaml -f compose.override.yaml up -d web
-
-The test checks it both ways: with the base file alone the variable is not there,
-with the override on top it is. That is how you keep a single model of the
-application across environments, instead of two files drifting apart.
-
-Once the six TODOs are filled, run the test:
+Once the three TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -139,29 +69,17 @@ Once the six TODOs are filled, run the test:
 
 - compose.yaml defines db and web with a command that keeps them alive (TODO 1, 2).
 - It declares that web depends on db (TODO 3).
-- It declares the application network and the named volume, and puts the services on
-  them (TODO 4).
-- It adds the third service, cache (TODO 5).
-- It declares tools inside a profile, so it does not start by default (TODO 6).
-- run.sh prints OK 1..6 and ALL CHECKS PASSED.
+- run.sh prints OK 1..3 and ALL CHECKS PASSED.
 
 ## How it is verified
 
 solution/run.sh brings the application up and checks, point by point:
 
-- **OK 1** — the three services (db, web, cache) are running after docker compose up;
-  the fourth, the profiled one, is not.
-- **OK 2** — web reaches db by service name: the application network has the embedded
-  DNS.
+- **OK 1** — both services (db and web) are running after docker compose up.
+- **OK 2** — web reaches db by service name: the app network Compose created has the
+  embedded DNS.
 - **OK 3** — the file declares that web depends on db (the dependency graph), from a
   single declarative file.
-- **OK 4** — there is exactly one project network and all three services are on it;
-  the named volume exists, and db has it mounted at /var/lib/db.
-- **OK 5** — profiles: tools stays out of the default startup, and comes up only when
-  asked for with --profile tools.
-- **OK 6** — override: with compose.yaml alone the MODE variable does not exist; with
-  the override merged on top it is development. Only what the override declares
-  changes.
 
 ## Reflection questions
 
@@ -182,9 +100,8 @@ state and the orchestrator realises it?
 
 ## Cleanup
 
-Nothing to tear down by hand: run.sh closes the project with docker compose down -v,
-profiles included — removing the project's containers, network and named volume — with
-a safety trap. The volume belongs to the test project, not to you. The busybox
+Nothing to tear down by hand: run.sh closes the project with docker compose down
+(removing the project's containers and app network), with a safety trap. The busybox
 base image stays in cache. The daemon is never restarted.
 
 ## Where it leads

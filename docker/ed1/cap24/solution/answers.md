@@ -6,54 +6,13 @@
 
     default=$(docker run --rm busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
 
-**TODO 2 (24.1) — all dropped:**
+**TODO 2 (24.2) — all dropped:**
 
     dropall=$(docker run --rm --cap-drop ALL busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
 
-**TODO 3 (24.1) — only NET_RAW granted back:**
+**TODO 3 (24.2) — only NET_RAW granted back:**
 
     dropadd=$(docker run --rm --cap-drop ALL --cap-add NET_RAW busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
-
-**TODO 4 (24.1) — the same principle on a sharper key:**
-
-    mount_default=$(docker run --rm busybox sh -c 'mkdir -p /mnt/t; mount -t tmpfs none /mnt/t >/dev/null 2>&1 && echo MOUNTED || echo DENIED')
-    mount_added=$(docker run --rm --cap-add SYS_ADMIN busybox sh -c 'mkdir -p /mnt/t; mount -t tmpfs none /mnt/t >/dev/null 2>&1 && echo MOUNTED || echo DENIED')
-
-DENIED, then MOUNTED. The container was root in both runs: what changed is one
-capability. SYS_ADMIN is worth singling out because it is not one key among many - it
-guards mounting, and a good deal besides, to the point that granting it is often
-described as granting most of root back. When an image asks for it, the right question
-is what exactly it needs to mount, and whether the mount can be done outside the
-container instead.
-
-**TODO 5 (24.2) — seccomp is a separate barrier:**
-
-    seccomp_mode=$(docker run --rm busybox sh -c 'grep "^Seccomp:" /proc/self/status | tr -d "\t" | cut -d: -f2')
-    unshare_default=$(docker run --rm busybox sh -c 'unshare -U true >/dev/null 2>&1 && echo ALLOWED || echo BLOCKED')
-    unshare_unconfined=$(docker run --rm --security-opt seccomp=unconfined busybox sh -c 'unshare -U true >/dev/null 2>&1 && echo ALLOWED || echo BLOCKED')
-
-Mode 2 is what the kernel reports when a seccomp filter is loaded for the process, and
-Docker loads its default profile unless told otherwise. The measurement that matters is
-the pair that follows: the same image, the same capabilities, the same command - BLOCKED
-with the profile, ALLOWED without it. Nothing about root or about capabilities explains
-the difference, so the refusal can only come from the syscall filter. This is why the
-two mechanisms are worth keeping apart in your head: capabilities say what powers the
-process holds, seccomp says which system calls it may make at all, and a container can
-be stopped by either.
-
-**TODO 6 (24.4) — what --privileged really grants:**
-
-    caps_default=$(docker run --rm busybox sh -c 'grep "^CapEff:" /proc/self/status | tr -d "\t" | cut -d: -f2')
-    caps_privileged=$(docker run --rm --privileged busybox sh -c 'grep "^CapEff:" /proc/self/status | tr -d "\t" | cut -d: -f2')
-    mount_privileged=$(docker run --rm --privileged busybox sh -c 'mkdir -p /mnt/t; mount -t tmpfs none /mnt/t >/dev/null 2>&1 && echo MOUNTED || echo DENIED')
-
-The effective mask goes from a reduced value to every bit lit, and the mount that was
-denied in TODO 4 now succeeds with nothing asked for. That is the honest description of
-the flag: it does not "run the container as root" - the container was already root - it
-removes the restrictions that made root harmless. Read next to TODO 4, it makes the
-practical rule obvious: when something is refused, find the one capability that was
-missing and grant that, because reaching for --privileged also silently hands over
-everything you never meant to give.
 
 ## Reflection questions
 

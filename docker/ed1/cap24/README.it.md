@@ -11,22 +11,15 @@ sopra le capabilities ci sono altri due strati — seccomp, che filtra le syscal
 AppArmor o SELinux, che confinano cosa un processo può toccare. Difesa in profondità.
 In questo laboratorio tocchi le capabilities con mano: togli tutto, e la stessa
 operazione fallisce; ridai la chiave giusta, e riprende — senza restituire tutte le
-altre. Poi ripeti la prova su una chiave più affilata, quella che serve per montare
-un filesystem, verifichi che seccomp è una barriera a sé — rifiuta una syscall a
-parità di capabilities — e misuri che cosa cambia davvero con --privileged.
+altre.
 
 ## Obiettivi
 
 - Vedere che root non è monolitico: i suoi poteri sono capabilities separate (24.1).
 - Togliere tutte le capabilities con --cap-drop ALL e vedere un'operazione fallire
-  (24.1).
-- Ridare solo la capability necessaria con --cap-add: privilegio minimo (24.1).
-- Ripetere la prova su una capability pericolosa: montare un filesystem richiede
-  SYS_ADMIN, che nell'insieme di default non c'è (24.1).
-- Verificare che seccomp è una barriera indipendente: filtra le syscall a parità di
-  capabilities (24.2).
-- Misurare cosa concede davvero --privileged, leggendo l'insieme effettivo prima e
-  dopo (24.4).
+  (24.2).
+- Ridare solo la capability necessaria con --cap-add: privilegio minimo (24.2).
+- Inquadrare seccomp (24.3) e AppArmor/SELinux (24.4) come strati aggiuntivi.
 
 ## Prerequisiti
 
@@ -39,10 +32,8 @@ parità di capabilities — e misuri che cosa cambia davvero con --privileged.
 
 In start/ trovi icapabilities.sh: uno script che dovrebbe provare la stessa operazione
 (un ping, che richiede la capability NET_RAW) con tre insiemi di capabilities diversi,
-poi ripeterla su una capability più pericolosa, interrogare seccomp e leggere cosa fa
---privileged — ma le prove mancano. Colmi sei lacune (TODO 1..6). Container
-usa-e-getta (--rm); nessun percorso dell'host viene montato dentro di essi, il demone
-non si tocca.
+ma le tre prove mancano. Colmi tre lacune (TODO 1..3). Container usa-e-getta (--rm);
+il demone non si tocca.
 
 Prepara l'ambiente:
 
@@ -56,63 +47,21 @@ che serve per il socket raw del ping.
 
     default=$(docker run --rm busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
 
-### Fase 2 — Tolte tutte le chiavi (24.1 — TODO 2)
+### Fase 2 — Tolte tutte le chiavi (24.2 — TODO 2)
 
 Completa il **TODO 2**: rifai lo stesso ping ma con --cap-drop ALL. Il processo è
 ancora root, ma senza NET_RAW non può aprire il socket raw: fallisce.
 
     dropall=$(docker run --rm --cap-drop ALL busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
 
-### Fase 3 — Solo la chiave giusta (24.1 — TODO 3)
+### Fase 3 — Solo la chiave giusta (24.2 — TODO 3)
 
 Completa il **TODO 3**: togli tutto e ridai solo NET_RAW. Il ping riprende, ma il
 container ha esattamente una capability, non tutte — privilegio minimo.
 
     dropadd=$(docker run --rm --cap-drop ALL --cap-add NET_RAW busybox sh -c 'ping -c1 -w2 127.0.0.1 >/dev/null 2>&1 && echo OK || echo FAIL')
 
-### Fase 4 — Una chiave più affilata (24.1 — TODO 4)
-
-Completa il **TODO 4**: ripeti l'esercizio su un'operazione più pericolosa del ping.
-Montare un filesystem richiede SYS_ADMIN, che nell'insieme di default non c'è: il
-container è root e viene comunque respinto. Poi ridai solo quella chiave.
-
-    mount_default=$(docker run --rm busybox sh -c 'mkdir -p /mnt/t; mount -t tmpfs none /mnt/t >/dev/null 2>&1 && echo MOUNTED || echo DENIED')
-    mount_added=$(docker run --rm --cap-add SYS_ADMIN busybox sh -c 'mkdir -p /mnt/t; mount -t tmpfs none /mnt/t >/dev/null 2>&1 && echo MOUNTED || echo DENIED')
-
-SYS_ADMIN non è una chiave come le altre: è quella che apre più porte di tutte, ed è
-il motivo per cui concederla è quasi come concedere --privileged.
-
-### Fase 5 — La seconda barriera: seccomp (24.2 — TODO 5)
-
-Completa il **TODO 5**: leggi il modo seccomp del container, poi prova la stessa
-syscall con e senza il profilo di default. Le capabilities non cambiano fra le due
-prove: cambia solo il filtro.
-
-    seccomp_mode=$(docker run --rm busybox sh -c 'grep "^Seccomp:" /proc/self/status | tr -d "\t" | cut -d: -f2')
-    unshare_default=$(docker run --rm busybox sh -c 'unshare -U true >/dev/null 2>&1 && echo ALLOWED || echo BLOCKED')
-    unshare_unconfined=$(docker run --rm --security-opt seccomp=unconfined busybox sh -c 'unshare -U true >/dev/null 2>&1 && echo ALLOWED || echo BLOCKED')
-
-Il modo 2 vuol dire che un filtro è caricato. E la syscall che crea uno USER
-namespace viene rifiutata con il profilo di default e passa senza: è seccomp a
-fermarla, non le capabilities. Sono due barriere indipendenti, e questo è il senso
-della difesa in profondità.
-
-### Fase 6 — Cosa concede davvero --privileged (24.4 — TODO 6)
-
-Completa il **TODO 6**: leggi l'insieme effettivo delle capabilities in un container
-normale e in uno privilegiato, e riprova il mount.
-
-    caps_default=$(docker run --rm busybox sh -c 'grep "^CapEff:" /proc/self/status | tr -d "\t" | cut -d: -f2')
-    caps_privileged=$(docker run --rm --privileged busybox sh -c 'grep "^CapEff:" /proc/self/status | tr -d "\t" | cut -d: -f2')
-    mount_privileged=$(docker run --rm --privileged busybox sh -c 'mkdir -p /mnt/t; mount -t tmpfs none /mnt/t >/dev/null 2>&1 && echo MOUNTED || echo DENIED')
-
-La maschera passa da un insieme ridotto a tutti i bit accesi, e il mount riesce senza
-che tu abbia chiesto nulla. È l'opposto esatto del privilegio minimo: invece di dare
-la chiave che serve, --privileged consegna il mazzo. I due container privilegiati di
-questa fase non fanno che leggere il proprio stato e montare un tmpfs dentro sé
-stessi: nessun percorso dell'host è montato, niente sulla macchina viene toccato.
-
-Quando i sei TODO sono colmati, esegui il test:
+Quando i tre TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -122,10 +71,7 @@ Quando i sei TODO sono colmati, esegui il test:
 - icapabilities.sh prova il ping con le capabilities di default (TODO 1).
 - Lo riprova con --cap-drop ALL (TODO 2).
 - Lo riprova con --cap-drop ALL --cap-add NET_RAW (TODO 3).
-- Prova il mount senza e con SYS_ADMIN (TODO 4).
-- Interroga seccomp e prova la stessa syscall con e senza il profilo (TODO 5).
-- Legge la maschera delle capabilities con e senza --privileged (TODO 6).
-- run.sh stampa OK 1..6 e ALL CHECKS PASSED.
+- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -136,13 +82,6 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
   pur essendo root.
 - **OK 3** — con --cap-drop ALL --cap-add NET_RAW il ping riprende: al container è
   stata data solo la chiave necessaria.
-- **OK 4** — montare un filesystem è negato con l'insieme di default e riesce quando
-  si ridà la sola SYS_ADMIN: lo stesso principio su una chiave molto più pericolosa.
-- **OK 5** — seccomp: un filtro è caricato (modo 2) e rifiuta la syscall per conto
-  suo — unshare è bloccata con il profilo di default e passa senza, a parità di
-  capabilities.
-- **OK 6** — --privileged: l'insieme effettivo passa da quello ridotto a tutti i bit
-  accesi, e il mount riesce senza che sia stata chiesta nessuna capability.
 
 ## Domande di riflessione
 
@@ -166,9 +105,8 @@ superficie d'attacco complessiva di un container?
 
 ## Pulizia
 
-Niente da smontare a mano: tutti i container sono usa-e-getta (--rm), compresi i due
-privilegiati, che non montano nessun percorso dell'host e spariscono con il comando.
-L'immagine base busybox resta in cache. Il demone non viene mai riavviato.
+Niente da smontare a mano: tutti i container sono usa-e-getta (--rm). L'immagine base
+busybox resta in cache. Il demone non viene mai riavviato.
 
 ## Dove porta
 

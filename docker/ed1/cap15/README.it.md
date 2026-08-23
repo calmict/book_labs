@@ -9,11 +9,7 @@ ragione è che sul confine di un mount i permessi non si leggono per nome ma per
 numero: conta l'UID: un badge numerico. Se il numero del container non possiede i
 file montati, non scrive — punto. In questo laboratorio riproduci il mismatch, lo
 risolvi facendo girare il container con l'UID giusto, e verifichi che il numero
-attraversa il confine tale e quale: l'UID N dentro è l'UID N sull'host. Poi
-riproduci il fastidio quotidiano — il container lasciato a girare come root che ti
-riempie la cartella di file che non puoi più toccare — e lo curi in altri due modi:
-con USER dichiarato nell'immagine, e con un entrypoint che sistema i permessi e
-cede il posto all'utente non privilegiato.
+attraversa il confine tale e quale: l'UID N dentro è l'UID N sull'host.
 
 ## Obiettivi
 
@@ -24,11 +20,7 @@ cede il posto all'utente non privilegiato.
 - Risolverlo facendo girare il container con l'UID che possiede i file (--user)
   (15.3).
 - Verificare che l'UID non viene tradotto: il file creato dal container è di
-  proprietà dello stesso UID sull'host (15.1).
-- Riprodurre il problema dei file di root: un container lasciato come root scrive
-  sul mount e lascia un albero che dall'host non riesci a rimuovere (15.1).
-- Curarlo in due modi diversi: l'identità dichiarata nell'immagine con USER (15.2),
-  e l'entrypoint che sistema i permessi da root e poi cede con exec (15.3).
+  proprietà dello stesso UID sull'host (15.4).
 
 ## Prerequisiti
 
@@ -40,13 +32,9 @@ cede il posto all'utente non privilegiato.
 ## Lo scenario
 
 In start/ trovi ipermessi.sh: uno script che prepara una cartella dell'host di tua
-proprietà, la monta in un container e dovrebbe mostrare il mismatch e le sue cure —
-ma le prove chiave mancano. Colmi sei lacune (TODO 1..6).
-
-Accanto trovi due Dockerfile già completi, Dockerfile.user e Dockerfile.entrypoint,
-e lo script fixperms.sh che il secondo usa come entrypoint: sono i materiali delle
-fasi 5 e 6, non ci sono TODO dentro. Container e immagini usa-e-getta e una cartella
-temporanea: nessun privilegio sull'host, il demone non si tocca.
+proprietà, la monta in un container e dovrebbe mostrare il mismatch e la sua cura —
+ma le tre prove chiave mancano. Colmi tre lacune (TODO 1..3). Container usa-e-getta
+(--rm) e una cartella temporanea: nessun privilegio, il demone non si tocca.
 
 Prepara l'ambiente:
 
@@ -76,51 +64,7 @@ container. Non c'è traduzione: l'UID del container è lo stesso UID sull'host.
 
     owner_uid=$(stat -c '%u' "$HOSTDIR/ok" 2>/dev/null || echo NONE)
 
-### Fase 4 — Il fastidio quotidiano: i file di root (15.1 — TODO 4)
-
-Completa il **TODO 4**: lascia che un container giri come root — cioè come fa per
-default — e crei una cartella con dentro un file sul mount condiviso. Poi guarda
-dall'host di chi sono, e prova a rimuoverli.
-
-    ROOTDIR="$HOSTDIR/state"
-    docker run --rm -v "$HOSTDIR:/data" busybox sh -c 'mkdir -p /data/state && echo seed > /data/state/f'
-    root_owner=$(stat -c '%u' "$ROOTDIR/f")
-    rm -rf "$ROOTDIR" 2>/dev/null && host_cleanup=REMOVED || host_cleanup=DENIED
-
-Appartengono a UID 0, e il tuo utente non può rimuoverli: per cancellare un file
-serve il permesso di scrittura sulla cartella che lo contiene, e quella cartella
-l'ha creata root. È il motivo per cui, dopo una sessione di sviluppo in container,
-ti ritrovi cartelle che si tolgono solo con sudo.
-
-### Fase 5 — Cura: l'identità nell'immagine (15.2 — TODO 5)
-
-Completa il **TODO 5**: costruisci Dockerfile.user passando il tuo UID come
-argomento di build, e scrivi con quell'immagine. Non serve nessun flag al lancio:
-l'identità è dichiarata nell'immagine con USER, e ogni container che ne nasce parte
-già con il numero giusto.
-
-    docker build -q -t "$IMG_USER" --build-arg "APP_UID=$HOST_UID" -f "$HERE/Dockerfile.user" "$HERE" >/dev/null
-    user_write=$(docker run --rm -v "$HOSTDIR:/data" "$IMG_USER" sh -c 'touch /data/by-user 2>/dev/null && echo WROTE || echo DENIED')
-    user_owner=$(stat -c '%u' "$HOSTDIR/by-user" 2>/dev/null || echo NONE)
-
-### Fase 6 — Cura: sistemare e cedere il posto (15.3 — TODO 6)
-
-Completa il **TODO 6**: costruisci Dockerfile.entrypoint e lancialo sull'albero che
-root ti ha lasciato bloccato nella fase 4. Lo script fixperms.sh parte come root —
-gli serve, per fare chown — sistema la proprietà, e poi cede il posto all'utente non
-privilegiato con exec: da lì in avanti il processo non è più root.
-
-    docker build -q -t "$IMG_ENTRY" -f "$HERE/Dockerfile.entrypoint" "$HERE" >/dev/null
-    entry_uid=$(docker run --rm -e "TARGET_UID=$HOST_UID" -v "$HOSTDIR:/data" "$IMG_ENTRY" 'id -u; echo done > /data/state/written' | head -1)
-    entry_owner=$(stat -c '%u' "$ROOTDIR/written" 2>/dev/null || echo NONE)
-    rm -rf "$ROOTDIR" 2>/dev/null && after_cure=REMOVED || after_cure=DENIED
-
-Su una base completa questo passaggio si scrive con gosu (mondo Debian) o su-exec
-(mondo Alpine); qui la base è busybox e il gesto è lo stesso: exec sostituisce il
-processo invece di restargli sopra, così il comando resta PID 1 come nel capitolo
-10. Alla fine l'albero che prima era bloccato si rimuove senza privilegi.
-
-Quando i sei TODO sono colmati, esegui il test:
+Quando i tre TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -131,10 +75,7 @@ Quando i sei TODO sono colmati, esegui il test:
   (TODO 1).
 - Risolve facendo girare il container con l'UID proprietario (TODO 2).
 - Verifica dall'host la proprietà del file creato (TODO 3).
-- Riproduce l'albero lasciato da root e la rimozione negata (TODO 4).
-- Cura con USER dichiarato nell'immagine (TODO 5).
-- Cura con l'entrypoint che sistema e cede (TODO 6).
-- run.sh stampa OK 1..6 e ALL CHECKS PASSED.
+- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -146,13 +87,6 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
   WROTE).
 - **OK 3** — nessuna traduzione: il file creato dal container è di proprietà, sull'
   host, dello stesso UID con cui girava il container.
-- **OK 4** — il problema dei file di root: l'albero creato dal container root
-  appartiene a UID 0 sull'host, e il tuo utente non riesce a rimuoverlo.
-- **OK 5** — cura con USER: l'immagine che dichiara il tuo UID scrive senza alcun
-  flag al lancio, e il file che crea è tuo.
-- **OK 6** — cura con l'entrypoint: dopo il chown il processo gira con il tuo UID,
-  quello che scrive è tuo, e l'albero che root aveva bloccato ora si rimuove senza
-  privilegi.
 
 ## Domande di riflessione
 
@@ -173,10 +107,8 @@ l'UID N sull'host?
 
 ## Pulizia
 
-Niente da smontare a mano: i container sono usa-e-getta (--rm), le due immagini
-costruite dallo scenario vengono rimosse da un trap, e la cartella condivisa vive in
-una directory temporanea che run.sh ripulisce da sé — l'ultimo residuo di root, se
-c'è, viene tolto da dentro un container e mai con sudo. L'immagine
+Niente da smontare a mano: i container sono usa-e-getta (--rm) e la cartella
+condivisa vive in una directory temporanea che run.sh ripulisce da sé. L'immagine
 base busybox resta in cache (condivisa). Il demone non viene mai riavviato.
 
 ## Dove porta

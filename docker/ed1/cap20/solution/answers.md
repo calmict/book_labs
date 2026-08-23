@@ -15,86 +15,17 @@
     depends_on:
       - db
 
-**TODO 4 (20.3) — the declared network and the named volume:** on db, web and cache,
-
-    networks:
-      - appnet
-
-on db also,
-
-    volumes:
-      - dbdata:/var/lib/db
-
-and at the bottom of the file, the two declarations they refer to,
-
-    networks:
-      appnet:
-
-    volumes:
-      dbdata:
-
-**TODO 5 (20.3) — the third service:**
-
-    cache:
-      image: busybox
-      command: sleep 3600
-      networks:
-        - appnet
-
-**TODO 6 (20.4) — the service that stays out of the startup:**
-
-    tools:
-      image: busybox
-      command: sleep 3600
-      networks:
-        - appnet
-      profiles:
-        - tools
-
 The complete compose.yaml:
 
     services:
       db:
         image: busybox
         command: sleep 3600
-        networks:
-          - appnet
-        volumes:
-          - dbdata:/var/lib/db
       web:
         image: busybox
         command: sleep 3600
         depends_on:
           - db
-        networks:
-          - appnet
-      cache:
-        image: busybox
-        command: sleep 3600
-        networks:
-          - appnet
-      tools:
-        image: busybox
-        command: sleep 3600
-        networks:
-          - appnet
-        profiles:
-          - tools
-
-    networks:
-      appnet:
-
-    volumes:
-      dbdata:
-
-Two notes on what the test measures. The profile is not a switch that disables a
-service: tools is a full member of the project, on the same network, and docker
-compose --profile tools up -d tools brings it in without touching the other three.
-And the override file is merged, not substituted: compose.override.yaml declares only
-an environment variable for web, so passing both files leaves db, cache and tools
-exactly as the base file describes them, and gives web MODE=development. With the
-base file alone that variable does not exist at all — which is the point of keeping
-one model of the application and layering the differences on top.
 
 ## Reflection questions
 

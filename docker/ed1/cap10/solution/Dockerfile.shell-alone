@@ -1,9 +1,0 @@
-# cap10 - shell form, the shell that steps aside. Given complete: it is the third
-# term of comparison. The CMD is again wrapped in /bin/sh -c "...", but here the
-# script is the ONLY command, and busybox's shell replaces itself with it instead
-# of waiting: PID 1 is the script again, the signal arrives, the stop is prompt.
-# The rule is not "shell form is slow": it is "if the shell stays, the signal
-# stops with it".
-FROM busybox
-COPY entry.sh /entry.sh
-CMD /entry.sh serve

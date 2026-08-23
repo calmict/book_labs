@@ -1,7 +1,0 @@
-# cap20 solution - the development override. It is not a second application: it is
-# a layer that Compose merges onto compose.yaml, service by service, when both
-# files are passed. Here it adds to web only what belongs to a developer's machine.
-services:
-  web:
-    environment:
-      MODE: development
