@@ -55,6 +55,14 @@ nella rete reale dell'host. La rete esterna è simulata localmente, perciò la p
 non dipende dall'accesso a Internet del lettore. Il TODO 7 torna in irete.sh e chiude
 il cerchio: legge le regole che Docker ha scritto davvero, per confrontarle con la tua.
 
+Le due metà chiedono cose diverse, e la consegna lo rispecchia. Nelle Fasi 1-3 e 7 si
+legge e si interpreta: la riga esatta è scritta qui sotto, perché il lavoro sta nel
+capire cosa dicono quei numeri, non nell'indovinare il nome di un file sotto /sys.
+Nelle Fasi 4-6 si costruisce, e lì la riga non c'è: dentro ilcablaggio.sh trovi le
+operazioni in ordine e i comandi in gioco, gli argomenti li scrivi tu. È posando i
+mattoni uno dopo l'altro che si vede la tesi del capitolo — la rete di un container
+non è magia.
+
 Prepara l'ambiente:
 
     cd docker/ed1/cap16/start

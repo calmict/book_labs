@@ -53,6 +53,14 @@ host's real network. The external network is simulated locally, so the proof doe
 not depend on the reader's Internet access. TODO 7 goes back to irete.sh and closes
 the circle: it reads the rules Docker really wrote, to compare them with yours.
 
+The two halves ask for different things, and the brief follows. In Phases 1-3 and 7
+you read and interpret: the exact line is written below, because the work is in
+understanding what those numbers say, not in guessing the name of a file under /sys.
+In Phases 4-6 you build, and there the line is not given: inside ilcablaggio.sh you
+find the operations in order and the commands in play, while the arguments are yours
+to write. It is by laying the bricks one after another that the chapter's claim shows
+itself — a container's network is not magic.
+
 Prepare the environment:
 
     cd docker/ed1/cap16/start
