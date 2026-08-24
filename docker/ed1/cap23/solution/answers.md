@@ -15,15 +15,27 @@
 
     host_write=$(unshare --user --map-root-user sh -c 'touch /etc/rootless-probe 2>/dev/null && echo YES || echo NO')
 
+**TODO 4 (23.1) — direct denial and daemon-mediated uid 0 access** (the probe path
+is chosen by the script: the first of /root and /var/lib/docker your own user cannot
+open):
+
+    direct_read=$(ls -A "$probe" >/dev/null 2>&1 && echo YES || echo NO)
+    root_probe=$(docker run --rm --name "$ROOT_CONTAINER" -v /:/host:ro "$IMAGE" sh -c 'printf "%s:%s:%s:" "$(id -u)" "$(stat -c %u "/host$1")" "$(stat -c %a "/host$1")"; ls -A "/host$1" >/dev/null 2>&1 && echo YES || echo NO' sh "$probe")
+
+**TODO 5 (23.4) — the same mount as the unprivileged host uid:**
+
+    user_read=$(docker run --rm --name "$USER_CONTAINER" --user "$outer_uid:$outer_gid" -v /:/host:ro "$IMAGE" sh -c 'ls -A "/host$1" >/dev/null 2>&1 && echo YES || echo NO' sh "$probe")
+
 ## Reflection questions
 
 **a. Why is the docker group root on the host?**
 
 The daemon runs as root and listens on a UNIX socket; the docker group grants write
 access to that socket. But the API behind the socket can do anything the daemon can —
-and the daemon is root. Whoever writes to it can, for instance, start a container that
-bind-mounts the host's / read-write and runs as root, or that uses --privileged, and
-from there read or change any file on the host, add a user, install a backdoor. So
+and the daemon is root. The lab demonstrates the safe, read-only form: the ordinary
+host user is denied on a root-owned path, but a uid 0 container opens it through a
+read-only bind mount, and the same container asked to run as your own uid is denied
+again. A malicious request would ask for a read-write mount instead. So
 "member of the docker group" is not a lesser privilege than root; it is root, one
 docker run away (you met this in chapter 5, following a request from the socket to the
 kernel). That is precisely the exposure rootless mode removes.
@@ -42,7 +54,7 @@ unprivileged user wearing a crown that only counts indoors.
 **c. Why does rootless shrink the blast radius, and what are its limits?**
 
 If the daemon and containers run inside such a mapping, then a process that escapes the
-container lands not as host root but as an unprivileged host user — it can damage only
+container lands not as host root but as an unprivileged host user — it can affect only
 what that user can, which is little. The whole class of "container escape = host root"
 attacks loses its prize. The costs are real but bounded: an unprivileged user cannot
 bind ports below 1024 (rootless works around it with slirp/rootlesskit or a port

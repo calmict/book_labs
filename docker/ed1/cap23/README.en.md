@@ -20,23 +20,33 @@ privileged on the host.
 - Verify that that root is mapped to your real, unprivileged user on the host (23.3).
 - Observe that that "root" cannot touch the host's root-owned files — it is powerful
   only inside the namespace (23.3).
+- Prove that whoever controls the rootful Docker daemon can read the host filesystem
+  as uid 0 while remaining an unprivileged host user (23.1).
+- Isolate the cause by running the same mount as an unprivileged UID (23.4).
 - Understand why this model shrinks the blast radius of an escape (23.4).
 
 ## Prerequisites
 
 - A Linux with **unprivileged user namespaces enabled** (default on modern
   distributions; it is what Docker rootless uses). You need the unshare command
-  (util-linux). No sudo, no Docker: this chapter works on the kernel mechanism under
-  rootless.
+  (util-linux). No sudo.
+- Docker installed, a reachable daemon, and membership in the docker group, as
+  described in ../../SETUP.md. Run the exercise as an unprivileged user, never as
+  root: the contrast depends on this condition.
 - Chapter 2 (namespaces, including the USER namespace) and chapter 12 (non-root
   containers): here you see what is underneath.
 
 ## The scenario
 
 In start/ you will find rootless.sh: a script that should enter a user namespace and
-measure the UID mapping and the limits of that "root", but the three key measurements
-are missing. You fill three gaps (TODO 1..3). No privileges, no daemon touched: just
-unshare, which runs as an ordinary user.
+measure the UID mapping and the limits of that "root", but five key measurements are
+missing. You fill five gaps (TODO 1..5). The first three use only unshare; the final
+two query Docker without reconfiguring its daemon.
+
+The demonstration is deliberately harmless: it mounts / at /host read-only, writes
+nothing to the host, and reads no credential file. The probe path is chosen by the
+script: the first of /root and /var/lib/docker that your own user cannot open. Of
+that path it only checks whether it opens, never listing or printing its contents.
 
 Prepare the environment:
 
@@ -65,7 +75,27 @@ path (/etc). It cannot: the capabilities hold inside the namespace, not on the h
 
     host_write=$(unshare --user --map-root-user sh -c 'touch /etc/rootless-probe 2>/dev/null && echo YES || echo NO')
 
-Once the three TODOs are filled, run the test:
+### Phase 4 — From the docker group to the host filesystem (23.1 — TODO 4)
+
+Complete **TODO 4**: try to open the probe path as your user — permission is denied,
+and that is the control without which the rest would prove nothing. Then ask the
+daemon for a container with / mounted read-only at /host: inside you are uid 0, and
+the same path opens. Read its owner and permissions too, which say why it was closed
+before.
+
+    direct_read=$(ls -A "$probe" >/dev/null 2>&1 && echo YES || echo NO)
+    root_probe=$(docker run --rm --name "$ROOT_CONTAINER" -v /:/host:ro "$IMAGE" sh -c 'printf "%s:%s:%s:" "$(id -u)" "$(stat -c %u "/host$1")" "$(stat -c %a "/host$1")"; ls -A "/host$1" >/dev/null 2>&1 && echo YES || echo NO' sh "$probe")
+
+### Phase 5 — It is not the mount, but who you ask to be (23.4 — TODO 5)
+
+Complete **TODO 5**: repeat with the same image and the same read-only mount, but pass
+--user with your unprivileged UID:GID. The path closes again. The mount exposes the
+filesystem; the power to traverse it comes from the uid 0 you asked the daemon for. In
+rootless mode that uid 0 is remapped elsewhere, exactly as in Phases 1-3.
+
+    user_read=$(docker run --rm --name "$USER_CONTAINER" --user "$outer_uid:$outer_gid" -v /:/host:ro "$IMAGE" sh -c 'ls -A "/host$1" >/dev/null 2>&1 && echo YES || echo NO' sh "$probe")
+
+Once the five TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -75,7 +105,10 @@ Once the three TODOs are filled, run the test:
 - rootless.sh reads the uid inside the user namespace (TODO 1).
 - It reads the host owner of a file created "as root" inside (TODO 2).
 - It checks whether that "root" can write to the host's /etc (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It contrasts direct denial with daemon-mediated uid 0 access through a read-only
+  host filesystem mount (TODO 4).
+- It repeats the same mount as the unprivileged UID and gets denial again (TODO 5).
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -86,6 +119,11 @@ solution/run.sh runs the scenario and checks, point by point:
   "as root" is owned by your UID on the host, which is not 0.
 - **OK 3** — that "root" cannot write the host's root-owned files: it is powerful only
   inside the namespace.
+- **OK 4** — the host user cannot open the probe path, while the daemon-requested uid
+  0 container opens it through the read-only mount; the path's owner and mode, both
+  printed, say why the control holds.
+- **OK 5** — the same image and mount, run as the unprivileged UID, stay out: the
+  difference is who the daemon runs.
 
 ## Reflection questions
 
@@ -105,9 +143,10 @@ privilege) and when do you accept them?
 
 ## Cleanup
 
-Nothing to tear down by hand: the script works in a temporary directory that run.sh
-cleans up itself; unshare leaves no process nor namespace after it exits. No daemon
-touched, no privilege required.
+Nothing to tear down by hand: run.sh removes its temporary directory and the cap23
+containers even on error; unshare leaves no process nor namespace after it exits. The
+mounts are read-only and disappear with the containers. The daemon is not
+reconfigured.
 
 ## Where it leads
 
