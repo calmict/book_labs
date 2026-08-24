@@ -8,9 +8,11 @@ for the container to appear on the physical network as a machine of its own, wit
 own address and its own MAC, unmediated. That is the macvlan driver — the container
 on the quay, no longer behind the glass. In this lab you give two containers a direct
 address on a parent interface's network and verify that each has its own MAC and that
-they talk to each other on the same segment. Then you look beyond the single host's
-horizon: ipvlan (the variant that shares the MAC) and overlay (the network that spans
-several hosts), the bridge toward orchestration.
+they talk to each other on the same segment. Then you feel the price of that choice —
+the container does not talk to its own host, not even when the host sits on the same
+subnet — and you swap the driver to see where ipvlan differs. Finally you look beyond
+the single host's horizon: overlay (the network that spans several hosts), the bridge
+toward orchestration.
 
 ## Objectives
 
@@ -19,7 +21,11 @@ several hosts), the bridge toward orchestration.
   segment (19.1).
 - Verify that two macvlan containers on the same parent reach each other at layer 2
   (19.1).
-- Frame ipvlan (19.2) and overlay (19.3) and understand when they are needed (19.4).
+- Measure the hairpin limit: a macvlan child and its parent do not reach each other,
+  in either direction (19.2).
+- Tell ipvlan from macvlan on what actually matters: ipvlan children share the
+  parent's MAC (19.2).
+- Frame overlay (19.3) and understand when it is needed (19.4).
 
 ## Prerequisites
 
@@ -31,8 +37,13 @@ several hosts), the bridge toward orchestration.
 
       sudo ip link add cap19dummy type dummy
       sudo ip link set cap19dummy up
+      sudo ip addr add 192.168.190.1/24 dev cap19dummy
 
-  At the end of the chapter you remove it with: sudo ip link del cap19dummy
+  The third command puts the host on the containers' own subnet: Phase 4 needs it,
+  or the host's ping would leave through the home gateway and you would be measuring
+  a missing route instead of macvlan's isolation.
+
+  At the end of the chapter you remove it all with: sudo ip link del cap19dummy
 - Chapter 16 (network namespaces) and chapters 17-18 (the drivers): here you add the
   driver that puts the container directly on the physical segment.
 
@@ -40,9 +51,10 @@ several hosts), the bridge toward orchestration.
 
 In start/ you will find imacvlan.sh: a script that, given the parent cap19dummy,
 should create a macvlan network, start two containers on it and measure their MAC and
-reachability — but the three key operations are missing. You fill three gaps
-(TODO 1..3). Throwaway network and containers, removed at the end; the real NIC and
-the daemon are not touched.
+reachability — but the key operations are missing. You fill five gaps (TODO 1..5):
+the first three build the macvlan network and measure it, the last two show the
+driver's limit and the comparison with ipvlan. Throwaway networks and containers,
+removed at the end; the real NIC and the daemon are not touched.
 
 Prepare the environment:
 
@@ -75,7 +87,32 @@ both on the parent's segment, adjacent at layer 2: they talk directly.
 
     reach=$(docker exec "$A" sh -c "ping -c1 -w2 192.168.190.11 >/dev/null 2>&1 && echo OK || echo FAIL")
 
-Once the three TODOs are filled, run the test:
+### Phase 4 — The hairpin limit (19.2 — TODO 4)
+
+Complete **TODO 4**: measure the two directions that do not work. The container does
+not reach 192.168.190.1, which is the host on its very own subnet; and the host does
+not reach the container. The segment is not broken: the sibling ping of Phase 3 is
+the control that proves the wire is alive. It is macvlan isolating a child from its
+own parent by design — the hairpin limit, the reason a macvlan container cannot talk
+to a service running on the host that carries it.
+
+    a_to_host=$(docker exec "$A" sh -c "ping -c1 -w2 192.168.190.1 >/dev/null 2>&1 && echo OK || echo FAIL")
+    host_to_a=$(ping -c1 -w2 192.168.190.10 >/dev/null 2>&1 && echo OK || echo FAIL)
+
+### Phase 5 — The other driver: ipvlan (19.2 — TODO 5)
+
+Complete **TODO 5**: take the macvlan side down and create, on the same parent, an
+ipvlan network in L2 mode with two containers. Taking it down is not fussiness: a
+parent accepts one kind of child at a time, and without that the ipvlan port fails to
+attach with "device or resource busy". Then read the MACs. Where macvlan gave each
+container its own, ipvlan makes them all share the parent's and tells them apart by
+IP — and the two containers reach each other just the same.
+
+    docker network create -d ipvlan --subnet 192.168.191.0/24 -o parent="$PARENT" -o ipvlan_mode=l2 "$IPVNET" >/dev/null
+    parent_mac=$(cat "/sys/class/net/$PARENT/address")
+    c_mac=$(docker exec "$C" cat /sys/class/net/eth0/address)
+
+Once the five TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -85,7 +122,9 @@ Once the three TODOs are filled, run the test:
 - imacvlan.sh creates the macvlan network and the two containers (TODO 1).
 - It reads each container's MAC (TODO 2).
 - It verifies L2 reachability between the two (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It measures the two blocked directions between child and parent (TODO 4).
+- It creates the ipvlan network and reads the parent's and children's MACs (TODO 5).
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -97,6 +136,10 @@ solution/run.sh runs the scenario and checks, point by point:
   of its own on the segment.
 - **OK 3** — same segment: the two macvlan containers reach each other by IP (adjacent
   at layer 2).
+- **OK 4** — hairpin limit: with the host addressed on the same subnet, container and
+  host do not reach each other in either direction, while the sibling does.
+- **OK 5** — the other driver: the two ipvlan containers carry the parent's MAC and
+  still reach each other, where macvlan gave each one of its own.
 
 ## Reflection questions
 
@@ -119,9 +162,10 @@ network between nodes) generalises exactly this idea?
 
 ## Cleanup
 
-The script removes the two containers and the macvlan network (docker rm -f, docker
-network rm, with a safety trap). The parent interface cap19dummy remains: having been
-created with sudo, you remove it by hand when you are done:
+The script removes the containers and both networks, macvlan and ipvlan (docker rm -f,
+docker network rm, with a safety trap). The parent interface cap19dummy remains, with
+its address: having been created with sudo, you remove it by hand when you are done —
+the command takes the address away too:
 
     sudo ip link del cap19dummy
 

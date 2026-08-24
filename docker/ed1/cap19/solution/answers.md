@@ -17,6 +17,51 @@
 
     reach=$(docker exec "$A" sh -c "ping -c1 -w2 192.168.190.11 >/dev/null 2>&1 && echo OK || echo FAIL")
 
+**TODO 4 (19.2) — the hairpin limit:**
+
+    a_to_host=$(docker exec "$A" sh -c "ping -c1 -w2 192.168.190.1 >/dev/null 2>&1 && echo OK || echo FAIL")
+    host_to_a=$(ping -c1 -w2 192.168.190.10 >/dev/null 2>&1 && echo OK || echo FAIL)
+
+Both come back FAIL, and that is the expected result. Asserting a failure is only
+worth something with a control alongside it, and there are two here. The sibling ping
+of TODO 3 succeeds over the same parent, so the segment carries traffic. And run.sh
+refuses to start unless the host actually holds 192.168.190.1/24 on the parent, so the
+host is on the segment and a missing route cannot be mistaken for the limit.
+
+What blocks the path is the macvlan design: a child and the parent it hangs from are
+isolated from each other, whichever direction you try. The standard workaround is to
+give the host a macvlan child of its own and let the address live there, so that both
+ends are children rather than parent-and-child. Verified in an ephemeral namespace,
+where the same three pings behave the same way and start working after the shim
+appears:
+
+    sudo ip addr del 192.168.190.1/24 dev cap19dummy
+    sudo ip link add cap19shim link cap19dummy type macvlan mode bridge
+    sudo ip addr add 192.168.190.1/24 dev cap19shim
+    sudo ip link set cap19shim up
+
+It stays out of the automatic test because it needs root on the host, and this lab
+asks for sudo only once, to create the parent.
+
+**TODO 5 (19.2) — the other driver:**
+
+The macvlan side has to come down first. A parent interface accepts one kind of child
+at a time: with a macvlan port already attached, creating the ipvlan network succeeds
+but the first container fails to start with "failed to create the ipvlan port: device
+or resource busy". That error is itself worth meeting once.
+
+    docker rm -f "$A" "$B" >/dev/null
+    docker network rm "$NET" >/dev/null
+    docker network create -d ipvlan --subnet 192.168.191.0/24 -o parent="$PARENT" -o ipvlan_mode=l2 "$IPVNET" >/dev/null
+    parent_mac=$(cat "/sys/class/net/$PARENT/address")
+    c_mac=$(docker exec "$C" cat /sys/class/net/eth0/address)
+    d_mac=$(docker exec "$D" cat /sys/class/net/eth0/address)
+
+The reading is unambiguous: both ipvlan containers report the parent's own MAC, while
+the two macvlan containers reported one each. They still reach each other, so what
+changes is not connectivity but L2 identity — the single fact on which the choice
+between the two drivers rests when the network polices MAC addresses per port.
+
 ## Reflection questions
 
 **a. Benefits and limits of macvlan.**
