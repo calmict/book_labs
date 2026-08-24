@@ -88,7 +88,7 @@ solution/run.sh costruisce il container a mani nude e verifica, punto per punto:
 
 ## Domande di riflessione
 
-**a.** Dall'host, il container appena creato ha un PID normale e lo puoi terminare con un semplice kill.
+**a.** Dall'host, il container appena creato ha un PID normale e lo puoi terminare con kill -9.
 Cosa ci dice questo sulla natura di un container? E cosa lo fa "sembrare" una macchina a sé, se non è
 altro che un processo?
 

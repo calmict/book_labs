@@ -32,7 +32,7 @@ TODO 2 (1.4) - the proof from inside, written by the child shell:
 ## Reflection answers
 
 a. The container is a normal process because, from the host, it has an ordinary
-PID and can be killed with a plain kill: nothing about it is a separate machine.
+PID and can be killed with kill -9: nothing about it is a separate machine.
 What makes it "feel" like a machine is only the set of restricted views the
 kernel gives it - here a new PID namespace (so it renumbers processes from 1)
 and a new UTS namespace (so its hostname is its own). Change the set of

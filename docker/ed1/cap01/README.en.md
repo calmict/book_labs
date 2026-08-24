@@ -89,8 +89,8 @@ solution/run.sh builds the bare-hands container and checks, point by point:
 
 ## Reflection questions
 
-**a.** From the host, the container you just created has an ordinary PID and you can end it with a plain
-kill. What does this tell you about the nature of a container? And what makes it "feel" like a machine of
+**a.** From the host, the container you just created has an ordinary PID and you can end it with
+kill -9. What does this tell you about the nature of a container? And what makes it "feel" like a machine of
 its own, if it is nothing but a process?
 
 **b.** From the inside the shell is PID 1, from the host it has a large number. Are they the same process
