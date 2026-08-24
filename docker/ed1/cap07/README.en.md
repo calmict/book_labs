@@ -23,8 +23,8 @@ containers "always take ten seconds" to stop.
 ## The scenario
 
 In start/ you will find shutdown.sh: a script that should start two containers and time their stop, but
-does not time it and records no exit code. You fill three gaps (TODO 1..3) using throwaway containers,
-never restarting the daemon.
+does not time it, records no exit code, and does not observe zombies. You fill four gaps (TODO 1..4)
+using throwaway containers, never restarting the daemon.
 
 Prepare the environment:
 
@@ -60,7 +60,14 @@ Container A runs sleep as PID 1, which ignores SIGTERM. Complete **TODO 2**: mak
 
     read -r b_ms b_code < <(measure b --init)
 
-Once the three TODOs are filled, run the test:
+### Phase 5 — Zombies and the job of init (7.5 — TODO 4)
+
+Complete **TODO 4**: add a function parallel to measure that starts five short-lived children while
+keeping PID 1 alive, waits four seconds, and counts processes in state Z by reading field 3 of
+/proc/[0-9]*/stat. Run it once without init and once with --init: zombies accumulate in the first
+container, while tini reaps them in the second. Record the counts as zombies_noinit and zombies_init.
+
+Once the four TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -69,8 +76,9 @@ Once the three TODOs are filled, run the test:
 
 - measure times the stop with the grace period (TODO 1) and records the exit code (TODO 3).
 - Container B uses --init (TODO 2).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED: A waits the grace and exits 137, B stops at once and exits
-  143, and A is clearly slower than B.
+- The script counts zombies without init and with --init (TODO 4).
+- run.sh prints OK 1..4 and ALL CHECKS PASSED: A waits the grace and exits 137, B stops at once and exits
+  143, A is clearly slower than B, and tini leaves no zombies behind.
 
 ## How it is verified
 
@@ -79,6 +87,7 @@ solution/run.sh starts the two containers and times them, checking:
 - **OK 1** — A ignores SIGTERM: it waits (almost) the whole grace and is killed with SIGKILL (exit 137).
 - **OK 2** — B with --init stops instantly with a clean SIGTERM (exit 143).
 - **OK 3** — the difference is PID 1: A is far slower than B; --init makes the difference.
+- **OK 4** — without init at least one zombie accumulates; with tini none remains.
 
 ## Reflection questions
 
@@ -94,7 +103,7 @@ Why is designing for SIGTERM — instead of suffering SIGKILL — a matter of da
 
 ## Cleanup
 
-Nothing to tear down: both containers are removed by the script (docker rm, plus a safety trap) at the
+Nothing to tear down: all containers are removed by the script (docker rm, plus a safety trap) at the
 end; the test works in a temporary directory it cleans up itself. The daemon is never restarted.
 
 ## Where it leads

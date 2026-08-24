@@ -21,6 +21,8 @@ a_code=$(val "$WORK/stop.txt" a_code)
 b_ms=$(val "$WORK/stop.txt" b_ms)
 b_code=$(val "$WORK/stop.txt" b_code)
 grace_ms=$(val "$WORK/stop.txt" grace_ms)
+zombies_noinit=$(val "$WORK/stop.txt" zombies_noinit)
+zombies_init=$(val "$WORK/stop.txt" zombies_init)
 
 # 1. container A ignores SIGTERM: it waits (almost) the full grace, then is SIGKILLed
 if [ "$a_ms" -lt $(( grace_ms * 7 / 10 )) ] || [ "$a_code" != "137" ]; then
@@ -39,6 +41,12 @@ if [ "$a_ms" -le $(( b_ms * 3 )) ]; then
   echo "UNEXPECTED: A was not clearly slower than B (${a_ms}ms vs ${b_ms}ms)" >&2; exit 1
 fi
 echo "OK 3 - the gap is PID 1: A (${a_ms}ms) is far slower than B (${b_ms}ms) - --init makes the difference"
+
+# 4. tini also reaps orphaned children instead of letting zombies accumulate
+if [ "$zombies_noinit" -lt 1 ] || [ "$zombies_init" -ne 0 ]; then
+  echo "UNEXPECTED: zombie counts without/with --init were $zombies_noinit/$zombies_init" >&2; exit 1
+fi
+echo "OK 4 - zombies accumulate without init ($zombies_noinit) and tini reaps them ($zombies_init)"
 
 echo
 echo "ALL CHECKS PASSED"

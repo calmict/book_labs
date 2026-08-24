@@ -21,6 +21,28 @@ forwards SIGTERM to sleep, which then terminates at once:
 
     read -r b_ms b_code < <(measure b --init)
 
+TODO 4 (7.5) - start five short-lived orphaned children, wait for them to exit,
+and count zombie states in /proc. Run the function without init and with tini:
+
+    count_zombies() {  # $1 = suffix ; $2.. = extra docker run flags
+      local n="${NAME}-$1"; shift
+      docker run -d "$@" --name "$n" busybox sh -c \
+        'for i in 1 2 3 4 5; do sh -c "sleep 1 &"; done; sleep 300' >/dev/null
+      sleep 4
+      docker exec "$n" sh -c '
+        count=0
+        for stat in /proc/[0-9]*/stat; do
+          read -r pid comm state rest < "$stat" || continue
+          [ "$state" = Z ] && count=$((count + 1))
+        done
+        echo "$count"
+      '
+      docker rm -f "$n" >/dev/null
+    }
+
+    zombies_noinit=$(count_zombies z-noinit)
+    zombies_init=$(count_zombies z-init --init)
+
 ## Reflection answers
 
 a. Container A takes the full grace period because its PID 1 (sleep) ignores

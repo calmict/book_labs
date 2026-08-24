@@ -23,8 +23,8 @@ cronometro alla mano, perché tanti container «ci mettono sempre dieci secondi�
 ## Lo scenario
 
 In start/ trovi shutdown.sh: uno script che dovrebbe avviare due container e cronometrarne lo stop, ma
-non cronometra e non registra l'exit code. Colmi tre lacune (TODO 1..3) usando container usa-e-getta,
-senza mai riavviare il demone.
+non cronometra, non registra l'exit code e non osserva gli zombie. Colmi quattro lacune (TODO 1..4)
+usando container usa-e-getta, senza mai riavviare il demone.
 
 Prepara l'ambiente:
 
@@ -60,7 +60,14 @@ container B con --init, così tini diventa PID 1 e inoltra SIGTERM a sleep, che 
 
     read -r b_ms b_code < <(measure b --init)
 
-Quando i tre TODO sono colmati, esegui il test:
+### Fase 5 — Gli zombie e il compito di init (7.5 — TODO 4)
+
+Completa il **TODO 4**: aggiungi una funzione gemella di measure che avvia cinque figli brevi e lascia
+vivo PID 1, aspetta quattro secondi e conta i processi nello stato Z leggendo il campo 3 dei file
+/proc/[0-9]*/stat. Eseguila una volta senza init e una con --init: nel primo container gli zombie si
+accumulano, mentre tini li raccoglie nel secondo. Registra i conteggi come zombies_noinit e zombies_init.
+
+Quando i quattro TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -69,8 +76,9 @@ Quando i tre TODO sono colmati, esegui il test:
 
 - measure cronometra lo stop con il grace period (TODO 1) e registra l'exit code (TODO 3).
 - Il container B usa --init (TODO 2).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED: A attende il grace ed esce 137, B si ferma subito ed esce
-  143, e A è nettamente più lento di B.
+- Lo script conta gli zombie senza init e con --init (TODO 4).
+- run.sh stampa OK 1..4 e ALL CHECKS PASSED: A attende il grace ed esce 137, B si ferma subito ed esce
+  143, A è nettamente più lento di B e tini non lascia zombie.
 
 ## Come viene verificato
 
@@ -79,6 +87,7 @@ solution/run.sh avvia i due container e li cronometra, verificando:
 - **OK 1** — A ignora SIGTERM: attende (quasi) tutto il grace ed è ucciso con SIGKILL (exit 137).
 - **OK 2** — B con --init si ferma all'istante con un SIGTERM pulito (exit 143).
 - **OK 3** — la differenza è il PID 1: A è molto più lento di B; --init fa la differenza.
+- **OK 4** — senza init si accumula almeno uno zombie; con tini non ne rimane nessuno.
 
 ## Domande di riflessione
 
@@ -95,7 +104,7 @@ eleganza?
 
 ## Pulizia
 
-Niente da smontare: entrambi i container sono rimossi dallo script (docker rm, più un trap di sicurezza)
+Niente da smontare: tutti i container sono rimossi dallo script (docker rm, più un trap di sicurezza)
 a fine esecuzione; il test lavora in una cartella temporanea che ripulisce da sé. Il demone non viene mai
 riavviato.
 

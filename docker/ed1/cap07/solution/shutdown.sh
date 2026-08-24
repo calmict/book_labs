@@ -11,7 +11,10 @@ OUT="${1:?usage: shutdown.sh OUTPUT_DIR}"
 mkdir -p "$OUT"
 GRACE=4
 NAME="cap07-$$"
-cleanup() { docker rm -f "${NAME}-a" "${NAME}-b" >/dev/null 2>&1 || true; }
+cleanup() {
+  docker rm -f "${NAME}-a" "${NAME}-b" \
+    "${NAME}-z-noinit" "${NAME}-z-init" >/dev/null 2>&1 || true
+}
 trap cleanup EXIT
 
 # Start a container, stop it with a grace period, and print "<elapsed_ms> <exit_code>".
@@ -26,10 +29,32 @@ measure() {  # $1 = suffix ; $2.. = extra docker run flags
   docker rm "$n" >/dev/null
 }
 
+# Start a zombie generator, wait for its children to exit, and print the number
+# of zombie processes still visible in /proc.
+count_zombies() {  # $1 = suffix ; $2.. = extra docker run flags
+  local n="${NAME}-$1"; shift
+  docker run -d "$@" --name "$n" busybox sh -c \
+    'for i in 1 2 3 4 5; do sh -c "sleep 1 &"; done; sleep 300' >/dev/null
+  sleep 4
+  docker exec "$n" sh -c '
+    count=0
+    for stat in /proc/[0-9]*/stat; do
+      read -r pid comm state rest < "$stat" || continue
+      [ "$state" = Z ] && count=$((count + 1))
+    done
+    echo "$count"
+  '
+  docker rm -f "$n" >/dev/null
+}
+
 # A: sleep is PID 1 and ignores SIGTERM -> full grace, then SIGKILL (exit 137).
 read -r a_ms a_code < <(measure a)
 # B: --init (tini) as PID 1 forwards SIGTERM -> stops at once (exit 143 = 128+15).
 read -r b_ms b_code < <(measure b --init)
+
+# Without an init the orphaned children remain zombies; tini reaps them.
+zombies_noinit=$(count_zombies z-noinit)
+zombies_init=$(count_zombies z-init --init)
 
 {
   echo "a_ms=$a_ms"
@@ -37,4 +62,6 @@ read -r b_ms b_code < <(measure b --init)
   echo "b_ms=$b_ms"
   echo "b_code=$b_code"
   echo "grace_ms=$(( GRACE * 1000 ))"
+  echo "zombies_noinit=$zombies_noinit"
+  echo "zombies_init=$zombies_init"
 } > "$OUT/stop.txt"
