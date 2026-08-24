@@ -24,3 +24,19 @@ echo "greedy_capped_rc=$(rc systemd-run "${CAP[@]}" python3 -c "$greedy")"     >
 echo "frugal_capped_rc=$(rc systemd-run "${CAP[@]}" python3 -c "$frugal")"     >> "$OUT/mem.txt"
 # 3) greedy WITHOUT the cap -> the allocation itself is harmless -> exit 0
 echo "greedy_uncapped_rc=$(rc systemd-run "${NOCAP[@]}" python3 -c "$greedy")" >> "$OUT/mem.txt"
+
+# 4) read the kernel's own account of the kill before the cgroup disappears
+# shellcheck disable=SC2016  # single quotes on purpose: the string is expanded by the shell that receives it
+systemd-run --user --scope -q bash -c '
+  OUT=$1
+  greedy=$2
+  CG="/sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cap03-oom-$$"
+  cleanup_cgroup() { rmdir "$CG" 2>/dev/null || true; }
+  trap cleanup_cgroup EXIT
+  mkdir "$CG"
+  echo 40M > "$CG/memory.max"
+  echo 0 > "$CG/memory.swap.max"
+  { ( echo "$BASHPID" > "$CG/cgroup.procs"; exec python3 -c "$greedy" ) || true; } >/dev/null 2>&1
+  oom_kill=$(awk "/^oom_kill / {print \$2}" "$CG/memory.events")
+  echo "oom_kill_count=$oom_kill" >> "$OUT/mem.txt"
+' _ "$OUT" "$greedy"

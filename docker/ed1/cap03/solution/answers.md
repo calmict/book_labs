@@ -19,6 +19,23 @@ TODO 3 (3.4) - the contrast, the same greedy allocation with no ceiling:
 
     echo "greedy_uncapped_rc=$(rc systemd-run "${NOCAP[@]}" python3 -c "$greedy")" >> "$OUT/mem.txt"
 
+TODO 4 (3.5) - keep a uniquely named cgroup alive long enough to read the
+kernel's OOM counter, and always remove it through a trap:
+
+    systemd-run --user --scope -q bash -c '
+      OUT=$1
+      greedy=$2
+      CG="/sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cap03-oom-$$"
+      cleanup_cgroup() { rmdir "$CG" 2>/dev/null || true; }
+      trap cleanup_cgroup EXIT
+      mkdir "$CG"
+      echo 40M > "$CG/memory.max"
+      echo 0 > "$CG/memory.swap.max"
+      { ( echo "$BASHPID" > "$CG/cgroup.procs"; exec python3 -c "$greedy" ) || true; } >/dev/null 2>&1
+      oom_kill=$(awk "/^oom_kill / {print \$2}" "$CG/memory.events")
+      echo "oom_kill_count=$oom_kill" >> "$OUT/mem.txt"
+    ' _ "$OUT" "$greedy"
+
 ## Reflection answers
 
 a. The exit code 137 is 128 + 9: by convention a process killed by signal N ends

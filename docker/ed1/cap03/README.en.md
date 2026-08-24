@@ -26,7 +26,7 @@ systemd's delegation (3.7) gives you a piece of the cgroup tree with no need for
 ## The scenario
 
 In start/ you will find ceiling.sh: a script that should impose a memory ceiling and watch the OOM, but
-the ceiling is missing, so no process is ever killed. You fill three gaps (TODO 1..3) so the ceiling
+the ceiling is missing, so no process is ever killed. You fill four gaps (TODO 1..4) so the ceiling
 bites and the contrast proves it.
 
 Prepare the environment:
@@ -61,7 +61,15 @@ Complete **TODO 3**: run the *same* greedy allocator WITHOUT a cap (the NOCAP sc
 code as greedy_uncapped_rc. It should be 0: the allocation itself is harmless; the cap is what kills. It
 is the proof that the limit does its job, isolating the damage to the one cgroup that overflows.
 
-Once the three TODOs are filled, run the test:
+### Phase 5 — Reading the kernel's proof (3.5 — TODO 4)
+
+Complete **TODO 4**: create a uniquely named cgroup in the subtree already delegated to your user, set
+the same 40 MiB ceiling with swap disabled, and move the greedy allocator into it. Enter the subtree
+through a user scope, with no additional privileges. After the kill, read oom_kill from memory.events
+and record it in mem.txt as oom_kill_count. Install a trap that always removes the cgroup, even if the
+script exits with an error.
+
+Once the four TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -71,8 +79,9 @@ Once the three TODOs are filled, run the test:
 - The CAP array imposes MemoryMax=40M and MemorySwapMax=0 (TODO 1).
 - greedy_capped_rc records the greedy exit code under the cap (TODO 2).
 - greedy_uncapped_rc records the greedy exit code without a cap (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED: greedy under the cap is killed (137), the frugal one
-  survives (0), greedy without a cap survives (0).
+- oom_kill_count records the oom_kill value read from memory.events after the kill (TODO 4).
+- run.sh prints OK 1..4 and ALL CHECKS PASSED: greedy under the cap is killed (137), the frugal one
+  survives (0), greedy without a cap survives (0), and memory.events records at least one oom_kill.
 
 ## How it is verified
 
@@ -82,6 +91,7 @@ solution/run.sh imposes the ceiling and checks, point by point:
 - **OK 2** — a frugal process under the same ceiling survives: exit 0.
 - **OK 3** — the gate is the ceiling: without it the same allocation is harmless (exit 0). The limit has
   isolated the damage to the one overflowing cgroup.
+- **OK 4** — memory.events records that the oom_kill count increased (at least 1).
 
 ## Reflection questions
 
@@ -99,9 +109,9 @@ effect, while the memory ceiling does?
 
 ## Cleanup
 
-Nothing to tear down: each transient systemd-run scope ends with its process and is collected on its own,
-and the test works in a temporary directory it cleans up itself. No cgroup left behind, no Docker
-container.
+Nothing to tear down: each transient systemd-run scope ends with its process and is collected on its own;
+the manually created cgroup is always removed by a trap, even on error, and the test works in a temporary
+directory it cleans up itself. No cgroup left behind, no Docker container.
 
 ## Where it leads
 

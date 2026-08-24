@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # cap03 start - impose a cgroup memory ceiling and watch the OOM killer strike.
 # Rootless via systemd-run --user (the systemd delegation of section 3.7): no
-# sudo, no Docker. Three gaps to fill (TODO 1..3). As written the ceiling is
+# sudo, no Docker. Four gaps to fill (TODO 1..4). As written the ceiling is
 # missing, so nothing is ever OOM-killed.
 set -euo pipefail
 
@@ -29,3 +29,9 @@ echo "frugal_capped_rc=$(rc systemd-run "${CAP[@]}" python3 -c "$frugal")"     >
 # TODO 3 (3.4): the contrast - run the SAME greedy allocator WITHOUT a cap (the
 #   NOCAP scope) and record its exit code as greedy_uncapped_rc. It should be 0:
 #   the allocation is harmless; the cap is what kills.
+
+# TODO 4 (3.5): in the user's delegated cgroup subtree, create a uniquely named
+#   cgroup with the same 40 MiB ceiling and no swap. Run the greedy allocator in
+#   it, then read memory.events AFTER the kill and append its oom_kill value to
+#   mem.txt as oom_kill_count. Enter the delegated subtree through a user scope,
+#   and install a trap that always removes the manually created cgroup.

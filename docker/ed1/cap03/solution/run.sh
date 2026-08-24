@@ -17,6 +17,7 @@ val() { grep "^$2=" "$1" | cut -d= -f2-; }
 greedy_capped=$(val "$WORK/mem.txt" greedy_capped_rc)
 frugal_capped=$(val "$WORK/mem.txt" frugal_capped_rc)
 greedy_uncapped=$(val "$WORK/mem.txt" greedy_uncapped_rc)
+oom_kill_count=$(val "$WORK/mem.txt" oom_kill_count)
 
 # 1. the greedy process under the cap is OOM-killed: exit 137 (128 + 9, SIGKILL)
 if [ "$greedy_capped" != "137" ]; then
@@ -38,6 +39,13 @@ if [ "$greedy_uncapped" != "0" ]; then
   exit 1
 fi
 echo "OK 3 - remove the ceiling and the same allocation is harmless (exit 0): the cap is the killer"
+
+# 4. memory.events records that the cgroup OOM killer intervened
+if ! [[ "$oom_kill_count" =~ ^[0-9]+$ ]] || [ "$oom_kill_count" -lt 1 ]; then
+  echo "UNEXPECTED: memory.events reports oom_kill=$oom_kill_count, expected at least 1" >&2
+  exit 1
+fi
+echo "OK 4 - memory.events reports that oom_kill increased ($oom_kill_count)"
 
 echo
 echo "ALL CHECKS PASSED"

@@ -26,7 +26,7 @@ rootless, perché la delega di systemd (§3.7) ti dà un pezzo dell'albero dei c
 ## Lo scenario
 
 In start/ trovi ceiling.sh: uno script che dovrebbe imporre un tetto di memoria e osservare l'OOM, ma il
-tetto manca, quindi nessun processo viene mai ucciso. Colmi tre lacune (TODO 1..3) perché il tetto morda
+tetto manca, quindi nessun processo viene mai ucciso. Colmi quattro lacune (TODO 1..4) perché il tetto morda
 e il contrasto lo dimostri.
 
 Prepara l'ambiente:
@@ -61,7 +61,15 @@ Completa il **TODO 3**: esegui lo *stesso* allocatore vorace SENZA tetto (lo sco
 suo exit code come greedy_uncapped_rc. Dovrebbe essere 0: l'allocazione in sé è innocua, è il tetto a
 uccidere. È la prova che il limite fa il suo lavoro, isolando il danno al solo cgroup che sfora.
 
-Quando i tre TODO sono colmati, esegui il test:
+### Fase 5 — Leggere la prova del kernel (3.5 — TODO 4)
+
+Completa il **TODO 4**: crea un cgroup dal nome unico nel sottoalbero già delegato al tuo utente,
+imposta lo stesso tetto di 40 MiB con lo swap disabilitato e sposta al suo interno l'allocatore
+vorace. Entra nel sottoalbero attraverso uno scope utente, senza privilegi aggiuntivi. Dopo il kill,
+leggi oom_kill da memory.events e registralo in mem.txt come oom_kill_count. Installa un trap che
+rimuova sempre il cgroup, anche se lo script termina con un errore.
+
+Quando i quattro TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -71,8 +79,9 @@ Quando i tre TODO sono colmati, esegui il test:
 - L'array CAP impone MemoryMax=40M e MemorySwapMax=0 (TODO 1).
 - greedy_capped_rc registra l'exit code del vorace sotto il tetto (TODO 2).
 - greedy_uncapped_rc registra l'exit code del vorace senza tetto (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED: il vorace col tetto è ucciso (137), il frugale sopravvive
-  (0), il vorace senza tetto sopravvive (0).
+- oom_kill_count registra il valore di oom_kill letto da memory.events dopo il kill (TODO 4).
+- run.sh stampa OK 1..4 e ALL CHECKS PASSED: il vorace col tetto è ucciso (137), il frugale sopravvive
+  (0), il vorace senza tetto sopravvive (0) e memory.events registra almeno un oom_kill.
 
 ## Come viene verificato
 
@@ -82,6 +91,7 @@ solution/run.sh impone il tetto e verifica, punto per punto:
 - **OK 2** — un processo frugale sotto lo stesso tetto sopravvive: exit 0.
 - **OK 3** — il cancello è il tetto: senza, la stessa allocazione è innocua (exit 0). Il limite ha
   isolato il danno al solo cgroup che sfora.
+- **OK 4** — memory.events registra che il conteggio oom_kill si è incrementato (almeno 1).
 
 ## Domande di riflessione
 
@@ -100,8 +110,8 @@ quota di CPU potrebbe non avere effetto, mentre il tetto di memoria sì?
 ## Pulizia
 
 Niente da smontare: ogni scope transitorio di systemd-run termina con il suo processo e viene raccolto
-da solo, e il test lavora in una cartella temporanea che ripulisce da sé. Nessun cgroup lasciato, nessun
-container Docker.
+da solo; il cgroup creato a mano viene sempre rimosso da un trap, anche in caso di errore, e il test
+lavora in una cartella temporanea che ripulisce da sé. Nessun cgroup lasciato, nessun container Docker.
 
 ## Dove porta
 
