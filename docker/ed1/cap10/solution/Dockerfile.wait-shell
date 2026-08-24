@@ -1,0 +1,5 @@
+FROM busybox
+COPY entry.sh /entry.sh
+COPY wait-entry.sh /wait-entry.sh
+RUN chmod +x /entry.sh /wait-entry.sh
+ENTRYPOINT /wait-entry.sh /entry.sh & wait

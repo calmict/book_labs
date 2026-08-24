@@ -1,0 +1,6 @@
+FROM busybox
+COPY entry.sh /entry.sh
+COPY wait-entry.sh /wait-entry.sh
+RUN chmod +x /entry.sh /wait-entry.sh
+# TODO 7 (10.4): add exec-form ENTRYPOINT for wait-entry.sh and pass entry.sh
+# as the default application through CMD.

@@ -1,0 +1,6 @@
+FROM busybox
+COPY entry.sh /entry.sh
+COPY wait-entry.sh /wait-entry.sh
+RUN chmod +x /entry.sh /wait-entry.sh
+# TODO 7 (10.4): add shell-form ENTRYPOINT. Keep the shell as PID 1 while it
+# runs wait-entry.sh with /entry.sh as the application, then waits for it.

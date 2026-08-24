@@ -2,17 +2,20 @@
 # cap10 - solution test. Builds the ENTRYPOINT/CMD image and checks: running with
 # no arguments, ENTRYPOINT runs with CMD's default arguments; run arguments
 # override CMD but not ENTRYPOINT; and the exec form makes the script PID 1 (it
-# receives signals first-hand, chapter 7). Throwaway image, no restart, no
-# privileges.
+# receives signals first-hand, chapter 7). It then checks that an entrypoint
+# waits for a local dependency and hands PID 1 to the app with exec. Throwaway
+# images, no restart, no privileges.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 TAG="cap10-$$"
 SHELL_NAME="cap10-shell-$$"
 EXEC_NAME="cap10-exec-$$"
+WAIT_SHELL_NAME="cap10-wait-shell-$$"
+WAIT_EXEC_NAME="cap10-wait-exec-$$"
 cleanup() {
-  docker rm -f "$SHELL_NAME" "$EXEC_NAME" >/dev/null 2>&1 || true
-  docker rmi -f "$TAG-shell" "$TAG-exec" "$TAG" >/dev/null 2>&1 || true
+  docker rm -f "$SHELL_NAME" "$EXEC_NAME" "$WAIT_SHELL_NAME" "$WAIT_EXEC_NAME" >/dev/null 2>&1 || true
+  docker rmi -f "$TAG-shell" "$TAG-exec" "$TAG-wait-shell" "$TAG-wait-exec" "$TAG" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -54,6 +57,28 @@ if [ "$shell_ms" -lt 1500 ] || [ "$exec_ms" -ge 1500 ]; then
   echo "UNEXPECTED: stop times shell=${shell_ms}ms exec=${exec_ms}ms" >&2; exit 1
 fi
 echo "OK 4 - CMD signal delivery: shell form ${shell_ms}ms, exec form ${exec_ms}ms"
+
+# 5. A real entrypoint waits for a delayed local dependency, then execs the
+# application. Exec-form ENTRYPOINT lets the app inherit PID 1; shell form
+# keeps the wrapping shell as PID 1.
+docker build -q -t "$TAG-wait-shell" -f "$HERE/Dockerfile.wait-shell" "$HERE" >/dev/null
+docker build -q -t "$TAG-wait-exec" -f "$HERE/Dockerfile.wait-exec" "$HERE" >/dev/null
+wait_started=$(date +%s%N)
+docker run -d --name "$WAIT_SHELL_NAME" "$TAG-wait-shell" >/dev/null
+docker run -d --name "$WAIT_EXEC_NAME" "$TAG-wait-exec" >/dev/null
+sleep 0.5
+if docker logs "$WAIT_SHELL_NAME" 2>&1 | grep -q '^self_pid=' ||
+   docker logs "$WAIT_EXEC_NAME" 2>&1 | grep -q '^self_pid='; then
+  echo "UNEXPECTED: an application started before its dependency was ready" >&2; exit 1
+fi
+docker wait "$WAIT_SHELL_NAME" "$WAIT_EXEC_NAME" >/dev/null
+wait_ms=$(( ($(date +%s%N) - wait_started) / 1000000 ))
+wait_shell_pid=$(docker logs "$WAIT_SHELL_NAME" 2>&1 | sed -n 's/^self_pid=//p')
+wait_exec_pid=$(docker logs "$WAIT_EXEC_NAME" 2>&1 | sed -n 's/^self_pid=//p')
+if [ "$wait_ms" -lt 1500 ] || [ "$wait_exec_pid" != "1" ] || [ "$wait_shell_pid" = "1" ] || [ -z "$wait_shell_pid" ]; then
+  echo "UNEXPECTED: wait=${wait_ms}ms shell app PID=$wait_shell_pid exec app PID=$wait_exec_pid" >&2; exit 1
+fi
+echo "OK 5 - entrypoint waited ${wait_ms}ms; app PID: shell=$wait_shell_pid, exec=$wait_exec_pid"
 
 echo
 echo "ALL CHECKS PASSED"

@@ -9,7 +9,9 @@ metafora è quella del comandante e degli ordini: ENTRYPOINT è il comandante fi
 della nave, CMD sono gli ordini di default, che si possono cambiare alla partenza.
 In questo laboratorio li combini, vedi come gli argomenti passati a docker run
 sovrascrivono CMD ma non ENTRYPOINT, e verifichi che la forma esatta con cui li
-scrivi decide se il tuo processo è PID 1 o finisce avvolto in una shell.
+scrivi decide se il tuo processo è PID 1 o finisce avvolto in una shell. Infine
+costruisci un entrypoint reale: attende una dipendenza locale e cede il posto
+all'applicazione con exec.
 
 ## Obiettivi
 
@@ -20,20 +22,23 @@ scrivi decide se il tuo processo è PID 1 o finisce avvolto in una shell.
 - Capire la forma exec contro la forma shell: la exec rende il tuo processo PID 1
   (10.1, 10.4).
 - Ricollegare il PID 1 ai segnali del capitolo 7: chi è PID 1 riceve SIGTERM.
+- Scrivere un entrypoint che attende una dipendenza con timeout e cede il PID
+  all'applicazione con exec (10.4).
 
 ## Prerequisiti
 
 - Un Linux con Docker Engine attivo (vedi SETUP.md). Il tuo utente deve poter
   usare Docker.
 - Il capitolo 7 (il PID 1 e i segnali) e il capitolo 9 (COPY, CMD): qui li metti
-  insieme.
+insieme. Il comando nc è già incluso nell'immagine busybox usata dal laboratorio.
 
 ## Lo scenario
 
 In start/ trovi un Dockerfile incompleto e entry.sh, uno script che stampa il
 proprio PID e gli argomenti ricevuti. Il Dockerfile parte da busybox ma non imbarca
-lo script, non nomina il comandante e non dà ordini di default. Colmi quattro lacune
-(TODO 1..4). Immagini usa-e-getta, nessun privilegio, il demone condiviso non si
+lo script, non nomina il comandante e non dà ordini di default. Completi anche le
+varianti in start/Dockerfile.wait-shell e start/Dockerfile.wait-exec e il nuovo
+start/wait-entry.sh (TODO 5..7). Immagini usa-e-getta, nessun privilegio, il demone condiviso non si
 tocca.
 
 Prepara l'ambiente:
@@ -81,13 +86,24 @@ Completa Dockerfile.shell e Dockerfile.exec con due CMD che differiscono solo
 per la forma. Il test arresta entrambi con due secondi di timeout: la shell non
 inoltra SIGTERM e consuma il timeout, mentre l'app in forma exec termina subito.
 
+### Fase 6 — Attendere e cedere il posto (10.4 — TODO 5..7)
+
+Completa wait-entry.sh: avvia una dipendenza TCP locale con un breve ritardo,
+attendila con nc -z senza superare il timeout, poi sostituisci lo script con
+l'applicazione usando exec e tutti gli argomenti ricevuti. Completa le due nuove
+varianti Dockerfile: la prima mantiene una shell come PID 1, la seconda avvia lo
+script in forma exec. Entrambe devono passare entry.sh come applicazione.
+
 ## Criteri di "fatto"
 
 - Il Dockerfile copia entry.sh nell'immagine (TODO 1).
 - Dichiara ENTRYPOINT in forma exec (TODO 2).
 - Dà argomenti di default con CMD (TODO 3).
 - Confronta i tempi di arresto delle forme shell ed exec di CMD (TODO 4).
-- run.sh stampa OK 1..4 e ALL CHECKS PASSED.
+- L'entrypoint attende la dipendenza con timeout e cede il controllo con exec
+  (TODO 5 e 6).
+- Le varianti shell ed exec rendono osservabile il PID effettivo dell'app (TODO 7).
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -101,6 +117,9 @@ solution/run.sh costruisce l'immagine e verifica, punto per punto:
   in prima persona (capitolo 7), senza una shell che lo avvolge.
 - **OK 4** — con docker stop -t 2 la forma shell consuma circa il timeout,
   mentre la forma exec consegna SIGTERM all'app e termina quasi subito.
+- **OK 5** — entrambe le varianti restano in attesa finché la dipendenza TCP
+  locale non risponde; dopo exec, entry.sh è PID 1 nella variante exec e ha un
+  PID diverso da 1 nella variante shell.
 
 ## Domande di riflessione
 

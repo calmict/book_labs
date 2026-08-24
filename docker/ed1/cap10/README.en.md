@@ -9,7 +9,9 @@ CMD. The metaphor is the captain and the orders: ENTRYPOINT is the ship's fixed
 captain, CMD are the default orders, which can be changed at departure. In this lab
 you combine them, see how arguments passed to docker run override CMD but not
 ENTRYPOINT, and check that the exact form you write them in decides whether your
-process is PID 1 or ends up wrapped in a shell.
+process is PID 1 or ends up wrapped in a shell. Finally, you build a real
+entrypoint: it waits for a local dependency and hands control to the application
+with exec.
 
 ## Objectives
 
@@ -20,20 +22,23 @@ process is PID 1 or ends up wrapped in a shell.
 - Understand exec form versus shell form: exec makes your process PID 1 (10.1,
   10.4).
 - Reconnect PID 1 to the signals of chapter 7: whoever is PID 1 receives SIGTERM.
+- Write an entrypoint that waits for a dependency with a timeout and hands its
+  PID to the application with exec (10.4).
 
 ## Prerequisites
 
 - A Linux with Docker Engine running (see SETUP.md). Your user must be able to use
   Docker.
 - Chapter 7 (PID 1 and signals) and chapter 9 (COPY, CMD): here you put them
-  together.
+  together. The nc command is already included in the busybox image used by the lab.
 
 ## The scenario
 
 In start/ you will find an incomplete Dockerfile and entry.sh, a script that prints
 its own PID and the arguments it received. The Dockerfile starts from busybox but
 does not load the script, does not name the captain and gives no default orders.
-You fill four gaps (TODO 1..4). Throwaway images, no privileges, the shared daemon
+You also complete the variants in start/Dockerfile.wait-shell and
+start/Dockerfile.wait-exec and the new start/wait-entry.sh (TODO 5..7). Throwaway images, no privileges, the shared daemon
 is not touched.
 
 Prepare the environment:
@@ -81,13 +86,24 @@ Complete Dockerfile.shell and Dockerfile.exec with two CMD instructions that
 differ only in form. The test stops both with a two-second timeout: the shell
 does not forward SIGTERM and consumes it, while the exec-form app exits at once.
 
+### Phase 6 — Wait and hand over (10.4 — TODO 5..7)
+
+Complete wait-entry.sh: start a local TCP dependency after a short delay, wait
+for it with nc -z without exceeding the timeout, then replace the script with
+the application using exec and every argument received. Complete the two new
+Dockerfile variants: the first keeps a shell as PID 1, while the second starts
+the script in exec form. Both must pass entry.sh as the application.
+
 ## "Done" criteria
 
 - The Dockerfile copies entry.sh into the image (TODO 1).
 - It declares ENTRYPOINT in exec form (TODO 2).
 - It gives default arguments with CMD (TODO 3).
 - It compares shell-form and exec-form CMD stop times (TODO 4).
-- run.sh prints OK 1..4 and ALL CHECKS PASSED.
+- The entrypoint waits for the dependency with a timeout and hands over with
+  exec (TODO 5 and 6).
+- The shell and exec variants expose the application's actual PID (TODO 7).
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -101,6 +117,9 @@ solution/run.sh builds the image and checks, point by point:
   first-hand (chapter 7), with no shell wrapping it.
 - **OK 4** — with docker stop -t 2, shell form consumes approximately the
   timeout while exec form delivers SIGTERM to the app and stops almost at once.
+- **OK 5** — both variants remain waiting until the local TCP dependency
+  answers; after exec, entry.sh is PID 1 in the exec variant and has a PID other
+  than 1 in the shell variant.
 
 ## Reflection questions
 

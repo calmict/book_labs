@@ -21,6 +21,25 @@ Dockerfile.exec uses
 CMD ["/signal.sh"]. The trapping application is identical, so the measured
 stop-time difference comes from signal delivery through PID 1.
 
+**TODO 5 (10.4) — wait for the dependency:**
+
+wait-entry.sh starts a delayed TCP listener on loopback and polls it with nc -z.
+A deadline stops the loop with a clear error instead of letting it hang.
+
+**TODO 6 (10.4) — hand control to the application:**
+
+    exec "$@"
+
+This replaces the entrypoint process without changing its PID and preserves the
+application command and arguments.
+
+**TODO 7 (10.4) — compare ENTRYPOINT forms:**
+
+Dockerfile.wait-shell starts wait-entry.sh under a shell that remains PID 1;
+Dockerfile.wait-exec uses the JSON-array form and supplies entry.sh through CMD.
+After wait-entry.sh calls exec, entry.sh therefore inherits PID 1 only in the
+exec-form image.
+
 ## Reflection questions
 
 **a. How do ENTRYPOINT and CMD combine, and what happens with run arguments?**
