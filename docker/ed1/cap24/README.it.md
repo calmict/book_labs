@@ -30,7 +30,7 @@ altre.
 
 ## Lo scenario
 
-In start/ trovi icapabilities.sh: uno script che dovrebbe provare la stessa operazione
+In start/ trovi capabilities.sh: uno script che dovrebbe provare la stessa operazione
 (un ping, che richiede la capability NET_RAW) con tre insiemi di capabilities diversi,
 ma le tre prove mancano. Colmi tre lacune (TODO 1..3). Container usa-e-getta (--rm);
 il demone non si tocca.
@@ -41,7 +41,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — Con le chiavi di default (24.1 — TODO 1)
 
-Apri start/icapabilities.sh e completa il **TODO 1**: esegui un ping in un container
+Apri start/capabilities.sh e completa il **TODO 1**: esegui un ping in un container
 di default. Funziona: tra le capabilities che Docker concede per default c'è NET_RAW,
 che serve per il socket raw del ping.
 
@@ -74,7 +74,7 @@ subito; nessun percorso host viene coinvolto.
 
 ## Criteri di "fatto"
 
-- icapabilities.sh prova il ping con le capabilities di default (TODO 1).
+- capabilities.sh prova il ping con le capabilities di default (TODO 1).
 - Lo riprova con --cap-drop ALL (TODO 2).
 - Lo riprova con --cap-drop ALL --cap-add NET_RAW (TODO 3).
 - Confronta il mount interno normale e --privileged (TODO 4).

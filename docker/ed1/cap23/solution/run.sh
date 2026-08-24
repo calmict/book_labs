@@ -17,7 +17,7 @@ fi
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/irootless.sh" "$WORK"
+"$HERE/rootless.sh" "$WORK"
 outer_uid=$(val "$WORK/rootless.txt" outer_uid)
 inner_uid=$(val "$WORK/rootless.txt" inner_uid)
 owner_uid=$(val "$WORK/rootless.txt" owner_uid)

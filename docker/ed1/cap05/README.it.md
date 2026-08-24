@@ -25,7 +25,7 @@ container.
 
 ## Lo scenario
 
-In start/ trovi lacatena.sh: uno script che dovrebbe seguire una richiesta dall'API alla catena, ma non
+In start/ trovi chain.sh: uno script che dovrebbe seguire una richiesta dall'API alla catena, ma non
 registra ancora le informazioni che contano. Colmi tre lacune (TODO 1..3) usando un container usa-e-getta,
 senza mai riavviare il demone condiviso.
 
@@ -41,7 +41,7 @@ demone, non il client, a possedere container, immagini e reti.
 
 ### Fase 2 — Il socket è l'API (5.2 — TODO 1)
 
-Apri start/lacatena.sh e completa il **TODO 1**: chiedi al demone la sua versione parlando direttamente
+Apri start/chain.sh e completa il **TODO 1**: chiedi al demone la sua versione parlando direttamente
 al socket UNIX con curl, e registrala —
 
     ver=$(curl -s --unix-socket "$SOCK" http://localhost/version \
@@ -71,7 +71,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- lacatena.sh registra la versione ottenuta dal socket (TODO 1).
+- chain.sh registra la versione ottenuta dal socket (TODO 1).
 - Registra il genitore (uno shim) del container (TODO 2).
 - Registra il nonno (systemd/containerd, non dockerd) (TODO 3).
 - run.sh stampa OK 1..4 e ALL CHECKS PASSED.

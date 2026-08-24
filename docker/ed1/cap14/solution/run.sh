@@ -16,7 +16,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/imontaggi.sh" "$WORK"
+"$HERE/mounts.sh" "$WORK"
 bind_host=$(val "$WORK/mounts.txt" bind_host)
 vol_persist=$(val "$WORK/mounts.txt" vol_persist)
 tmpfs_type=$(val "$WORK/mounts.txt" tmpfs_type)

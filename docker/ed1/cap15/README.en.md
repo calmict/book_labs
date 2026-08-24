@@ -30,7 +30,7 @@ unchanged: UID N inside is UID N on the host.
 
 ## The scenario
 
-In start/ you will find ipermessi.sh: a script that prepares a host folder you own,
+In start/ you will find permissions.sh: a script that prepares a host folder you own,
 mounts it in a container and should show the mismatch and its cure — but the three key
 proofs are missing. You fill four gaps (TODO 1..4). Throwaway containers (--rm) and a
 temporary folder: no privileges, the daemon is not touched.
@@ -41,7 +41,7 @@ Prepare the environment:
 
 ### Phase 1 — The problem: wrong badge (15.2 — TODO 1)
 
-Open start/ipermessi.sh and complete **TODO 1**: the host folder is owned by your
+Open start/permissions.sh and complete **TODO 1**: the host folder is owned by your
 UID. Run a container with a different (non-root) UID that tries to write to the
 mount: it is refused, because that number does not own the folder and is only
 "other", with no write permission.
@@ -76,7 +76,7 @@ packages su-exec cleanly, so gosu is unnecessary here.
 
 ## "Done" criteria
 
-- ipermessi.sh reproduces the mismatch: a UID that does not own the folder is refused
+- permissions.sh reproduces the mismatch: a UID that does not own the folder is refused
   (TODO 1).
 - It fixes it by running the container with the owning UID (TODO 2).
 - It checks from the host the ownership of the created file (TODO 3).

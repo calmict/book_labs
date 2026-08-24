@@ -29,7 +29,7 @@ dove comincia l'orizzonte dell'orchestrazione.
 
 ## Lo scenario
 
-In start/ trovi imaint.sh: uno script che crea un container fermo e un volume
+In start/ trovi maintenance.sh: uno script che crea un container fermo e un volume
 inutilizzato, entrambi etichettati come tuoi, e dovrebbe recuperarli in sicurezza — ma
 le tre operazioni mancano. Colmi tre lacune (TODO 1..3). Tutte le risorse sono
 etichettate e rimosse solo per ambito: il demone condiviso e le risorse altrui non si
@@ -41,7 +41,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — Reclamare i container fermi, per ambito (27.2 — TODO 1)
 
-Apri start/imaint.sh e completa il **TODO 1**: recupera i container fermi che
+Apri start/maintenance.sh e completa il **TODO 1**: recupera i container fermi che
 appartengono a te, filtrando per la tua etichetta. È un prune con ambito: tocca solo i
 tuoi, mai quelli degli altri.
 
@@ -69,7 +69,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- imaint.sh recupera i propri container fermi con un prune filtrato per etichetta
+- maintenance.sh recupera i propri container fermi con un prune filtrato per etichetta
   (TODO 1).
 - Rimuove il proprio volume con nome (TODO 2).
 - Riconta e conferma che nulla di suo resta (TODO 3).

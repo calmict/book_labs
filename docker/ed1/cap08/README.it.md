@@ -29,7 +29,7 @@ diverse condividono gli stessi strati senza copiarli.
 
 ## Lo scenario
 
-In start/ trovi lanatomia.sh: uno script che costruisce una piccola immagine
+In start/ trovi anatomy.sh: uno script che costruisce una piccola immagine
 (busybox più due istruzioni che scrivono un file) e dovrebbe registrarne
 l'anatomia, ma le tre misure chiave non sono ancora prese. Colmi tre lacune
 (TODO 1..4) usando immagini usa-e-getta, senza mai toccare il demone condiviso.
@@ -47,7 +47,7 @@ strato: l'immagine finale ne avrà uno per lo strato base più due per le due RU
 
 ### Fase 2 — Contare gli strati (8.2 — TODO 1)
 
-Apri start/lanatomia.sh e completa il **TODO 1**: registra il numero di layer
+Apri start/anatomy.sh e completa il **TODO 1**: registra il numero di layer
 dell'immagine e della base, leggendoli dalla config con docker image inspect
 (il campo rootfs.diff_ids è esposto come .RootFS.Layers) —
 
@@ -92,7 +92,7 @@ direttamente quel digest: il tag cambia destinazione, il digest no.
 
 ## Criteri di "fatto"
 
-- lanatomia.sh registra numero di layer dell'immagine e della base (TODO 1).
+- anatomy.sh registra numero di layer dell'immagine e della base (TODO 1).
 - Registra l'image ID e il digest del layer in cima (TODO 2).
 - Costruisce l'immagine figlia e conta i layer condivisi (TODO 3).
 - Dimostra che lo stesso tag può puntare a due digest diversi e che il primo

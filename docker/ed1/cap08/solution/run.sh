@@ -16,7 +16,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/lanatomia.sh" "$WORK"
+"$HERE/anatomy.sh" "$WORK"
 layers=$(val "$WORK/image.txt" layers)
 base_layers=$(val "$WORK/image.txt" base_layers)
 image_id=$(val "$WORK/image.txt" image_id)

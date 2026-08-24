@@ -15,7 +15,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/iobs.sh" "$WORK"
+"$HERE/observability.sh" "$WORK"
 stdout_seen=$(val "$WORK/obs.txt" stdout_seen)
 stderr_seen=$(val "$WORK/obs.txt" stderr_seen)
 driver=$(val "$WORK/obs.txt" driver)

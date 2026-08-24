@@ -29,7 +29,7 @@ copying them.
 
 ## The scenario
 
-In start/ you will find lanatomia.sh: a script that builds a small image (busybox
+In start/ you will find anatomy.sh: a script that builds a small image (busybox
 plus two instructions that each write a file) and should record its anatomy, but
 the key measurements are not taken yet. You fill four gaps (TODO 1..4)
 using throwaway images, never touching the shared daemon.
@@ -47,7 +47,7 @@ layer: the final image will have one for the base plus two for the two RUNs.
 
 ### Phase 2 — Counting the layers (8.2 — TODO 1)
 
-Open start/lanatomia.sh and complete **TODO 1**: record the number of layers of
+Open start/anatomy.sh and complete **TODO 1**: record the number of layers of
 the image and of the base, reading them from the config with docker image inspect
 (the rootfs.diff_ids field is exposed as .RootFS.Layers) —
 
@@ -91,7 +91,7 @@ tag changes destination, while the digest does not.
 
 ## "Done" criteria
 
-- lanatomia.sh records the number of layers of the image and of the base (TODO 1).
+- anatomy.sh records the number of layers of the image and of the base (TODO 1).
 - It records the image ID and the digest of the top layer (TODO 2).
 - It builds the child image and counts the shared layers (TODO 3).
 - It proves that one tag can point to two different digests and that the first

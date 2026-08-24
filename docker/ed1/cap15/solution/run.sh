@@ -16,7 +16,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/ipermessi.sh" "$WORK"
+"$HERE/permissions.sh" "$WORK"
 host_uid=$(val "$WORK/perms.txt" host_uid)
 mismatch=$(val "$WORK/perms.txt" mismatch)
 match=$(val "$WORK/perms.txt" match)

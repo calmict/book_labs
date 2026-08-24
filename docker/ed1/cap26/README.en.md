@@ -26,7 +26,7 @@ the restart counter.
 
 ## The scenario
 
-In start/ you will find idiag.sh: a script that starts a container which exits silently
+In start/ you will find troubleshoot.sh: a script that starts a container which exits silently
 with a non-zero code and a restart policy, and should read its logs, exit code and
 restarts — but the three reads are missing. You fill three gaps (TODO 1..3). Throwaway
 container (rm), the daemon is not touched.
@@ -37,7 +37,7 @@ Prepare the environment:
 
 ### Phase 1 — The silence: empty logs (26.1 — TODO 1)
 
-Open start/idiag.sh and complete **TODO 1**: read the container's logs. They are empty: the
+Open start/troubleshoot.sh and complete **TODO 1**: read the container's logs. They are empty: the
 container died without printing anything. From the logs, here, you get nothing.
 
     logs=$(docker logs "$C" 2>&1)
@@ -65,7 +65,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- idiag.sh reads the container's logs (empty) (TODO 1).
+- troubleshoot.sh reads the container's logs (empty) (TODO 1).
 - It reads the exit code from docker inspect (TODO 2).
 - It reads the restart counter and the final state (TODO 3).
 - run.sh prints OK 1..3 and ALL CHECKS PASSED.

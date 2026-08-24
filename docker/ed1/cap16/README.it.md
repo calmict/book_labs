@@ -43,22 +43,22 @@ sull'host.
 
 ## Lo scenario
 
-In start/ trovi irete.sh: uno script che avvia due container e dovrebbe leggerne lo
+In start/ trovi network.sh: uno script che avvia due container e dovrebbe leggerne lo
 stack di rete — namespace, indirizzo, cavo — ma le tre letture chiave mancano. Colmi
 tre lacune (TODO 1..3). I due container girano contemporaneamente (così ciascuno
 tiene il suo indirizzo) e sono rimossi alla fine; si usa il bridge di default, senza
 crearne o toccarne altri; il demone non si tocca.
 
-In start/ trovi anche ilcablaggio.sh. I TODO 4..6 ricostruiscono il percorso completo
+In start/ trovi anche wiring.sh. I TODO 4..6 ricostruiscono il percorso completo
 in un user e network namespace effimero: nessuna interfaccia o regola viene creata
 nella rete reale dell'host. La rete esterna è simulata localmente, perciò la prova
-non dipende dall'accesso a Internet del lettore. Il TODO 7 torna in irete.sh e chiude
+non dipende dall'accesso a Internet del lettore. Il TODO 7 torna in network.sh e chiude
 il cerchio: legge le regole che Docker ha scritto davvero, per confrontarle con la tua.
 
 Le due metà chiedono cose diverse, e la consegna lo rispecchia. Nelle Fasi 1-3 e 7 si
 legge e si interpreta: la riga esatta è scritta qui sotto, perché il lavoro sta nel
 capire cosa dicono quei numeri, non nell'indovinare il nome di un file sotto /sys.
-Nelle Fasi 4-6 si costruisce, e lì la riga non c'è: dentro ilcablaggio.sh trovi le
+Nelle Fasi 4-6 si costruisce, e lì la riga non c'è: dentro wiring.sh trovi le
 operazioni in ordine e i comandi in gioco, gli argomenti li scrivi tu. È posando i
 mattoni uno dopo l'altro che si vede la tesi del capitolo — la rete di un container
 non è magia.
@@ -69,7 +69,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — Uno stack di rete tutto suo (16.1 — TODO 1)
 
-Apri start/irete.sh e completa il **TODO 1**: leggi il network namespace del primo
+Apri start/network.sh e completa il **TODO 1**: leggi il network namespace del primo
 container (l'inode di /proc/self/ns/net). Confrontato con quello dell'host, è
 diverso: il container non condivide lo stack di rete della macchina, ne ha uno suo.
 
@@ -95,7 +95,7 @@ cavo sta in un'altra rete — sull'host, attaccata a docker0.
 
 ### Fase 4 — Cablaggio manuale (16.1+16.2 — TODO 4)
 
-In start/ilcablaggio.sh crea il namespace contenitore, il bridge br-cap16 e una
+In start/wiring.sh crea il namespace contenitore, il bridge br-cap16 e una
 coppia veth. Sposta un capo nel namespace, rinominalo eth0, assegna 10.16.0.2/24 e
 collega l'altro capo al bridge con indirizzo 10.16.0.1/24. Porta su interfacce e
 loopback e aggiungi la route predefinita del contenitore.
@@ -116,7 +116,7 @@ confrontare bridge, veth e subnet privata.
 
 ### Fase 7 — Le regole che Docker scrive davvero (16.3 — TODO 7)
 
-Torna in start/irete.sh e completa il **TODO 7**. Le regole NAT dell'host non si
+Torna in start/network.sh e completa il **TODO 7**. Le regole NAT dell'host non si
 leggono senza privilegi: prendile in prestito invece di darteli. Un container usa e
 getta entra nel network namespace dell'host con la sola capability NET_ADMIN, legge
 la catena POSTROUTING e sparisce; l'host non viene toccato e nessuna regola viene
@@ -131,13 +131,13 @@ Quando i sette TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- irete.sh legge il network namespace del container (TODO 1).
+- network.sh legge il network namespace del container (TODO 1).
 - Legge l'IP di eth0 di entrambi i container (TODO 2).
 - Legge gli indici della veth (ifindex e iflink) (TODO 3).
-- ilcablaggio.sh costruisce namespace, veth e bridge dentro unshare -Urnm (TODO 4).
+- wiring.sh costruisce namespace, veth e bridge dentro unshare -Urnm (TODO 4).
 - Il traffico raggiunge la rete esterna simulata attraverso MASQUERADE (TODO 5).
 - La struttura viene confrontata con docker0 senza modificare la rete reale (TODO 6).
-- irete.sh legge la regola MASQUERADE che Docker ha scritto per il suo bridge (TODO 7).
+- network.sh legge la regola MASQUERADE che Docker ha scritto per il suo bridge (TODO 7).
 - run.sh stampa OK 1..7 e ALL CHECKS PASSED.
 
 ## Come viene verificato

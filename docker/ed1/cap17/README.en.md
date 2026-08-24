@@ -30,7 +30,7 @@ network stays out.
 
 ## The scenario
 
-In start/ you will find irete.sh: a script that creates a custom network, starts
+In start/ you will find bridges.sh: a script that creates a custom network, starts
 containers on it and on the default bridge, and should measure name resolution and
 isolation — but the three key proofs are missing. You fill three gaps (TODO 1..3). A
 uniquely named network and throwaway containers, both removed at the end; the default
@@ -42,7 +42,7 @@ Prepare the environment:
 
 ### Phase 1 — The directory: names on the custom bridge (17.2 — TODO 1)
 
-Open start/irete.sh and complete **TODO 1**: on the custom network, have container A
+Open start/bridges.sh and complete **TODO 1**: on the custom network, have container A
 reach container B **by name**. The network's embedded DNS resolves the container's
 name: ping by name works.
 
@@ -77,7 +77,7 @@ is exposed on the interface, without privileged iptables access.
 
 ## "Done" criteria
 
-- irete.sh checks name resolution on the custom network (TODO 1).
+- bridges.sh checks name resolution on the custom network (TODO 1).
 - It checks that on the default bridge the name does not resolve (TODO 2).
 - It checks that a container off the network cannot reach B, not even by IP (TODO 3).
 - It compares 127.0.0.1 and 0.0.0.0 exposure (TODO 4).

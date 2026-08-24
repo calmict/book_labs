@@ -22,7 +22,7 @@ cronometro alla mano, perché tanti container «ci mettono sempre dieci secondi�
 
 ## Lo scenario
 
-In start/ trovi congrazia.sh: uno script che dovrebbe avviare due container e cronometrarne lo stop, ma
+In start/ trovi shutdown.sh: uno script che dovrebbe avviare due container e cronometrarne lo stop, ma
 non cronometra e non registra l'exit code. Colmi tre lacune (TODO 1..3) usando container usa-e-getta,
 senza mai riavviare il demone.
 
@@ -38,7 +38,7 @@ SIGKILL. Come reagisce il PID 1 a quel primo segnale fa tutta la differenza.
 
 ### Fase 2 — Cronometrare lo stop (7.3 — TODO 1)
 
-Apri start/congrazia.sh e completa il **TODO 1**, dentro la funzione measure: ferma il container con il
+Apri start/shutdown.sh e completa il **TODO 1**, dentro la funzione measure: ferma il container con il
 grace period e cronometra l'operazione.
 
     local t0 t1

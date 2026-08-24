@@ -16,7 +16,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/irete.sh" "$WORK"
+"$HERE/bridges.sh" "$WORK"
 custom_name=$(val "$WORK/net.txt" custom_name)
 default_name=$(val "$WORK/net.txt" default_name)
 isolation=$(val "$WORK/net.txt" isolation)

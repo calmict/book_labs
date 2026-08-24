@@ -24,7 +24,7 @@ ricetta e il container cambierà: perché il config.json è il container.
 
 ## Lo scenario
 
-In start/ trovi laricetta.sh: uno script che dovrebbe generare la ricetta OCI ed eseguirla, ma non genera
+In start/ trovi recipe.sh: uno script che dovrebbe generare la ricetta OCI ed eseguirla, ma non genera
 nulla e non esegue nulla. Colmi tre lacune (TODO 1..3) perché la ricetta esista, runc la esegua, e una
 sua modifica si rifletta nel container.
 
@@ -40,7 +40,7 @@ non un programma, delle specifiche — e da lì i pezzi diventarono intercambiab
 
 ### Fase 2 — Generare la ricetta (6.3 — TODO 1)
 
-Lo script prepara un rootfs minimale da busybox. Apri start/laricetta.sh e completa il **TODO 1**: genera
+Lo script prepara un rootfs minimale da busybox. Apri start/recipe.sh e completa il **TODO 1**: genera
 la ricetta runtime-spec, rootless, e registra i namespace che elenca —
 
     runc spec --rootless
@@ -76,7 +76,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- laricetta.sh genera la ricetta e registra i namespace (TODO 1).
+- recipe.sh genera la ricetta e registra i namespace (TODO 1).
 - run_recipe modifica il config.json (comando + terminale) (TODO 2) ed esegue con runc (TODO 3).
 - run.sh stampa OK 1..3 e ALL CHECKS PASSED: la ricetta elenca i namespace della Parte 1, runc la esegue,
   e cambiando la ricetta cambia l'output.

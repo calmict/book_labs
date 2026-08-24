@@ -15,7 +15,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/idiag.sh" "$WORK"
+"$HERE/troubleshoot.sh" "$WORK"
 logs_len=$(val "$WORK/diag.txt" logs_len)
 exit_code=$(val "$WORK/diag.txt" exit_code)
 restart_count=$(val "$WORK/diag.txt" restart_count)

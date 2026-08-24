@@ -16,7 +16,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/idriver.sh" "$WORK"
+"$HERE/drivers.sh" "$WORK"
 host_ns=$(val "$WORK/drivers.txt" host_ns)
 host_driver_ns=$(val "$WORK/drivers.txt" host_driver_ns)
 none_ns=$(val "$WORK/drivers.txt" none_ns)

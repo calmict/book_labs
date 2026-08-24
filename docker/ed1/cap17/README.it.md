@@ -30,7 +30,7 @@ tuo bridge sì, e chi è fuori dalla rete resta fuori.
 
 ## Lo scenario
 
-In start/ trovi irete.sh: uno script che crea una rete custom, avvia dei container
+In start/ trovi bridges.sh: uno script che crea una rete custom, avvia dei container
 su di essa e sul bridge di default, e dovrebbe misurare risoluzione per nome e
 isolamento — ma le tre prove chiave mancano. Colmi tre lacune (TODO 1..3). Rete con
 nome unico e container usa-e-getta, entrambi rimossi alla fine; il bridge di default
@@ -42,7 +42,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — La rubrica: nomi sul bridge custom (17.2 — TODO 1)
 
-Apri start/irete.sh e completa il **TODO 1**: sulla rete custom, fai raggiungere al
+Apri start/bridges.sh e completa il **TODO 1**: sulla rete custom, fai raggiungere al
 container A il container B **per nome**. Il DNS integrato della rete risolve il nome
 del container: ping per nome funziona.
 
@@ -77,7 +77,7 @@ sia esposto sull'interfaccia, senza accesso privilegiato a iptables.
 
 ## Criteri di "fatto"
 
-- irete.sh verifica la risoluzione per nome sulla rete custom (TODO 1).
+- bridges.sh verifica la risoluzione per nome sulla rete custom (TODO 1).
 - Verifica che sul bridge di default il nome non si risolve (TODO 2).
 - Verifica che un container fuori dalla rete non raggiunge B, neppure per IP
   (TODO 3).

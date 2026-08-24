@@ -14,7 +14,7 @@ trap cleanup EXIT
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
 # --- build the bare-hands container and read the two points of view ---
-"$HERE/manibnude.sh" "$WORK"
+"$HERE/barehands.sh" "$WORK"
 inside_pid=$(val "$WORK/inside.txt" inside_pid)
 inside_hostname=$(val "$WORK/inside.txt" inside_hostname)
 inside_pidns=$(val "$WORK/inside.txt" inside_pidns)

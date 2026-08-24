@@ -41,22 +41,22 @@ compare your own rule with the one Docker really wrote on the host.
 
 ## The scenario
 
-In start/ you will find irete.sh: a script that starts two containers and should read
+In start/ you will find network.sh: a script that starts two containers and should read
 their network stack — namespace, address, cable — but the three key reads are
 missing. You fill three gaps (TODO 1..3). The two containers run at the same time (so
 each holds its own address) and are removed at the end; the default bridge is used,
 with none other created or touched; the daemon is not touched.
 
-You will also find ilcablaggio.sh in start/. TODO 4..6 rebuild the complete path in
+You will also find wiring.sh in start/. TODO 4..6 rebuild the complete path in
 an ephemeral user and network namespace: no interface or rule is created in the
 host's real network. The external network is simulated locally, so the proof does
-not depend on the reader's Internet access. TODO 7 goes back to irete.sh and closes
+not depend on the reader's Internet access. TODO 7 goes back to network.sh and closes
 the circle: it reads the rules Docker really wrote, to compare them with yours.
 
 The two halves ask for different things, and the brief follows. In Phases 1-3 and 7
 you read and interpret: the exact line is written below, because the work is in
 understanding what those numbers say, not in guessing the name of a file under /sys.
-In Phases 4-6 you build, and there the line is not given: inside ilcablaggio.sh you
+In Phases 4-6 you build, and there the line is not given: inside wiring.sh you
 find the operations in order and the commands in play, while the arguments are yours
 to write. It is by laying the bricks one after another that the chapter's claim shows
 itself — a container's network is not magic.
@@ -67,7 +67,7 @@ Prepare the environment:
 
 ### Phase 1 — A network stack of its own (16.1 — TODO 1)
 
-Open start/irete.sh and complete **TODO 1**: read the first container's network
+Open start/network.sh and complete **TODO 1**: read the first container's network
 namespace (the inode of /proc/self/ns/net). Compared with the host's, it is
 different: the container does not share the machine's network stack, it has one of
 its own.
@@ -94,7 +94,7 @@ network — on the host, attached to docker0.
 
 ### Phase 4 — Hand-built wiring (16.1+16.2 — TODO 4)
 
-In start/ilcablaggio.sh create the container namespace, the br-cap16 bridge and a
+In start/wiring.sh create the container namespace, the br-cap16 bridge and a
 veth pair. Move one end into the namespace, rename it eth0, assign 10.16.0.2/24 and
 attach the other end to the bridge at 10.16.0.1/24. Bring interfaces and loopback up
 and add the container's default route.
@@ -115,7 +115,7 @@ and private subnet.
 
 ### Phase 7 — The rules Docker really writes (16.3 — TODO 7)
 
-Go back to start/irete.sh and fill in TODO 7. The host's NAT rules are not readable
+Go back to start/network.sh and fill in TODO 7. The host's NAT rules are not readable
 without privileges: borrow them instead of granting yourself any. A throwaway
 container enters the host's network namespace holding NET_ADMIN alone, reads the
 POSTROUTING chain and disappears; the host is not touched and no rule is written.
@@ -129,13 +129,13 @@ Once the seven TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- irete.sh reads the container's network namespace (TODO 1).
+- network.sh reads the container's network namespace (TODO 1).
 - It reads the eth0 IP of both containers (TODO 2).
 - It reads the veth indices (ifindex and iflink) (TODO 3).
-- ilcablaggio.sh builds namespaces, veth and a bridge inside unshare -Urnm (TODO 4).
+- wiring.sh builds namespaces, veth and a bridge inside unshare -Urnm (TODO 4).
 - Traffic reaches the simulated external network through MASQUERADE (TODO 5).
 - The structure is compared with docker0 without changing the real network (TODO 6).
-- irete.sh reads the MASQUERADE rule Docker wrote for its own bridge (TODO 7).
+- network.sh reads the MASQUERADE rule Docker wrote for its own bridge (TODO 7).
 - run.sh prints OK 1..7 and ALL CHECKS PASSED.
 
 ## How it is verified

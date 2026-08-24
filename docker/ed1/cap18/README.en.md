@@ -31,7 +31,7 @@ network at all, and the bridge in between.
 
 ## The scenario
 
-In start/ you will find idriver.sh: a script that starts a container with each driver
+In start/ you will find drivers.sh: a script that starts a container with each driver
 and should read what it gets — namespace and interfaces — but the three key reads are
 missing. You fill three gaps (TODO 1..3). Throwaway containers (--rm); no network is
 created, the daemon is not touched nor restarted. The host container only reads: it
@@ -43,7 +43,7 @@ Prepare the environment:
 
 ### Phase 1 — Plugged into the socket: host driver (18.1 — TODO 1)
 
-Open start/idriver.sh and complete **TODO 1**: read the network namespace of a
+Open start/drivers.sh and complete **TODO 1**: read the network namespace of a
 container started with --network host. It is the same as the host's: the container
 has no stack of its own, it uses the machine's.
 
@@ -74,7 +74,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- idriver.sh reads the namespace of the host-driver container (TODO 1).
+- drivers.sh reads the namespace of the host-driver container (TODO 1).
 - It reads namespace and eth0 of the none-driver container (TODO 2).
 - It reads namespace and eth0 of the default-bridge container (TODO 3).
 - run.sh prints OK 1..3 and ALL CHECKS PASSED.

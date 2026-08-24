@@ -34,7 +34,7 @@ di privilegiato sull'host.
 
 ## Lo scenario
 
-In start/ trovi irootless.sh: uno script che dovrebbe entrare in uno user namespace e
+In start/ trovi rootless.sh: uno script che dovrebbe entrare in uno user namespace e
 misurare la mappatura degli UID e i limiti di quel «root», ma le tre misure chiave
 mancano. Colmi tre lacune (TODO 1..3). Nessun privilegio, nessun demone toccato: solo
 unshare, che gira da utente normale.
@@ -45,7 +45,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — Root nella propria stanza (23.2 — TODO 1)
 
-Apri start/irootless.sh e completa il **TODO 1**: entra in uno user namespace che
+Apri start/rootless.sh e completa il **TODO 1**: entra in uno user namespace che
 mappa il tuo utente a root, e leggi l'uid. Dentro sei 0 — «root».
 
     inner_uid=$(unshare --user --map-root-user id -u)
@@ -74,7 +74,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- irootless.sh legge l'uid dentro lo user namespace (TODO 1).
+- rootless.sh legge l'uid dentro lo user namespace (TODO 1).
 - Legge il proprietario, sull'host, di un file creato «da root» dentro (TODO 2).
 - Verifica se quel «root» può scrivere in /etc dell'host (TODO 3).
 - run.sh stampa OK 1..3 e ALL CHECKS PASSED.

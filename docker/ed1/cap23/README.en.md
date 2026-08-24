@@ -33,7 +33,7 @@ privileged on the host.
 
 ## The scenario
 
-In start/ you will find irootless.sh: a script that should enter a user namespace and
+In start/ you will find rootless.sh: a script that should enter a user namespace and
 measure the UID mapping and the limits of that "root", but the three key measurements
 are missing. You fill three gaps (TODO 1..3). No privileges, no daemon touched: just
 unshare, which runs as an ordinary user.
@@ -44,7 +44,7 @@ Prepare the environment:
 
 ### Phase 1 — Root in your own room (23.2 — TODO 1)
 
-Open start/irootless.sh and complete **TODO 1**: enter a user namespace that maps your
+Open start/rootless.sh and complete **TODO 1**: enter a user namespace that maps your
 user to root, and read the uid. Inside you are 0 — "root".
 
     inner_uid=$(unshare --user --map-root-user id -u)
@@ -72,7 +72,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- irootless.sh reads the uid inside the user namespace (TODO 1).
+- rootless.sh reads the uid inside the user namespace (TODO 1).
 - It reads the host owner of a file created "as root" inside (TODO 2).
 - It checks whether that "root" can write to the host's /etc (TODO 3).
 - run.sh prints OK 1..3 and ALL CHECKS PASSED.

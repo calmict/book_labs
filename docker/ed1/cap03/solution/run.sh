@@ -13,7 +13,7 @@ trap cleanup EXIT
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/iltetto.sh" "$WORK"
+"$HERE/ceiling.sh" "$WORK"
 greedy_capped=$(val "$WORK/mem.txt" greedy_capped_rc)
 frugal_capped=$(val "$WORK/mem.txt" frugal_capped_rc)
 greedy_uncapped=$(val "$WORK/mem.txt" greedy_uncapped_rc)

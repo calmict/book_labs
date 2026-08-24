@@ -16,7 +16,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/lacatena.sh" "$WORK"
+"$HERE/chain.sh" "$WORK"
 api_version=$(val "$WORK/chain.txt" api_version)
 api_lists=$(val "$WORK/chain.txt" api_lists_container)
 parent=$(val "$WORK/chain.txt" parent_comm)

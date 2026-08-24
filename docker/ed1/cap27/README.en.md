@@ -25,7 +25,7 @@ where Docker on a single host ends, and where the horizon of orchestration begin
 
 ## The scenario
 
-In start/ you will find imaint.sh: a script that creates a stopped container and an unused
+In start/ you will find maintenance.sh: a script that creates a stopped container and an unused
 volume, both labelled as yours, and should reclaim them safely — but the three operations
 are missing. You fill three gaps (TODO 1..3). All the resources are labelled and removed
 by scope only: the shared daemon and other people's resources are not touched.
@@ -36,7 +36,7 @@ Prepare the environment:
 
 ### Phase 1 — Reclaim stopped containers, by scope (27.2 — TODO 1)
 
-Open start/imaint.sh and complete **TODO 1**: reclaim the stopped containers that belong
+Open start/maintenance.sh and complete **TODO 1**: reclaim the stopped containers that belong
 to you, filtering by your label. It is a scoped prune: it touches only yours, never other
 people's.
 
@@ -64,7 +64,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- imaint.sh reclaims its own stopped containers with a label-filtered prune (TODO 1).
+- maintenance.sh reclaims its own stopped containers with a label-filtered prune (TODO 1).
 - It removes its own named volume (TODO 2).
 - It recounts and confirms nothing of its own remains (TODO 3).
 - run.sh prints OK 1..3 and ALL CHECKS PASSED.

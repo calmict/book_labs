@@ -23,7 +23,7 @@ yourself what the hold is made of.
 
 ## The scenario
 
-In start/ you will find manibnude.sh: a script that should build a bare-hands container but is
+In start/ you will find barehands.sh: a script that should build a bare-hands container but is
 deliberately incomplete. As written it only opens a USER namespace and isolates nothing. Your job is to
 fill three gaps (TODO 1..3) so that the child process is truly born into a separate world, and records
 the proof that it is.
@@ -41,7 +41,7 @@ restricted version of reality. In this lab you create that process yourself, by 
 
 ### Phase 2 — The views to isolate (1.4 — TODO 1)
 
-A container is a process with a fresh instance of some kernel "worlds". Open start/manibnude.sh and
+A container is a process with a fresh instance of some kernel "worlds". Open start/barehands.sh and
 complete **TODO 1**: add to the unshare command the flags that create the isolation —
 
     unshare --user --map-root-user --uts --pid --fork --mount-proc \
@@ -70,7 +70,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- manibnude.sh builds the container with the correct flags (TODO 1).
+- barehands.sh builds the container with the correct flags (TODO 1).
 - From the inside the shell is PID 1 and the hostname is nave-cargo (TODO 2).
 - From the host, the hostname is untouched and the PID-namespace inode differs from the inside one
   (TODO 3).

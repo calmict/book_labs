@@ -27,7 +27,7 @@ Docker lo conserva (il logging driver) e leggi i suoi consumi dal vivo.
 
 ## Lo scenario
 
-In start/ trovi iobs.sh: uno script che avvia un container che scrive su stdout e stderr
+In start/ trovi observability.sh: uno script che avvia un container che scrive su stdout e stderr
 e dovrebbe leggerne i log, il driver e i consumi — ma le tre letture mancano. Colmi tre
 lacune (TODO 1..3). Container usa-e-getta (--rm/rm), il demone non si tocca.
 
@@ -37,7 +37,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — Il diario: docker logs (25.1 — TODO 1)
 
-Apri start/iobs.sh e completa il **TODO 1**: leggi i log del container. Docker cattura sia
+Apri start/observability.sh e completa il **TODO 1**: leggi i log del container. Docker cattura sia
 stdout sia stderr; unendo i due stream (2>&1) li recuperi entrambi.
 
     logs=$(docker logs "$C" 2>&1)
@@ -69,7 +69,7 @@ di memoria e collega il campo LIMIT di docker stats ai 67.108.864 byte configura
 
 ## Criteri di "fatto"
 
-- iobs.sh legge i log del container (stdout e stderr) (TODO 1).
+- observability.sh legge i log del container (stdout e stderr) (TODO 1).
 - Legge il logging driver (TODO 2).
 - Legge l'uso di memoria con docker stats (TODO 3).
 - Confronta direttamente i file senza/con rotazione e collega LIMIT a --memory.

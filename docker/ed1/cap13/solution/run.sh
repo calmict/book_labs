@@ -16,7 +16,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/aterra.sh" "$WORK"
+"$HERE/persistence.sh" "$WORK"
 ephemeral=$(val "$WORK/data.txt" ephemeral)
 persisted=$(val "$WORK/data.txt" persisted)
 vol_exists=$(val "$WORK/data.txt" vol_exists)

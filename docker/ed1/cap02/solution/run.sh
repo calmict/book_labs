@@ -14,7 +14,7 @@ trap cleanup EXIT
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/lestanze.sh" "$WORK"
+"$HERE/namespaces.sh" "$WORK"
 inside_pid=$(val "$WORK/inside.txt" inside_pid)
 inside_hostname=$(val "$WORK/inside.txt" inside_hostname)
 inside_uts=$(val "$WORK/inside.txt" inside_uts)

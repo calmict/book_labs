@@ -25,7 +25,7 @@ systemd's delegation (3.7) gives you a piece of the cgroup tree with no need for
 
 ## The scenario
 
-In start/ you will find iltetto.sh: a script that should impose a memory ceiling and watch the OOM, but
+In start/ you will find ceiling.sh: a script that should impose a memory ceiling and watch the OOM, but
 the ceiling is missing, so no process is ever killed. You fill three gaps (TODO 1..3) so the ceiling
 bites and the contrast proves it.
 
@@ -41,7 +41,7 @@ cgroups and it can take everything, starving the neighbours. Here you drive the 
 
 ### Phase 2 — The memory ceiling (3.4 — TODO 1)
 
-Open start/iltetto.sh and complete **TODO 1**: give the scope a memory ceiling. Complete the CAP array
+Open start/ceiling.sh and complete **TODO 1**: give the scope a memory ceiling. Complete the CAP array
 with a 40 MiB limit and swap disabled, so the limit truly bites —
 
     CAP=(--user --scope -q -p MemoryMax=40M -p MemorySwapMax=0)

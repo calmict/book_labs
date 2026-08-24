@@ -15,7 +15,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/icapabilities.sh" "$WORK"
+"$HERE/capabilities.sh" "$WORK"
 default=$(val "$WORK/caps.txt" default)
 dropall=$(val "$WORK/caps.txt" dropall)
 dropadd=$(val "$WORK/caps.txt" dropadd)

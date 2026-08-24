@@ -25,7 +25,7 @@ several views the kernel agrees not to show.
 
 ## The scenario
 
-In start/ you will find lestanze.sh: a script that should build a process isolated in several namespaces
+In start/ you will find namespaces.sh: a script that should build a process isolated in several namespaces
 but only opens the USER namespace and isolates nothing else. You fill three gaps (TODO 1..3) so the
 child is born into a separate world on several fronts and records the proof of each.
 
@@ -42,7 +42,7 @@ It is the metric we will use for every room.
 
 ### Phase 2 — Opening the rooms (2.2-2.5 — TODO 1)
 
-Open start/lestanze.sh and complete **TODO 1**: add to the unshare command the flags that open one room
+Open start/namespaces.sh and complete **TODO 1**: add to the unshare command the flags that open one room
 each —
 
     unshare --user --map-root-user --uts --pid --fork --mount-proc --mount --net \
@@ -72,7 +72,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- lestanze.sh opens the correct namespaces (TODO 1) and creates the private mount (TODO 2).
+- namespaces.sh opens the correct namespaces (TODO 1) and creates the private mount (TODO 2).
 - host.txt records the host's inodes (TODO 3).
 - From the inside: PID 1, hostname sei-stanze, marker present, network with only loopback, uid 0.
 - run.sh prints OK 1..6 and ALL CHECKS PASSED, including the contrast: without --net the process shares

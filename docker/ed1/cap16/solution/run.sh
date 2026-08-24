@@ -25,7 +25,7 @@ done
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/irete.sh" "$WORK"
+"$HERE/network.sh" "$WORK"
 host_ns=$(val "$WORK/net.txt" host_ns)
 c1_ns=$(val "$WORK/net.txt" c1_ns)
 c1_ip=$(val "$WORK/net.txt" c1_ip)
@@ -58,7 +58,7 @@ docker run -d --name "$COMPARE" busybox sleep 60 >/dev/null
 ip addr show docker0 > "$WORK/docker0.txt"
 bridge link > "$WORK/docker-bridge-links.txt"
 
-"$HERE/ilcablaggio.sh" "$WORK"
+"$HERE/wiring.sh" "$WORK"
 bridge_name=$(val "$WORK/cablaggio.txt" bridge)
 bridge_member=$(val "$WORK/cablaggio.txt" bridge_member)
 container_ip=$(val "$WORK/cablaggio.txt" container_ip)

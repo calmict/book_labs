@@ -23,7 +23,7 @@ mano di cosa è fatta la stiva.
 
 ## Lo scenario
 
-In start/ trovi manibnude.sh: uno script che dovrebbe costruire un container a mani nude, ma è
+In start/ trovi barehands.sh: uno script che dovrebbe costruire un container a mani nude, ma è
 volutamente incompleto. Così com'è apre solo un USER namespace e non isola nulla. Il tuo compito è
 colmare tre lacune (TODO 1..3) perché il processo figlio nasca davvero in un mondo separato, e registri
 la prova di esserlo.
@@ -41,7 +41,7 @@ versione ristretta della realtà. In questo laboratorio quel processo lo crei tu
 
 ### Fase 2 — Le viste da isolare (1.4 — TODO 1)
 
-Un container è un processo con una nuova istanza di alcuni "mondi" del kernel. Apri start/manibnude.sh e
+Un container è un processo con una nuova istanza di alcuni "mondi" del kernel. Apri start/barehands.sh e
 completa il **TODO 1**: aggiungi al comando unshare i flag che creano l'isolamento —
 
     unshare --user --map-root-user --uts --pid --fork --mount-proc \
@@ -70,7 +70,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- manibnude.sh costruisce il container con i flag corretti (TODO 1).
+- barehands.sh costruisce il container con i flag corretti (TODO 1).
 - Dall'interno la shell è PID 1 e l'hostname è nave-cargo (TODO 2).
 - Dall'host, l'hostname è intatto e l'inode del PID namespace è diverso da quello interno (TODO 3).
 - run.sh stampa OK 1..4 e ALL CHECKS PASSED, incluso il controllo di contrasto: senza --pid il PID

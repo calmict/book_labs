@@ -50,7 +50,7 @@ il ponte verso l'orchestrazione.
 
 ## Lo scenario
 
-In start/ trovi imacvlan.sh: uno script che, dato il parent cap19dummy, dovrebbe
+In start/ trovi macvlan.sh: uno script che, dato il parent cap19dummy, dovrebbe
 creare una rete macvlan, avviarci due container e misurarne MAC e raggiungibilità —
 ma le operazioni chiave mancano. Colmi cinque lacune (TODO 1..5): le prime tre
 costruiscono la rete macvlan e la misurano, le ultime due mostrano il limite del
@@ -63,7 +63,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — La rete macvlan (19.1 — TODO 1)
 
-Apri start/imacvlan.sh e completa il **TODO 1**: crea una rete macvlan sul parent e
+Apri start/macvlan.sh e completa il **TODO 1**: crea una rete macvlan sul parent e
 avvia due container, ciascuno con un IP sulla sottorete del parent. Con macvlan il
 container non prende un IP privato dietro NAT: è indirizzato direttamente sul
 segmento.
@@ -120,7 +120,7 @@ Quando i cinque TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- imacvlan.sh crea la rete macvlan e i due container (TODO 1).
+- macvlan.sh crea la rete macvlan e i due container (TODO 1).
 - Legge il MAC di ciascun container (TODO 2).
 - Verifica la raggiungibilità L2 tra i due (TODO 3).
 - Misura le due direzioni bloccate tra figlio e parent (TODO 4).

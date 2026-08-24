@@ -30,7 +30,7 @@ demone a terra, sopravvive alla nave.
 
 ## Lo scenario
 
-In start/ trovi aterra.sh: uno script che dovrebbe mettere a confronto due destini —
+In start/ trovi persistence.sh: uno script che dovrebbe mettere a confronto due destini —
 un file scritto nello strato del container e uno scritto in un volume — ma la parte
 del volume non è ancora fatta. Colmi tre lacune (TODO 1..3). Container usa-e-getta
 (--rm) e un volume con nome unico, rimosso alla fine: il demone condiviso non si
@@ -49,7 +49,7 @@ non è un posto dove tenere qualcosa che deve durare.
 
 ### Fase 2 — Creare un volume (13.3 — TODO 1)
 
-Apri start/aterra.sh e completa il **TODO 1**: crea un volume con nome. È un'area
+Apri start/persistence.sh e completa il **TODO 1**: crea un volume con nome. È un'area
 gestita dal demone, fuori dallo strato di qualsiasi container.
 
     docker volume create "$VOL" >/dev/null
@@ -76,7 +76,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- aterra.sh crea il volume con nome (TODO 1).
+- persistence.sh crea il volume con nome (TODO 1).
 - Scrive un file nel volume da un container usa-e-getta (TODO 2).
 - Rilegge il file da un container nuovo che monta lo stesso volume (TODO 3).
 - run.sh stampa OK 1..3 e ALL CHECKS PASSED.

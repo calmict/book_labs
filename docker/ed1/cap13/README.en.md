@@ -29,7 +29,7 @@ ashore, outlives the ship.
 
 ## The scenario
 
-In start/ you will find aterra.sh: a script that should contrast two fates — a file
+In start/ you will find persistence.sh: a script that should contrast two fates — a file
 written to the container's layer and one written to a volume — but the volume part
 is not done yet. You fill three gaps (TODO 1..3). Throwaway containers (--rm) and a
 uniquely named volume, removed at the end: the shared daemon is not touched.
@@ -47,7 +47,7 @@ gone — not a place to keep anything that must last.
 
 ### Phase 2 — Creating a volume (13.3 — TODO 1)
 
-Open start/aterra.sh and complete **TODO 1**: create a named volume. It is an area
+Open start/persistence.sh and complete **TODO 1**: create a named volume. It is an area
 managed by the daemon, outside any container's layer.
 
     docker volume create "$VOL" >/dev/null
@@ -75,7 +75,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- aterra.sh creates the named volume (TODO 1).
+- persistence.sh creates the named volume (TODO 1).
 - It writes a file into the volume from a throwaway container (TODO 2).
 - It reads the file back from a new container mounting the same volume (TODO 3).
 - run.sh prints OK 1..3 and ALL CHECKS PASSED.

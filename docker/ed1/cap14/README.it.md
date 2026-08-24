@@ -27,7 +27,7 @@ tutti e tre e ne verifichi il tratto che li distingue.
 
 ## Lo scenario
 
-In start/ trovi imontaggi.sh: uno script che dovrebbe mettere a confronto i tre
+In start/ trovi mounts.sh: uno script che dovrebbe mettere a confronto i tre
 montaggi, ma le tre operazioni chiave mancano. Colmi tre lacune (TODO 1..3).
 Container usa-e-getta (--rm), un volume con nome unico e una cartella temporanea:
 il demone condiviso non si tocca.
@@ -38,7 +38,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — Il molo condiviso: bind mount (14.2 — TODO 1)
 
-Apri start/imontaggi.sh e completa il **TODO 1**: monta una cartella dell'host su
+Apri start/mounts.sh e completa il **TODO 1**: monta una cartella dell'host su
 /mnt e scrivici un file dal container. Il tratto del bind è la bidirezionalità: il
 file compare sull'host, allo stesso percorso che hai scelto.
 
@@ -67,7 +67,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- imontaggi.sh scrive tramite un bind mount su una cartella dell'host (TODO 1).
+- mounts.sh scrive tramite un bind mount su una cartella dell'host (TODO 1).
 - Rilegge da un container nuovo un file scritto in un volume (TODO 2).
 - Monta un tmpfs e ne riporta il tipo (TODO 3).
 - run.sh stampa OK 1..3 e ALL CHECKS PASSED.

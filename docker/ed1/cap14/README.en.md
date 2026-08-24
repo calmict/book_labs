@@ -26,7 +26,7 @@ the trait that sets each apart.
 
 ## The scenario
 
-In start/ you will find imontaggi.sh: a script that should contrast the three
+In start/ you will find mounts.sh: a script that should contrast the three
 mounts, but the three key operations are missing. You fill three gaps (TODO 1..3).
 Throwaway containers (--rm), a uniquely named volume and a temporary folder: the
 shared daemon is not touched.
@@ -37,7 +37,7 @@ Prepare the environment:
 
 ### Phase 1 — The shared dock: bind mount (14.2 — TODO 1)
 
-Open start/imontaggi.sh and complete **TODO 1**: mount a host folder at /mnt and
+Open start/mounts.sh and complete **TODO 1**: mount a host folder at /mnt and
 write a file to it from the container. The bind's trait is two-way visibility: the
 file appears on the host, at the path you chose.
 
@@ -66,7 +66,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- imontaggi.sh writes through a bind mount onto a host folder (TODO 1).
+- mounts.sh writes through a bind mount onto a host folder (TODO 1).
 - It reads back from a new container a file written to a volume (TODO 2).
 - It mounts a tmpfs and reports its type (TODO 3).
 - run.sh prints OK 1..3 and ALL CHECKS PASSED.

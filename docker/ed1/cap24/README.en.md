@@ -28,7 +28,7 @@ without returning all the others.
 
 ## The scenario
 
-In start/ you will find icapabilities.sh: a script that should try the same operation
+In start/ you will find capabilities.sh: a script that should try the same operation
 (a ping, which needs the NET_RAW capability) with three different capability sets, but
 the three attempts are missing. You fill three gaps (TODO 1..3). Throwaway containers
 (--rm); the daemon is not touched.
@@ -39,7 +39,7 @@ Prepare the environment:
 
 ### Phase 1 — With the default keys (24.1 — TODO 1)
 
-Open start/icapabilities.sh and complete **TODO 1**: run a ping in a default container.
+Open start/capabilities.sh and complete **TODO 1**: run a ping in a default container.
 It works: among the capabilities Docker grants by default is NET_RAW, needed for ping's
 raw socket.
 
@@ -72,7 +72,7 @@ immediately; no host path is involved.
 
 ## "Done" criteria
 
-- icapabilities.sh tries the ping with the default capabilities (TODO 1).
+- capabilities.sh tries the ping with the default capabilities (TODO 1).
 - It retries it with --cap-drop ALL (TODO 2).
 - It retries it with --cap-drop ALL --cap-add NET_RAW (TODO 3).
 - It compares the normal internal mount and --privileged (TODO 4).

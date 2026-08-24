@@ -31,7 +31,7 @@ non ha rete affatto, e il bridge nel mezzo.
 
 ## Lo scenario
 
-In start/ trovi idriver.sh: uno script che avvia un container con ciascun driver e
+In start/ trovi drivers.sh: uno script che avvia un container con ciascun driver e
 dovrebbe leggere cosa ottiene — namespace e interfacce — ma le tre letture chiave
 mancano. Colmi tre lacune (TODO 1..3). Container usa-e-getta (--rm); nessuna rete
 viene creata, il demone non si tocca e non si riavvia. Il container host non fa che
@@ -43,7 +43,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — Attaccato alla presa: driver host (18.1 — TODO 1)
 
-Apri start/idriver.sh e completa il **TODO 1**: leggi il network namespace di un
+Apri start/drivers.sh e completa il **TODO 1**: leggi il network namespace di un
 container avviato con --network host. È lo stesso dell'host: il container non ha uno
 stack suo, usa quello della macchina.
 
@@ -73,7 +73,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- idriver.sh legge il namespace del container con driver host (TODO 1).
+- drivers.sh legge il namespace del container con driver host (TODO 1).
 - Legge namespace ed eth0 del container con driver none (TODO 2).
 - Legge namespace ed eth0 del container con bridge di default (TODO 3).
 - run.sh stampa OK 1..3 e ALL CHECKS PASSED.

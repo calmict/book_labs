@@ -25,7 +25,7 @@ ma la somma di più viste che il kernel accetta di non far vedere.
 
 ## Lo scenario
 
-In start/ trovi lestanze.sh: uno script che dovrebbe costruire un processo isolato in più namespace, ma
+In start/ trovi namespaces.sh: uno script che dovrebbe costruire un processo isolato in più namespace, ma
 apre solo il USER namespace e non isola altro. Colmi tre lacune (TODO 1..3) perché il figlio nasca in
 un mondo separato su più fronti e registri la prova di ciascuno.
 
@@ -42,7 +42,7 @@ vivono in mondi separati. È il metro che useremo per ogni stanza.
 
 ### Fase 2 — Aprire le stanze (2.2-2.5 — TODO 1)
 
-Apri start/lestanze.sh e completa il **TODO 1**: aggiungi al comando unshare i flag che aprono una
+Apri start/namespaces.sh e completa il **TODO 1**: aggiungi al comando unshare i flag che aprono una
 stanza ciascuno —
 
     unshare --user --map-root-user --uts --pid --fork --mount-proc --mount --net \
@@ -72,7 +72,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- lestanze.sh apre i namespace corretti (TODO 1) e crea il mount privato (TODO 2).
+- namespaces.sh apre i namespace corretti (TODO 1) e crea il mount privato (TODO 2).
 - host.txt registra gli inode dell'host (TODO 3).
 - Dall'interno: PID 1, hostname sei-stanze, marker presente, rete con la sola loopback, uid 0.
 - run.sh stampa OK 1..6 e ALL CHECKS PASSED, incluso il contrasto: senza --net il processo torna a

@@ -49,7 +49,7 @@ toward orchestration.
 
 ## The scenario
 
-In start/ you will find imacvlan.sh: a script that, given the parent cap19dummy,
+In start/ you will find macvlan.sh: a script that, given the parent cap19dummy,
 should create a macvlan network, start two containers on it and measure their MAC and
 reachability — but the key operations are missing. You fill five gaps (TODO 1..5):
 the first three build the macvlan network and measure it, the last two show the
@@ -62,7 +62,7 @@ Prepare the environment:
 
 ### Phase 1 — The macvlan network (19.1 — TODO 1)
 
-Open start/imacvlan.sh and complete **TODO 1**: create a macvlan network on the
+Open start/macvlan.sh and complete **TODO 1**: create a macvlan network on the
 parent and start two containers, each with an IP on the parent's subnet. With macvlan
 the container does not get a private IP behind NAT: it is addressed directly on the
 segment.
@@ -119,7 +119,7 @@ Once the five TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- imacvlan.sh creates the macvlan network and the two containers (TODO 1).
+- macvlan.sh creates the macvlan network and the two containers (TODO 1).
 - It reads each container's MAC (TODO 2).
 - It verifies L2 reachability between the two (TODO 3).
 - It measures the two blocked directions between child and parent (TODO 4).

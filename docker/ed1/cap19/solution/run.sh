@@ -32,7 +32,7 @@ fi
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/imacvlan.sh" "$WORK"
+"$HERE/macvlan.sh" "$WORK"
 a_ip=$(val "$WORK/mac.txt" a_ip)
 a_mac=$(val "$WORK/mac.txt" a_mac)
 b_mac=$(val "$WORK/mac.txt" b_mac)

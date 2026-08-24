@@ -31,7 +31,7 @@ attraversa il confine tale e quale: l'UID N dentro è l'UID N sull'host.
 
 ## Lo scenario
 
-In start/ trovi ipermessi.sh: uno script che prepara una cartella dell'host di tua
+In start/ trovi permissions.sh: uno script che prepara una cartella dell'host di tua
 proprietà, la monta in un container e dovrebbe mostrare il mismatch e la sua cura —
 ma le prove chiave mancano. Colmi quattro lacune (TODO 1..4). Container usa-e-getta
 (--rm) e una cartella temporanea: nessun privilegio, il demone non si tocca.
@@ -42,7 +42,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — Il problema: badge sbagliato (15.2 — TODO 1)
 
-Apri start/ipermessi.sh e completa il **TODO 1**: la cartella dell'host è di
+Apri start/permissions.sh e completa il **TODO 1**: la cartella dell'host è di
 proprietà del tuo UID. Fai girare un container con un UID diverso (non-root) che
 prova a scrivere nel mount: viene respinto, perché quel numero non possiede la
 cartella e non è che «other», senza permesso di scrittura.
@@ -77,7 +77,7 @@ Alpine offre su-exec come pacchetto piccolo e diretto, quindi non serve gosu.
 
 ## Criteri di "fatto"
 
-- ipermessi.sh riproduce il mismatch: un UID che non possiede la cartella è respinto
+- permissions.sh riproduce il mismatch: un UID che non possiede la cartella è respinto
   (TODO 1).
 - Risolve facendo girare il container con l'UID proprietario (TODO 2).
 - Verifica dall'host la proprietà del file creato (TODO 3).

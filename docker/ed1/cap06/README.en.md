@@ -24,7 +24,7 @@ container changes: because the config.json is the container.
 
 ## The scenario
 
-In start/ you will find laricetta.sh: a script that should generate the OCI recipe and run it, but
+In start/ you will find recipe.sh: a script that should generate the OCI recipe and run it, but
 generates nothing and runs nothing. You fill three gaps (TODO 1..3) so the recipe exists, runc executes
 it, and a change to it is reflected in the container.
 
@@ -40,7 +40,7 @@ program, specifications — and from there the parts became interchangeable.
 
 ### Phase 2 — Generating the recipe (6.3 — TODO 1)
 
-The script prepares a minimal rootfs from busybox. Open start/laricetta.sh and complete **TODO 1**:
+The script prepares a minimal rootfs from busybox. Open start/recipe.sh and complete **TODO 1**:
 generate the runtime-spec recipe, rootless, and record the namespaces it lists —
 
     runc spec --rootless
@@ -76,7 +76,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- laricetta.sh generates the recipe and records the namespaces (TODO 1).
+- recipe.sh generates the recipe and records the namespaces (TODO 1).
 - run_recipe edits the config.json (command + terminal) (TODO 2) and runs it with runc (TODO 3).
 - run.sh prints OK 1..3 and ALL CHECKS PASSED: the recipe lists the Part 1 namespaces, runc executes it,
   and changing the recipe changes the output.

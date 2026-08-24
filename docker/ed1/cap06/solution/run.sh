@@ -15,7 +15,7 @@ command -v docker >/dev/null || { echo "ERROR: docker not found - needed only to
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/laricetta.sh" "$WORK"
+"$HERE/recipe.sh" "$WORK"
 namespaces=$(val "$WORK/oci.txt" namespaces)
 run_one=$(val "$WORK/oci.txt" run_one)
 run_two=$(val "$WORK/oci.txt" run_two)

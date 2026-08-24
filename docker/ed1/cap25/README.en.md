@@ -27,7 +27,7 @@ driver) and read its live consumption.
 
 ## The scenario
 
-In start/ you will find iobs.sh: a script that starts a container writing to stdout and
+In start/ you will find observability.sh: a script that starts a container writing to stdout and
 stderr and should read its logs, driver and consumption — but the three reads are missing.
 You fill three gaps (TODO 1..3). Throwaway container (--rm/rm), the daemon is not touched.
 
@@ -37,7 +37,7 @@ Prepare the environment:
 
 ### Phase 1 — The logbook: docker logs (25.1 — TODO 1)
 
-Open start/iobs.sh and complete **TODO 1**: read the container's logs. Docker captures
+Open start/observability.sh and complete **TODO 1**: read the container's logs. Docker captures
 both stdout and stderr; merging the two streams (2>&1) retrieves them both.
 
     logs=$(docker logs "$C" 2>&1)
@@ -69,7 +69,7 @@ of memory and link docker stats' LIMIT field to the configured 67,108,864 bytes.
 
 ## "Done" criteria
 
-- iobs.sh reads the container's logs (stdout and stderr) (TODO 1).
+- observability.sh reads the container's logs (stdout and stderr) (TODO 1).
 - It reads the logging driver (TODO 2).
 - It reads the memory usage with docker stats (TODO 3).
 - It directly compares files without/with rotation and links LIMIT to --memory.

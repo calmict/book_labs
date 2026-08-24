@@ -22,7 +22,7 @@ containers "always take ten seconds" to stop.
 
 ## The scenario
 
-In start/ you will find congrazia.sh: a script that should start two containers and time their stop, but
+In start/ you will find shutdown.sh: a script that should start two containers and time their stop, but
 does not time it and records no exit code. You fill three gaps (TODO 1..3) using throwaway containers,
 never restarting the daemon.
 
@@ -38,7 +38,7 @@ sends SIGKILL. How PID 1 reacts to that first signal makes all the difference.
 
 ### Phase 2 — Timing the stop (7.3 — TODO 1)
 
-Open start/congrazia.sh and complete **TODO 1**, inside the measure function: stop the container with the
+Open start/shutdown.sh and complete **TODO 1**, inside the measure function: stop the container with the
 grace period and time the operation.
 
     local t0 t1

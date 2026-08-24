@@ -25,7 +25,7 @@ rootless, perché la delega di systemd (§3.7) ti dà un pezzo dell'albero dei c
 
 ## Lo scenario
 
-In start/ trovi iltetto.sh: uno script che dovrebbe imporre un tetto di memoria e osservare l'OOM, ma il
+In start/ trovi ceiling.sh: uno script che dovrebbe imporre un tetto di memoria e osservare l'OOM, ma il
 tetto manca, quindi nessun processo viene mai ucciso. Colmi tre lacune (TODO 1..3) perché il tetto morda
 e il contrasto lo dimostri.
 
@@ -41,7 +41,7 @@ tutto, affamando i vicini. Qui azioni la seconda metà.
 
 ### Fase 2 — Il tetto di memoria (3.4 — TODO 1)
 
-Apri start/iltetto.sh e completa il **TODO 1**: dai allo scope un tetto di memoria. Completa l'array CAP
+Apri start/ceiling.sh e completa il **TODO 1**: dai allo scope un tetto di memoria. Completa l'array CAP
 con un limite di 40 MiB e lo swap disabilitato, così il limite morde davvero —
 
     CAP=(--user --scope -q -p MemoryMax=40M -p MemorySwapMax=0)

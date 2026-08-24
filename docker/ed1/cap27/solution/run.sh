@@ -16,7 +16,7 @@ docker info >/dev/null 2>&1 || { echo "ERROR: cannot reach the Docker daemon (se
 
 val() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-"$HERE/imaint.sh" "$WORK"
+"$HERE/maintenance.sh" "$WORK"
 con_before=$(val "$WORK/maint.txt" con_before)
 vol_before=$(val "$WORK/maint.txt" vol_before)
 con_after=$(val "$WORK/maint.txt" con_after)

@@ -27,7 +27,7 @@ dal contatore dei riavvii.
 
 ## Lo scenario
 
-In start/ trovi idiag.sh: uno script che avvia un container che esce in silenzio con un
+In start/ trovi troubleshoot.sh: uno script che avvia un container che esce in silenzio con un
 codice non-zero e una restart policy, e dovrebbe leggerne log, exit code e riavvii — ma le
 tre letture mancano. Colmi tre lacune (TODO 1..3). Container usa-e-getta (rm), il demone
 non si tocca.
@@ -38,7 +38,7 @@ Prepara l'ambiente:
 
 ### Fase 1 — Il silenzio: log vuoti (26.1 — TODO 1)
 
-Apri start/idiag.sh e completa il **TODO 1**: leggi i log del container. Sono vuoti: il
+Apri start/troubleshoot.sh e completa il **TODO 1**: leggi i log del container. Sono vuoti: il
 container è morto senza stampare nulla. Dai log, qui, non ricavi niente.
 
     logs=$(docker logs "$C" 2>&1)
@@ -66,7 +66,7 @@ Quando i tre TODO sono colmati, esegui il test:
 
 ## Criteri di "fatto"
 
-- idiag.sh legge i log del container (vuoti) (TODO 1).
+- troubleshoot.sh legge i log del container (vuoti) (TODO 1).
 - Legge l'exit code da docker inspect (TODO 2).
 - Legge il contatore dei riavvii e lo stato finale (TODO 3).
 - run.sh stampa OK 1..3 e ALL CHECKS PASSED.

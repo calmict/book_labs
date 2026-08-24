@@ -24,7 +24,7 @@ technical proof behind an important promise — you can upgrade Docker without k
 
 ## The scenario
 
-In start/ you will find lacatena.sh: a script that should follow a request from the API to the chain, but
+In start/ you will find chain.sh: a script that should follow a request from the API to the chain, but
 does not yet record the information that matters. You fill three gaps (TODO 1..3) using a throwaway
 container, never restarting the shared daemon.
 
@@ -40,7 +40,7 @@ daemon, not the client, that owns containers, images and networks.
 
 ### Phase 2 — The socket is the API (5.2 — TODO 1)
 
-Open start/lacatena.sh and complete **TODO 1**: ask the daemon its version by talking straight to the
+Open start/chain.sh and complete **TODO 1**: ask the daemon its version by talking straight to the
 UNIX socket with curl, and record it —
 
     ver=$(curl -s --unix-socket "$SOCK" http://localhost/version \
@@ -70,7 +70,7 @@ Once the three TODOs are filled, run the test:
 
 ## "Done" criteria
 
-- lacatena.sh records the version obtained from the socket (TODO 1).
+- chain.sh records the version obtained from the socket (TODO 1).
 - It records the container's parent (a shim) (TODO 2).
 - It records the grandparent (systemd/containerd, not dockerd) (TODO 3).
 - run.sh prints OK 1..4 and ALL CHECKS PASSED.
