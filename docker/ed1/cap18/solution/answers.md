@@ -16,6 +16,23 @@
     bridge_ns=$(docker run --rm busybox readlink /proc/self/ns/net)
     bridge_eth0=$(docker run --rm busybox sh -c '[ -e /sys/class/net/eth0 ] && echo yes || echo no')
 
+**TODO 4 (18.1) — host-port conflict and ignored publishing** (the three servers
+are already started by the script; these are the reads):
+
+    set +e
+    conflict_output=$(docker run --rm --network host -v "$OUT:/www:ro" busybox httpd -f -p "$PORT" -h /www 2>&1)
+    conflict_status=$?
+    set -e
+    free_running=$(docker inspect -f '{{.State.Running}}' "$FREE_SERVER")
+    host_port_output=$(docker port "$HOST_SERVER")
+    bridge_port_output=$(docker port "$BRIDGE_SERVER" 80/tcp)
+
+**TODO 5 (18.3) — host and bridge paths to the same service:**
+
+    host_loopback=$(docker run --rm --network host busybox wget -q -O /dev/null "http://127.0.0.1:$PORT" && echo yes || echo no)
+    bridge_loopback=$(docker run --rm busybox wget -q -T 1 -O /dev/null "http://127.0.0.1:$PORT" 2>/dev/null && echo yes || echo no)
+    bridge_gateway=$(docker run --rm busybox sh -c 'gateway=$(ip route | awk '\''/default/ { print $3; exit }'\''); wget -q -O /dev/null "http://$gateway:'"$PORT"'" && echo yes || echo no')
+
 ## Reflection questions
 
 **a. Benefits and risks of the host driver, and when to use it.**
@@ -51,3 +68,13 @@ The power of host is that there is no separate network namespace to cross — wh
 also precisely its danger: everything the container does on the network, it does as
 the host, so in production it turns a container escape at the network layer into no
 escape at all, because there was never a wall to climb.
+
+The new checks make that trade-off concrete. A host-mode listener owns the actual
+host port, so another identical listener collides; -p has no separate namespace to
+publish from and is therefore ignored. A bridge container cannot use its own
+127.0.0.1 to reach the host service: it must cross its gateway and the host's NAT
+path. That extra mechanism is the real difference between the two drivers.
+It is not, however, a difference you can feel: timed inside the container, one
+hundred sequential requests take practically the same time on both paths, which is
+what 18.3 says in prose — the NAT overhead is negligible for the vast majority of
+workloads. The exercise therefore prints the two figures and asserts neither.

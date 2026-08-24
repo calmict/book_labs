@@ -21,6 +21,9 @@ network at all, and the bridge in between.
 - Compare with the default bridge: its own namespace and an eth0 — isolated but
   connected (18.4).
 - Understand how to choose the driver and why host is powerful but delicate (18.3).
+- Demonstrate that host directly occupies host ports and ignores -p (18.1).
+- Qualitatively compare host and bridge paths to the same service, measuring
+  latency without using it as an assertion (18.3).
 
 ## Prerequisites
 
@@ -32,10 +35,12 @@ network at all, and the bridge in between.
 ## The scenario
 
 In start/ you will find drivers.sh: a script that starts a container with each driver
-and should read what it gets — namespace and interfaces — but the three key reads are
-missing. You fill three gaps (TODO 1..3). Throwaway containers (--rm); no network is
-created, the daemon is not touched nor restarted. The host container only reads: it
-opens no ports, changes nothing.
+and should read what it gets — namespace and interfaces — and compare ports and
+paths, but the five key parts are missing. You fill five gaps (TODO 1..5).
+Throwaway containers (--rm); no network is created, the daemon is not touched nor
+restarted. For a few seconds three small ephemeral HTTP servers listen on high host
+ports: the script picks free ports before starting and a trap always releases them,
+even if the test is interrupted halfway.
 
 Prepare the environment:
 
@@ -67,7 +72,43 @@ middle way.
     bridge_ns=$(docker run --rm busybox readlink /proc/self/ns/net)
     bridge_eth0=$(docker run --rm busybox sh -c '[ -e /sys/class/net/eth0 ] && echo yes || echo no')
 
-Once the three TODOs are filled, run the test:
+### Phase 4 — There is only one host port (18.1 — TODO 4)
+
+The script already starts three throwaway servers for you: one in host mode on the
+chosen port (with a -p that host mode will ignore), one in host mode on a free port,
+one on the default bridge publishing a port. Complete **TODO 4**: try the same
+listener again in host mode on the port already taken — it must fail with address
+already in use — and read the control on the free port, which is running instead.
+Then compare what docker port says in the two cases: no mapping in host mode, a
+mapping on the bridge.
+
+    set +e
+    conflict_output=$(docker run --rm --network host -v "$OUT:/www:ro" busybox httpd -f -p "$PORT" -h /www 2>&1)
+    conflict_status=$?
+    set -e
+    free_running=$(docker inspect -f '{{.State.Running}}' "$FREE_SERVER")
+    host_port_output=$(docker port "$HOST_SERVER")
+    bridge_port_output=$(docker port "$BRIDGE_SERVER" 80/tcp)
+
+### Phase 5 — Two paths to the same service (18.3 — TODO 5)
+
+Complete **TODO 5**: query the same host server first from a host-mode container
+through 127.0.0.1, then from a bridge container. On the bridge, 127.0.0.1 is the
+container's loopback and must fail; the gateway address, read from the default
+route, must work.
+
+    host_loopback=$(docker run --rm --network host busybox wget -q -O /dev/null "http://127.0.0.1:$PORT" && echo yes || echo no)
+    bridge_loopback=$(docker run --rm busybox wget -q -T 1 -O /dev/null "http://127.0.0.1:$PORT" 2>/dev/null && echo yes || echo no)
+    bridge_gateway=$(docker run --rm busybox sh -c 'gateway=$(ip route | awk '\''/default/ { print $3; exit }'\''); wget -q -O /dev/null "http://$gateway:'"$PORT"'" && echo yes || echo no')
+
+Finally, time one hundred sequential requests over both paths, measuring them
+INSIDE the container with time, so that the startup of docker run stays out of the
+figure. The two times are only printed, never asserted — and they almost always come
+out comparable: that is exactly what 18.3 says, the NAT overhead is negligible for
+the vast majority of workloads. The real difference between the two drivers is not
+speed, it is which paths exist.
+
+Once the five TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -77,7 +118,11 @@ Once the three TODOs are filled, run the test:
 - drivers.sh reads the namespace of the host-driver container (TODO 1).
 - It reads namespace and eth0 of the none-driver container (TODO 2).
 - It reads namespace and eth0 of the default-bridge container (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It demonstrates the host-port conflict and ignored -p, with their positive
+  controls (TODO 4).
+- It compares host-loopback, bridge-loopback, and bridge-gateway paths to the same
+  service and prints both latency measurements (TODO 5).
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -89,6 +134,10 @@ solution/run.sh runs the scenario and checks, point by point:
   no eth0 — no connectivity.
 - **OK 3** — bridge: the container has its own namespace and an eth0 — isolated but
   connected.
+- **OK 4** — host: the same port conflicts and a free port works; -p is ignored in
+  host mode but produces a mapping on the bridge.
+- **OK 5** — same service: host loopback works; bridge loopback fails and the bridge
+  gateway works. The times for the two paths are only printed.
 
 ## Reflection questions
 
@@ -109,9 +158,10 @@ handle with care in production?
 
 ## Cleanup
 
-Nothing to tear down by hand: all the containers are throwaway (--rm) and no network
-is created. The busybox base image stays in cache (shared). The daemon is never
-restarted.
+Nothing to tear down by hand: a trap stops the HTTP server and the other cap18
+containers even if the test is interrupted, releasing the high ports; the
+containers are throwaway (--rm) and no network is created. The busybox base image
+stays in cache (shared). The daemon is never restarted.
 
 ## Where it leads
 

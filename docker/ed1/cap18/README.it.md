@@ -21,6 +21,9 @@ non ha rete affatto, e il bridge nel mezzo.
 - Confrontare col bridge di default: namespace proprio e una eth0 — isolato ma
   connesso (18.4).
 - Capire come si sceglie il driver e perché host è potente ma delicato (18.3).
+- Dimostrare che host occupa direttamente le porte dell'host e ignora -p (18.1).
+- Confrontare qualitativamente i percorsi host e bridge verso lo stesso servizio,
+  misurando la latenza senza usarla come asserzione (18.3).
 
 ## Prerequisiti
 
@@ -32,10 +35,12 @@ non ha rete affatto, e il bridge nel mezzo.
 ## Lo scenario
 
 In start/ trovi drivers.sh: uno script che avvia un container con ciascun driver e
-dovrebbe leggere cosa ottiene — namespace e interfacce — ma le tre letture chiave
-mancano. Colmi tre lacune (TODO 1..3). Container usa-e-getta (--rm); nessuna rete
-viene creata, il demone non si tocca e non si riavvia. Il container host non fa che
-leggere: non apre porte, non modifica nulla.
+dovrebbe leggere cosa ottiene — namespace e interfacce — e confrontare porte e
+percorsi, ma le cinque parti chiave mancano. Colmi cinque lacune (TODO 1..5).
+Container usa-e-getta (--rm); nessuna rete viene creata, il demone non si tocca e
+non si riavvia. Per pochi secondi tre piccoli server HTTP effimeri restano in
+ascolto su porte alte dell'host: lo script sceglie porte libere prima di partire e
+una trap le libera sempre, anche se il test si interrompe a metà.
 
 Prepara l'ambiente:
 
@@ -66,7 +71,43 @@ eth0. Namespace suo (isolato dall'host) e una eth0 (connesso): la via di mezzo.
     bridge_ns=$(docker run --rm busybox readlink /proc/self/ns/net)
     bridge_eth0=$(docker run --rm busybox sh -c '[ -e /sys/class/net/eth0 ] && echo yes || echo no')
 
-Quando i tre TODO sono colmati, esegui il test:
+### Fase 4 — La porta dell'host è una sola (18.1 — TODO 4)
+
+Lo script ti avvia già tre server usa-e-getta: uno in modalità host sulla porta
+scelta (con un -p che la modalità host ignorerà), uno in modalità host su una porta
+libera, uno sul bridge di default che pubblica una porta. Completa il **TODO 4**:
+riprova lo stesso ascolto in modalità host sulla porta già occupata — deve fallire
+con address already in use — e leggi la controprova sulla porta libera, che invece
+è in esecuzione. Poi confronta cosa dice docker port nei due casi: in modalità host
+nessuna mappatura, sul bridge sì.
+
+    set +e
+    conflict_output=$(docker run --rm --network host -v "$OUT:/www:ro" busybox httpd -f -p "$PORT" -h /www 2>&1)
+    conflict_status=$?
+    set -e
+    free_running=$(docker inspect -f '{{.State.Running}}' "$FREE_SERVER")
+    host_port_output=$(docker port "$HOST_SERVER")
+    bridge_port_output=$(docker port "$BRIDGE_SERVER" 80/tcp)
+
+### Fase 5 — Due percorsi verso lo stesso servizio (18.3 — TODO 5)
+
+Completa il **TODO 5**: interroga lo stesso server host prima da un container host
+attraverso 127.0.0.1, poi da un container bridge. Nel bridge 127.0.0.1 è il loopback
+del container e deve fallire; l'indirizzo del gateway, ricavato dalla route di
+default, deve funzionare.
+
+    host_loopback=$(docker run --rm --network host busybox wget -q -O /dev/null "http://127.0.0.1:$PORT" && echo yes || echo no)
+    bridge_loopback=$(docker run --rm busybox wget -q -T 1 -O /dev/null "http://127.0.0.1:$PORT" 2>/dev/null && echo yes || echo no)
+    bridge_gateway=$(docker run --rm busybox sh -c 'gateway=$(ip route | awk '\''/default/ { print $3; exit }'\''); wget -q -O /dev/null "http://$gateway:'"$PORT"'" && echo yes || echo no')
+
+Misura infine cento richieste sequenziali sui due percorsi, cronometrandole DENTRO
+il container con time, così l'avvio di docker run resta fuori dal numero. I due
+tempi vengono solo stampati, mai asseriti — e quasi sempre escono comparabili: è
+esattamente ciò che dice il 18.3, l'overhead del NAT è trascurabile per la
+stragrande maggioranza dei carichi. La differenza vera fra i due driver non è la
+velocità, è quali percorsi esistono.
+
+Quando i cinque TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -76,7 +117,11 @@ Quando i tre TODO sono colmati, esegui il test:
 - drivers.sh legge il namespace del container con driver host (TODO 1).
 - Legge namespace ed eth0 del container con driver none (TODO 2).
 - Legge namespace ed eth0 del container con bridge di default (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Dimostra il conflitto di porta host e -p ignorato, con le rispettive controprove
+  positive (TODO 4).
+- Confronta i percorsi host-loopback, bridge-loopback e bridge-gateway verso lo
+  stesso servizio e stampa le due misure di latenza (TODO 5).
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -88,6 +133,10 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
   eth0 — nessuna connettività.
 - **OK 3** — bridge: il container ha un namespace suo e una eth0 — isolato ma
   connesso.
+- **OK 4** — host: la stessa porta produce un conflitto e una porta libera funziona;
+  -p è ignorato in host ma produce una mappatura sul bridge.
+- **OK 5** — stesso servizio: il loopback host funziona; il loopback bridge fallisce
+  e il gateway bridge funziona. I tempi dei due percorsi vengono solo stampati.
 
 ## Domande di riflessione
 
@@ -108,9 +157,10 @@ maneggiare con cura in produzione?
 
 ## Pulizia
 
-Niente da smontare a mano: tutti i container sono usa-e-getta (--rm) e nessuna rete
-viene creata. L'immagine base busybox resta in cache (condivisa). Il demone non
-viene mai riavviato.
+Niente da smontare a mano: una trap ferma il server HTTP e gli altri container
+cap18 anche se il test si interrompe, liberando le porte alte; i container sono
+usa-e-getta (--rm) e nessuna rete viene creata. L'immagine base busybox resta in
+cache (condivisa). Il demone non viene mai riavviato.
 
 ## Dove porta
 
