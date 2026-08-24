@@ -16,11 +16,10 @@ with exec.
 ## Objectives
 
 - Tell ENTRYPOINT (the fixed executable) from CMD (the default arguments) and see
-  them combined (10.2, 10.3, 10.5).
+  them combined (10.1, 10.3).
 - Observe that arguments passed to docker run override CMD but leave ENTRYPOINT
-  untouched (10.5).
-- Understand exec form versus shell form: exec makes your process PID 1 (10.1,
-  10.4).
+  untouched (10.1).
+- Understand exec form versus shell form: exec makes your process PID 1 (10.2).
 - Reconnect PID 1 to the signals of chapter 7: whoever is PID 1 receives SIGTERM.
 - Write an entrypoint that waits for a dependency with a timeout and hands its
   PID to the application with exec (10.4).
@@ -50,8 +49,8 @@ Prepare the environment:
 A container runs a process as PID 1. How you write ENTRYPOINT/CMD decides who it
 is: the **exec form** (a JSON array, like ["/entry.sh"]) runs your program
 directly, and it becomes PID 1; the **shell form** (a string) wraps it in
-/bin/sh -c, and then it is the shell that is PID 1 — with the consequences on
-signals seen in chapter 7.
+/bin/sh -c, and depending on the base image's shell it may remain PID 1 — with
+the consequences on signals seen in chapter 7.
 
 ### Phase 2 — Loading the script (10.3 — TODO 1)
 
@@ -60,14 +59,14 @@ context it is already executable, and COPY preserves its permissions.
 
     COPY entry.sh /entry.sh
 
-### Phase 3 — The fixed captain: ENTRYPOINT (10.3 — TODO 2)
+### Phase 3 — The fixed captain: ENTRYPOINT (10.1 — TODO 2)
 
 Complete **TODO 2**: declare ENTRYPOINT in exec form, so the script is the fixed
 process at startup — and it is PID 1.
 
     ENTRYPOINT ["/entry.sh"]
 
-### Phase 4 — The default orders: CMD (10.5 — TODO 3)
+### Phase 4 — The default orders: CMD (10.1 — TODO 3)
 
 Complete **TODO 3**: give ENTRYPOINT default arguments with CMD. It is not a second
 command: it is the argument list that will be passed to ENTRYPOINT, and that docker
@@ -80,11 +79,14 @@ Once the four TODOs are filled, run the test:
     cd ../solution
     ./run.sh
 
-### Phase 5 — Measuring SIGTERM (10.1 — TODO 4)
+### Phase 5 — Measuring SIGTERM (10.2 — TODO 4)
 
 Complete Dockerfile.shell and Dockerfile.exec with two CMD instructions that
-differ only in form. The test stops both with a two-second timeout: the shell
-does not forward SIGTERM and consumes it, while the exec-form app exits at once.
+differ only in form: in Dockerfile.shell write CMD /signal.sh & wait, where
+& wait keeps the shell in place — with a plain command, busybox's ash would
+exec-replace itself with it. The test stops both with a two-second timeout: the
+shell does not forward SIGTERM and consumes it, while the exec-form app exits
+at once.
 
 ### Phase 6 — Wait and hand over (10.4 — TODO 5..7)
 

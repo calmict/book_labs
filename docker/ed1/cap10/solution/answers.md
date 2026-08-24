@@ -58,7 +58,8 @@ usually pairs ENTRYPOINT (the tool) with CMD (a sensible default argument), and 
 
 In exec form (ENTRYPOINT ["/entry.sh"]) Docker execs your program directly, so it
 is the container's PID 1. In shell form (ENTRYPOINT /entry.sh) Docker runs
-/bin/sh -c "/entry.sh": now the shell is PID 1 and your program runs under it. This
+/bin/sh -c "/entry.sh": depending on the base image's shell, it may remain
+PID 1 and your program may run under it. This
 matters because of chapter 7: docker stop sends SIGTERM to PID 1. If PID 1 is your
 app (exec form), it receives the signal and can shut down cleanly; if PID 1 is a
 shell that does not forward signals, your app never hears SIGTERM, the grace period

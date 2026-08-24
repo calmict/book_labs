@@ -16,11 +16,11 @@ all'applicazione con exec.
 ## Obiettivi
 
 - Distinguere ENTRYPOINT (l'eseguibile fisso) da CMD (gli argomenti di default) e
-  vederli combinati (10.2, 10.3, 10.5).
+  vederli combinati (10.1, 10.3).
 - Osservare che gli argomenti passati a docker run sovrascrivono CMD ma lasciano
-  intatto ENTRYPOINT (10.5).
+  intatto ENTRYPOINT (10.1).
 - Capire la forma exec contro la forma shell: la exec rende il tuo processo PID 1
-  (10.1, 10.4).
+  (10.2).
 - Ricollegare il PID 1 ai segnali del capitolo 7: chi è PID 1 riceve SIGTERM.
 - Scrivere un entrypoint che attende una dipendenza con timeout e cede il PID
   all'applicazione con exec (10.4).
@@ -50,8 +50,8 @@ Prepara l'ambiente:
 Un container esegue un processo come PID 1. Il modo in cui scrivi ENTRYPOINT/CMD
 decide chi è: la **forma exec** (un array JSON, come ["/entry.sh"]) esegue
 direttamente il tuo programma, che diventa PID 1; la **forma shell** (una stringa)
-lo avvolge in /bin/sh -c, e allora è la shell a essere PID 1 — con le conseguenze
-sui segnali viste nel capitolo 7.
+lo avvolge in /bin/sh -c, e allora può essere la shell a restare PID 1, a seconda
+della shell della base — con le conseguenze sui segnali viste nel capitolo 7.
 
 ### Fase 2 — Imbarcare lo script (10.3 — TODO 1)
 
@@ -60,14 +60,14 @@ Nel contesto è già eseguibile, e COPY ne preserva i permessi.
 
     COPY entry.sh /entry.sh
 
-### Fase 3 — Il comandante fisso: ENTRYPOINT (10.3 — TODO 2)
+### Fase 3 — Il comandante fisso: ENTRYPOINT (10.1 — TODO 2)
 
 Completa il **TODO 2**: dichiara ENTRYPOINT in forma exec, così lo script è il
 processo fisso all'avvio — ed è PID 1.
 
     ENTRYPOINT ["/entry.sh"]
 
-### Fase 4 — Gli ordini di default: CMD (10.5 — TODO 3)
+### Fase 4 — Gli ordini di default: CMD (10.1 — TODO 3)
 
 Completa il **TODO 3**: dai a ENTRYPOINT degli argomenti di default con CMD. Non è
 un secondo comando: è la lista di argomenti che verrà passata a ENTRYPOINT, e che
@@ -80,11 +80,14 @@ Quando i quattro TODO sono colmati, esegui il test:
     cd ../solution
     ./run.sh
 
-### Fase 5 — Misurare SIGTERM (10.1 — TODO 4)
+### Fase 5 — Misurare SIGTERM (10.2 — TODO 4)
 
 Completa Dockerfile.shell e Dockerfile.exec con due CMD che differiscono solo
-per la forma. Il test arresta entrambi con due secondi di timeout: la shell non
-inoltra SIGTERM e consuma il timeout, mentre l'app in forma exec termina subito.
+per la forma: in Dockerfile.shell scrivi CMD /signal.sh & wait, dove & wait
+serve a tenere la shell al suo posto — con un comando semplice, l'ash di busybox
+si sostituirebbe con lui. Il test arresta entrambi con due secondi di timeout: la
+shell non inoltra SIGTERM e consuma il timeout, mentre l'app in forma exec
+termina subito.
 
 ### Fase 6 — Attendere e cedere il posto (10.4 — TODO 5..7)
 
