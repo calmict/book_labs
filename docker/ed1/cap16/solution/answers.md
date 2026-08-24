@@ -44,8 +44,28 @@ MASQUERADE rule exist only in the throwaway network namespace:
 A ping from the container to 192.0.2.2 must succeed. The solution then reads the
 POSTROUTING packet counter and requires it to be greater than zero: the rule was not
 merely present, it processed real traffic. run.sh reads ip addr show docker0 and
-bridge link on the host only to compare the topology. It deliberately does not read
-Docker's host iptables rules, because an unprivileged user cannot do so.
+bridge link on the host only to compare the topology.
+
+**TODO 7 (16.3) — the rules Docker really wrote:**
+
+The host's nat table is not readable by an unprivileged user. Rather than granting
+privileges on the host, the solution borrows them for a moment inside a throwaway
+container: it joins the host's network namespace, holds NET_ADMIN and nothing else,
+reads and exits. Nothing on the host changes.
+
+    printf 'FROM alpine:3\nRUN apk add --no-cache iptables\n' | docker build -q -t "$NAT_TAG" - >/dev/null
+    docker_subnet=$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Subnet}}')
+    docker_masq_out=$(docker run --rm --network host --cap-add NET_ADMIN "$NAT_TAG" \
+      iptables -t nat -L POSTROUTING -n -v -x |
+      awk -v subnet="$docker_subnet" '$3 == "MASQUERADE" && $8 == subnet {print $7; exit}')
+
+What comes back is the same rule written by hand in TODO 5, one subnet apart: a
+MASQUERADE in POSTROUTING for the bridge's private subnet. The two differ in how
+they name the way out, and the difference is worth reading. By hand the rule names
+the external interface (-o veth-cap16-out) because there is exactly one way out. Docker
+writes the complement (! -o docker0): masquerade everything leaving that subnet except
+what stays on the bridge, because a host has many exits and only traffic between
+containers must keep its real source address.
 
 ## Reflection questions
 

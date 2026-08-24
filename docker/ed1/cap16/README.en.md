@@ -10,7 +10,8 @@ stack all of its own, with its interfaces, its IP, its routing table — and is 
 to the world by a virtual cable, the veth pair: one end inside the container (eth0),
 the other on the host, attached to the shared switchboard, the docker0 bridge. In
 this lab you first inspect it on two real containers, then rebuild it by hand in an
-isolated environment and add NAT towards a simulated external network.
+isolated environment, add NAT towards a simulated external network, and finally
+compare your own rule with the one Docker really wrote on the host.
 
 ## Objectives
 
@@ -25,6 +26,8 @@ isolated environment and add NAT towards a simulated external network.
 - Apply a MASQUERADE rule and prove it with end-to-end traffic to a simulated
   external network.
 - Compare the hand-built topology with Docker's real bridge, read-only.
+- Read the NAT rules Docker writes on the host, from a throwaway container holding
+  NET_ADMIN alone, and recognise in them the rule you wrote by hand.
 
 ## Prerequisites
 
@@ -32,6 +35,9 @@ isolated environment and add NAT towards a simulated external network.
   Docker.
 - Chapter 2 (namespaces): here you meet the network one, the network namespace.
 - The unshare, ip, bridge, iptables, ping, sysctl, mount and umount commands.
+- Network access on the first run: the test builds a minimal image (alpine plus the
+  iptables package) to read the host's rules. From the second run on, the layer cache
+  is enough.
 
 ## The scenario
 
@@ -44,7 +50,8 @@ with none other created or touched; the daemon is not touched.
 You will also find ilcablaggio.sh in start/. TODO 4..6 rebuild the complete path in
 an ephemeral user and network namespace: no interface or rule is created in the
 host's real network. The external network is simulated locally, so the proof does
-not depend on the reader's Internet access.
+not depend on the reader's Internet access. TODO 7 goes back to irete.sh and closes
+the circle: it reads the rules Docker really wrote, to compare them with yours.
 
 Prepare the environment:
 
@@ -95,11 +102,19 @@ the Internet or write rules on the real host.
 
 Send one ping from 10.16.0.2 to 192.0.2.2. Record veth bridge membership and the
 MASQUERADE rule counter after the traffic: it must be greater than zero. The test
-also observes docker0 and bridge link on the host read-only to compare bridge, veth
-and private subnet; it does not try to read Docker's iptables rules, which would
-require real privileges.
+also observes docker0 and bridge link on the host read-only, to compare bridge, veth
+and private subnet.
 
-Once the six TODOs are filled, run the test:
+### Phase 7 — The rules Docker really writes (16.3 — TODO 7)
+
+Go back to start/irete.sh and fill in TODO 7. The host's NAT rules are not readable
+without privileges: borrow them instead of granting yourself any. A throwaway
+container enters the host's network namespace holding NET_ADMIN alone, reads the
+POSTROUTING chain and disappears; the host is not touched and no rule is written.
+Extract the default bridge's subnet and the outgoing interface of the MASQUERADE rule
+that covers it: it is the very rule you wrote by hand in Phase 5, on another subnet.
+
+Once the seven TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -112,7 +127,8 @@ Once the six TODOs are filled, run the test:
 - ilcablaggio.sh builds namespaces, veth and a bridge inside unshare -Urnm (TODO 4).
 - Traffic reaches the simulated external network through MASQUERADE (TODO 5).
 - The structure is compared with docker0 without changing the real network (TODO 6).
-- run.sh prints OK 1..6 and ALL CHECKS PASSED.
+- irete.sh reads the MASQUERADE rule Docker wrote for its own bridge (TODO 7).
+- run.sh prints OK 1..7 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -130,6 +146,9 @@ solution/run.sh runs the scenario and checks, point by point:
   the counter of the MASQUERADE rule it actually crossed.
 - **OK 6** — Docker comparison: docker0 is visible read-only and presents the same
   conceptual model of bridge, veth and private subnet.
+- **OK 7** — the same rule, one subnet apart: the host's POSTROUTING holds a
+  MASQUERADE for the Docker bridge subnet, shaped exactly like the one written by
+  hand for 10.16.0.0/24.
 
 ## Reflection questions
 
@@ -153,8 +172,10 @@ bridges) and 18 (host, none and choosing the driver)?
 Nothing to tear down by hand: the two containers are removed by the script (docker
 rm -f, plus a safety trap). The second script explicitly removes namespaces, bridge,
 veth and its temporary mount with a trap; all wiring lives inside an ephemeral user,
-mount and network namespace anyway. docker0 is only observed. The busybox base image
-stays in cache and the daemon is never restarted.
+mount and network namespace anyway. docker0 is only observed, and the container that
+reads the host's rules runs with --rm and writes nothing: the image carrying it is
+removed by the trap at the end. The busybox and alpine base images stay in cache and
+the daemon is never restarted.
 
 ## Where it leads
 

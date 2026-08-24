@@ -2,8 +2,10 @@
 # cap16 - solution test. Proves how Docker networks a container: it has its own
 # network namespace (inode differs from the host's), its own address on the bridge
 # (two containers, two distinct IPs), and its eth0 is one end of a veth pair (local
-# index differs from the peer index). Throwaway containers, default bridge only,
-# no restart, no privileges.
+# index differs from the peer index). It then rebuilds the same plumbing by hand
+# in an ephemeral namespace, with NAT towards a simulated outside, and compares
+# it with the rules Docker really wrote. Throwaway containers and images,
+# default bridge only, no restart, nothing changed on the host.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -30,6 +32,8 @@ c1_ip=$(val "$WORK/net.txt" c1_ip)
 c2_ip=$(val "$WORK/net.txt" c2_ip)
 c1_ifindex=$(val "$WORK/net.txt" c1_ifindex)
 c1_iflink=$(val "$WORK/net.txt" c1_iflink)
+docker_subnet=$(val "$WORK/net.txt" docker_subnet)
+docker_masq_out=$(val "$WORK/net.txt" docker_masq_out)
 
 # 1. the container has its own network namespace (different inode from the host)
 if [ -z "$c1_ns" ] || [ "$c1_ns" = "$host_ns" ]; then
@@ -49,8 +53,7 @@ if [ -z "$c1_ifindex" ] || [ -z "$c1_iflink" ] || [ "$c1_ifindex" = "$c1_iflink"
 fi
 echo "OK 3 - veth pair: eth0 ifindex=$c1_ifindex, peer iflink=$c1_iflink (the other end is on the host)"
 
-# Read-only observation of Docker's real bridge. Never inspect host iptables:
-# an unprivileged reader cannot do so, and the lab does not need elevated rights.
+# Read-only observation of Docker's real bridge.
 docker run -d --name "$COMPARE" busybox sleep 60 >/dev/null
 ip addr show docker0 > "$WORK/docker0.txt"
 bridge link > "$WORK/docker-bridge-links.txt"
@@ -60,6 +63,7 @@ bridge_name=$(val "$WORK/cablaggio.txt" bridge)
 bridge_member=$(val "$WORK/cablaggio.txt" bridge_member)
 container_ip=$(val "$WORK/cablaggio.txt" container_ip)
 bridge_addr=$(val "$WORK/cablaggio.txt" bridge_addr)
+nat_out=$(val "$WORK/cablaggio.txt" nat_out)
 nat_packets=$(val "$WORK/cablaggio.txt" nat_packets)
 
 # 4. the hand-built namespace has an eth0 connected by veth to our bridge
@@ -78,6 +82,12 @@ echo "OK 5 - simulated Internet: MASQUERADE translated $nat_packets packet(s) at
 grep -q 'docker0' "$WORK/docker0.txt" || { echo "UNEXPECTED: docker0 was not visible in the read-only host inspection" >&2; exit 1; }
 grep -q 'master docker0' "$WORK/docker-bridge-links.txt" || { echo "UNEXPECTED: the comparison container's veth was not attached to docker0" >&2; exit 1; }
 echo "OK 6 - Docker comparison: docker0 and $bridge_name both provide a bridge, veth endpoints and a private subnet"
+
+# 7. the rule Docker wrote for its own bridge has the shape of the one we wrote
+if [ -z "$docker_masq_out" ]; then
+  echo "UNEXPECTED: no MASQUERADE rule for the Docker bridge subnet $docker_subnet" >&2; exit 1
+fi
+echo "OK 7 - the same rule, one subnet apart: Docker masquerades $docker_subnet with out $docker_masq_out, by hand we masqueraded 10.16.0.0/24 with out $nat_out"
 
 echo
 echo "ALL CHECKS PASSED"

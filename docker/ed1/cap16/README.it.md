@@ -10,8 +10,9 @@ rete tutto suo, con le sue interfacce, il suo IP, la sua tabella di routing — 
 viene collegato al mondo da un cavo virtuale, la veth pair: un'estremità dentro il
 container (eth0), l'altra sull'host, attaccata alla centralina condivisa, il bridge
 docker0. In questo laboratorio prima lo osservi su due container reali, poi lo
-ricostruisci a mano in un ambiente isolato e aggiungi il NAT verso una rete esterna
-simulata.
+ricostruisci a mano in un ambiente isolato, aggiungi il NAT verso una rete esterna
+simulata e infine confronti la tua regola con quella che Docker ha scritto davvero
+sull'host.
 
 ## Obiettivi
 
@@ -27,6 +28,8 @@ simulata.
   esterna simulata.
 - Confrontare la topologia costruita con quella del bridge Docker reale, in sola
   lettura.
+- Leggere le regole NAT che Docker scrive sull'host, da un container usa e getta con
+  la sola NET_ADMIN, e riconoscervi la stessa regola scritta a mano.
 
 ## Prerequisiti
 
@@ -34,6 +37,9 @@ simulata.
   Docker.
 - Il capitolo 2 (i namespace): qui incontri quello di rete, il network namespace.
 - I comandi unshare, ip, bridge, iptables, ping, sysctl, mount e umount.
+- Accesso alla rete alla prima esecuzione: il test costruisce un'immagine minima
+  (alpine piu' il pacchetto iptables) per leggere le regole dell'host. Dalla seconda
+  volta in poi la cache dei layer basta a se stessa.
 
 ## Lo scenario
 
@@ -46,7 +52,8 @@ crearne o toccarne altri; il demone non si tocca.
 In start/ trovi anche ilcablaggio.sh. I TODO 4..6 ricostruiscono il percorso completo
 in un user e network namespace effimero: nessuna interfaccia o regola viene creata
 nella rete reale dell'host. La rete esterna è simulata localmente, perciò la prova
-non dipende dall'accesso a Internet del lettore.
+non dipende dall'accesso a Internet del lettore. Il TODO 7 torna in irete.sh e chiude
+il cerchio: legge le regole che Docker ha scritto davvero, per confrontarle con la tua.
 
 Prepara l'ambiente:
 
@@ -96,11 +103,20 @@ Non usare Internet e non scrivere regole sull'host reale.
 
 Invia un ping da 10.16.0.2 a 192.0.2.2. Registra l'appartenenza della veth al bridge
 e il contatore della regola MASQUERADE dopo il traffico: deve essere maggiore di
-zero. Il test osserva inoltre docker0 e bridge link sull'host in sola lettura per
-confrontare bridge, veth e subnet privata; non prova a leggere le regole iptables
-di Docker, che richiederebbero privilegi reali.
+zero. Il test osserva inoltre docker0 e bridge link sull'host in sola lettura, per
+confrontare bridge, veth e subnet privata.
 
-Quando i sei TODO sono colmati, esegui il test:
+### Fase 7 — Le regole che Docker scrive davvero (16.3 — TODO 7)
+
+Torna in start/irete.sh e completa il **TODO 7**. Le regole NAT dell'host non si
+leggono senza privilegi: prendile in prestito invece di darteli. Un container usa e
+getta entra nel network namespace dell'host con la sola capability NET_ADMIN, legge
+la catena POSTROUTING e sparisce; l'host non viene toccato e nessuna regola viene
+scritta. Ricava la subnet del bridge di default e l'interfaccia di uscita della regola
+MASQUERADE che la riguarda: è la stessa regola che hai scritto a mano nella Fase 5,
+su un'altra subnet.
+
+Quando i sette TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -113,7 +129,8 @@ Quando i sei TODO sono colmati, esegui il test:
 - ilcablaggio.sh costruisce namespace, veth e bridge dentro unshare -Urnm (TODO 4).
 - Il traffico raggiunge la rete esterna simulata attraverso MASQUERADE (TODO 5).
 - La struttura viene confrontata con docker0 senza modificare la rete reale (TODO 6).
-- run.sh stampa OK 1..6 e ALL CHECKS PASSED.
+- irete.sh legge la regola MASQUERADE che Docker ha scritto per il suo bridge (TODO 7).
+- run.sh stampa OK 1..7 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -131,6 +148,9 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
   contatore della regola MASQUERADE realmente attraversata.
 - **OK 6** — confronto Docker: docker0 è visibile in sola lettura e presenta lo
   stesso modello concettuale di bridge, veth e subnet privata.
+- **OK 7** — la stessa regola, un'altra subnet: nella POSTROUTING dell'host c'è una
+  MASQUERADE per la subnet del bridge Docker, con la stessa forma di quella scritta
+  a mano per 10.16.0.0/24.
 
 ## Domande di riflessione
 
@@ -154,8 +174,10 @@ masquerade) con l'indirizzo dell'host. In che modo questo prepara i capitoli 17
 Niente da smontare a mano: i due container sono rimossi dallo script (docker rm -f,
 più un trap di sicurezza). Il secondo script elimina esplicitamente namespace,
 bridge, veth e mount temporaneo con un trap; l'intero cablaggio vive comunque in un
-user, mount e network namespace effimero. docker0 viene soltanto osservato. L'immagine
-base busybox resta in cache e il demone non viene mai riavviato.
+user, mount e network namespace effimero. docker0 viene soltanto osservato, e il
+container che legge le regole dell'host parte con --rm e non scrive nulla: l'immagine
+che lo porta viene rimossa dal trap a fine test. Le immagini base busybox e alpine
+restano in cache e il demone non viene mai riavviato.
 
 ## Dove porta
 
