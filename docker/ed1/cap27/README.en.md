@@ -16,6 +16,8 @@ where Docker on a single host ends, and where the horizon of orchestration begin
 - Reclaim space safely, scoped (labels, names), never a global prune on a shared host
   (27.2).
 - Verify that only your resources were removed (27.2).
+- Back up a volume and restore it into a new volume with a utility container (27.3).
+- Exercise the tag, push, removal and pull cycle with a local private registry (27.3).
 - Frame the horizons: the limits of a single host and the bridge to orchestration (27.4).
 
 ## Prerequisites
@@ -26,8 +28,9 @@ where Docker on a single host ends, and where the horizon of orchestration begin
 ## The scenario
 
 In start/ you will find maintenance.sh: a script that creates a stopped container and an unused
-volume, both labelled as yours, and should reclaim them safely — but the three operations
-are missing. You fill three gaps (TODO 1..3). All the resources are labelled and removed
+volume, both labelled as yours, and should reclaim them safely, back up and restore a
+volume, and exercise a local registry — but five operations are missing. You fill five
+gaps (TODO 1..5). All the resources are labelled and removed
 by scope only: the shared daemon and other people's resources are not touched.
 
 Prepare the environment:
@@ -57,7 +60,39 @@ Complete **TODO 3**: recount your resources after the cleanup. None of yours sho
     con_after=$(docker ps -aq --filter "label=owner=$LABEL" | grep -c . || true)
     vol_after=$(docker volume ls -q --filter "label=owner=$LABEL" | grep -c . || true)
 
-Once the three TODOs are filled, run the test:
+### Phase 4 — Back up and restore a volume (27.3 — TODO 4)
+
+Complete **TODO 4**: write known content into a volume, then use a throwaway container
+to mount it read-only and create an archive in the working directory. A second container
+restores the archive into a new volume. Finally compare the restored text with the
+original: equality is deterministic.
+
+    docker run --rm -v "$BACKUP_VOL:/data:ro" -v "$OUT:/backup" busybox tar czf "/backup/$(basename "$ARCHIVE")" -C /data .
+    docker run --rm -v "$RESTORE_VOL:/data" -v "$OUT:/backup:ro" busybox tar xzf "/backup/$(basename "$ARCHIVE")" -C /data
+
+### Phase 5 — A local private registry (27.3 — TODO 5)
+
+Complete **TODO 5**: start registry:2, publishing its port only on 127.0.0.1, and let
+Docker choose a free host port. Retag busybox with a cap27 name for that registry, push
+it, remove only the tag you just created, and pull it. The digest read immediately after
+the push must match the final pull digest. Do not remove busybox.
+
+One honest note about the pull: busybox's layers stay in the local cache, because the
+original tag still uses them. What the pull proves is not a fresh download, but that the
+registry keeps the manifest and hands it back with the same digest after the local tag
+is gone.
+
+Docker permits an HTTP registry on loopback without configuring insecure-registries.
+A registry reached through a real IP address does not get this exception: it needs TLS
+or explicit daemon configuration, which this lab does not change.
+
+    docker run -d --name "$REGISTRY" --label "owner=$LABEL" -p 127.0.0.1::5000 registry:2 >/dev/null
+    docker tag busybox "$REGISTRY_TAG"
+    docker push "$REGISTRY_TAG"
+    docker image rm "$REGISTRY_TAG"
+    docker pull "$REGISTRY_TAG"
+
+Once the five TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -67,7 +102,9 @@ Once the three TODOs are filled, run the test:
 - maintenance.sh reclaims its own stopped containers with a label-filtered prune (TODO 1).
 - It removes its own named volume (TODO 2).
 - It recounts and confirms nothing of its own remains (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It restores the known content from the archive into a new volume (TODO 4).
+- It completes a tag round trip through the local registry (TODO 5).
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -77,6 +114,10 @@ solution/run.sh runs the scenario and checks, point by point:
   yours (the orphans to reclaim).
 - **OK 2** — after the label-filtered prune, your stopped container is gone.
 - **OK 3** — after the removal by name, your volume is gone: complete reclaim, scoped.
+- **OK 4** — the restored volume contains exactly the known text written before the
+  backup.
+- **OK 5** — after the push, tag removal and pull from the local registry, the tag is
+  present again with the same digest read immediately after the push.
 
 ## Reflection questions
 
@@ -95,11 +136,21 @@ boundary beyond which you need an orchestrator, and how is everything you learne
 networks, volumes, Compose, healthchecks, security — exactly the vocabulary Kubernetes
 thinks in? It is the bridge of the Kubernetes book.
 
+**d.** Why does the container that creates the archive mount the source volume read-only,
+and why does the restore target a new volume instead of overwriting the original? Which
+checks would you add to a real backup procedure?
+
+**e.** Why is the lab registry bound only to 127.0.0.1, and what changes when it is
+exposed on a real IP address? In production, why are TLS, authentication and an image
+retention policy part of the service rather than optional details?
+
 ## Cleanup
 
-The script removes its own resources by scope (a label-filtered prune and a removal by
-name), with a safety trap that cleans up regardless. No one else's resources are touched,
-the daemon is never restarted.
+The script removes its own resources by scope, with a safety trap that cleans up
+regardless: the three cap27 volumes, the registry container, the registry tag and the
+backup archive. Utility containers are throwaway. The original busybox image stays in
+cache. No one else's resources are touched, the daemon is never restarted, and the
+loopback port is released.
 
 ## Where it leads
 

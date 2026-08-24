@@ -18,6 +18,9 @@ dove comincia l'orizzonte dell'orchestrazione.
 - Recuperare spazio in sicurezza, con ambito ristretto (label, nomi), mai un prune
   globale su un host condiviso (27.2).
 - Verificare che solo le tue risorse sono state rimosse (27.2).
+- Eseguire il backup di un volume e ripristinarlo in un volume nuovo con un
+  container-utensile (27.3).
+- Provare il ciclo tag, push, rimozione e pull con un registry privato locale (27.3).
 - Inquadrare gli orizzonti: i limiti del singolo host e il ponte all'orchestrazione
   (27.4).
 
@@ -30,8 +33,9 @@ dove comincia l'orizzonte dell'orchestrazione.
 ## Lo scenario
 
 In start/ trovi maintenance.sh: uno script che crea un container fermo e un volume
-inutilizzato, entrambi etichettati come tuoi, e dovrebbe recuperarli in sicurezza — ma
-le tre operazioni mancano. Colmi tre lacune (TODO 1..3). Tutte le risorse sono
+inutilizzato, entrambi etichettati come tuoi, e dovrebbe recuperarli in sicurezza,
+salvare e ripristinare un volume e provare un registry locale — ma cinque operazioni
+mancano. Colmi cinque lacune (TODO 1..5). Tutte le risorse sono
 etichettate e rimosse solo per ambito: il demone condiviso e le risorse altrui non si
 toccano.
 
@@ -62,7 +66,41 @@ nessuna delle tue — e nient'altro è stato toccato.
     con_after=$(docker ps -aq --filter "label=owner=$LABEL" | grep -c . || true)
     vol_after=$(docker volume ls -q --filter "label=owner=$LABEL" | grep -c . || true)
 
-Quando i tre TODO sono colmati, esegui il test:
+### Fase 4 — Backup e restore di un volume (27.3 — TODO 4)
+
+Completa il **TODO 4**: scrivi un contenuto noto in un volume, poi usa un container
+usa-e-getta per montarlo in sola lettura e creare un archivio nella cartella di lavoro.
+Un secondo container ripristina l'archivio in un volume nuovo. Infine confronta il
+testo ripristinato con l'originale: l'uguaglianza è deterministica.
+
+    docker run --rm -v "$BACKUP_VOL:/data:ro" -v "$OUT:/backup" busybox tar czf "/backup/$(basename "$ARCHIVE")" -C /data .
+    docker run --rm -v "$RESTORE_VOL:/data" -v "$OUT:/backup:ro" busybox tar xzf "/backup/$(basename "$ARCHIVE")" -C /data
+
+### Fase 5 — Un registry privato locale (27.3 — TODO 5)
+
+Completa il **TODO 5**: avvia registry:2 pubblicando la porta solo su 127.0.0.1 e
+lascia che Docker scelga una porta host libera. Ritagga busybox con un nome cap27 verso
+quel registry, esegui il push, rimuovi soltanto il tag appena creato e fai il pull.
+Il digest letto subito dopo il push deve coincidere con quello del pull finale. Non
+rimuovere busybox.
+
+Una precisazione onesta sul pull: i layer di busybox restano nella cache locale, perché
+il tag originale li usa ancora. Quello che il pull dimostra non è un nuovo scaricamento,
+ma che il registry conserva il manifest e sa restituirtelo con lo stesso digest dopo che
+il tag locale è sparito.
+
+Docker consente un registry HTTP sul loopback senza configurare insecure-registries.
+Un registry raggiunto tramite un vero indirizzo IP non gode di questa eccezione: lì
+servono TLS oppure una configurazione esplicita del demone, che questo laboratorio non
+modifica.
+
+    docker run -d --name "$REGISTRY" --label "owner=$LABEL" -p 127.0.0.1::5000 registry:2 >/dev/null
+    docker tag busybox "$REGISTRY_TAG"
+    docker push "$REGISTRY_TAG"
+    docker image rm "$REGISTRY_TAG"
+    docker pull "$REGISTRY_TAG"
+
+Quando i cinque TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -73,7 +111,9 @@ Quando i tre TODO sono colmati, esegui il test:
   (TODO 1).
 - Rimuove il proprio volume con nome (TODO 2).
 - Riconta e conferma che nulla di suo resta (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- Ripristina in un volume nuovo il contenuto noto salvato nell'archivio (TODO 4).
+- Completa il round trip di un tag attraverso il registry locale (TODO 5).
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -84,6 +124,10 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
 - **OK 2** — dopo il prune filtrato per etichetta, il tuo container fermo è sparito.
 - **OK 3** — dopo la rimozione per nome, il tuo volume è sparito: recupero completo,
   con ambito ristretto.
+- **OK 4** — il volume ripristinato contiene esattamente il testo noto scritto prima
+  del backup.
+- **OK 5** — dopo push, rimozione del tag e pull dal registry locale, il tag esiste di
+  nuovo con lo stesso digest letto subito dopo il push.
 
 ## Domande di riflessione
 
@@ -103,11 +147,22 @@ con lei; scalare significa avviare copie a mano; l'auto-riparazione non c'è. Pe
 imparato — immagini, reti, volumi, Compose, healthcheck, sicurezza — è esattamente il
 vocabolario con cui Kubernetes ragiona? È il ponte del Manuale di Kubernetes.
 
+**d.** Perché il container che crea l'archivio monta il volume sorgente in sola lettura,
+e perché il restore avviene in un volume nuovo invece di sovrascrivere l'originale? Quali
+controlli aggiungeresti a una procedura di backup reale?
+
+**e.** Perché il registry del laboratorio è legato soltanto a 127.0.0.1, e cosa cambia
+quando lo si espone su un vero indirizzo IP? In produzione, perché TLS, autenticazione e
+una politica di conservazione delle immagini sono parte del servizio e non dettagli
+facoltativi?
+
 ## Pulizia
 
-Lo script rimuove le proprie risorse per ambito (prune filtrato per etichetta e rimozione
-per nome), con un trap di sicurezza che ripulisce comunque. Nessuna risorsa altrui è
-toccata, il demone non viene mai riavviato.
+Lo script rimuove le proprie risorse per ambito, con un trap di sicurezza che ripulisce
+comunque: i tre volumi cap27, il container registry, il tag verso il registry e l'archivio
+di backup. I container-utensile sono usa-e-getta. L'immagine busybox originale resta in
+cache. Nessuna risorsa altrui è toccata, il demone non viene mai riavviato e la porta
+loopback viene liberata.
 
 ## Dove porta
 
