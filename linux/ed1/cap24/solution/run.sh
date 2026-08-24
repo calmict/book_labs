@@ -22,6 +22,7 @@ message='two words'
 printf '\nUnquoted wildcard expands before execution:\n'
 (
     cd "$scratch_dir/files"
+    # shellcheck disable=SC2035  # the bare glob is the subject of the exercise
     "$script_dir/print-args.sh" *.log
 )
 
@@ -35,6 +36,7 @@ file_name='quarterly report.txt'
 set +e
 unquoted_error=$(
     cd "$scratch_dir/files"
+    # shellcheck disable=SC2086  # the unquoted expansion is the subject of the exercise
     cat $file_name 2>&1
 )
 unquoted_status=$?

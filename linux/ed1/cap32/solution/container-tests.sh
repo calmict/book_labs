@@ -8,6 +8,7 @@ printf 'container_root_old_visible=%s\n' "$(test -e /.oldroot && printf yes || p
 printf 'container_processes:\n'
 ps -eo pid,ppid,comm
 
+# shellcheck disable=SC2009  # ps and grep are the point here: the exercise inspects the listing itself
 if ps -eo args | grep -q '[l]abcap32-host-sentinel'; then
     printf '%s\n' 'host_process_visible=yes'
     exit 1

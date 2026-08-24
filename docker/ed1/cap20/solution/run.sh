@@ -47,6 +47,7 @@ fi
 echo "OK 4 - profile: debug is absent by default and starts with --profile debug"
 
 # 5. compose.override.yaml is merged automatically from the project directory.
+# shellcheck disable=SC2016  # single quotes on purpose: LAB_MODE must expand inside the container
 mode=$(dc exec -T web sh -c 'printf %s "$LAB_MODE"')
 base_mode=$(dc -f compose.yaml config | awk '/LAB_MODE:/ {print $2; exit}')
 if [ "$mode" != development ] || [ "$base_mode" != production ]; then

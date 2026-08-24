@@ -27,6 +27,7 @@ mem=$(docker stats --no-stream --format '{{.MemUsage}}' "$C")
 # TODO 4 (25.2): identical chatty workloads, with and without json-file
 # rotation. A read-only helper measures the daemon-managed files without host
 # privileges or daemon changes.
+# shellcheck disable=SC2016  # single quotes on purpose: the string is expanded by the shell that receives it
 chat='i=0; while [ "$i" -lt 6000 ]; do echo 012345678901234567890123456789012345678901234567890123456789; i=$((i+1)); done; sleep 60'
 docker run -d --name "$UNROT" busybox sh -c "$chat" >/dev/null
 docker run -d --name "$ROT" --log-opt max-size=10k --log-opt max-file=2 busybox sh -c "$chat" >/dev/null

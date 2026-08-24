@@ -70,6 +70,7 @@ RUNTIME_OWNED=1
 
 echo "== start changes runtime state, not enablement =="
 systemctl --user start "$MAIN_UNIT"
+# shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
 for attempt in {1..80}; do
   timestamp_count=$(awk 'END { print NR + 0 }' "$LAB_RUNTIME/timestamps.log" 2>/dev/null || true)
   active_state=$(systemctl --user is-active "$MAIN_UNIT" 2>/dev/null || true)

@@ -36,6 +36,7 @@ wait_for_text() {
   local text=$1
   local path=$2
   local attempt
+  # shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
   for attempt in {1..100}; do
     grep -Fq "$text" "$path" 2>/dev/null && return 0
     sleep 0.05

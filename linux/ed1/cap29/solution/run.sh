@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-firewall_namespace=labcap29
 namespaces=(labcap29 labcap29client labcap29server)
 host_links=(labcap29in labcap29cli labcap29out labcap29srv)
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)

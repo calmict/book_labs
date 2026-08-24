@@ -53,15 +53,18 @@ echo "ENOENT check: PASS"
 
 ROOT_TRACE="$WORK_DIR/root.trace"
 ROOT_OUTPUT="$WORK_DIR/root.out"
+# shellcheck disable=SC2016  # single quotes on purpose: the string is expanded by the shell that receives it
 ROOT_COMMAND='printf "uid=%s\n" "$(id -u)"; cat /etc/os-release >/dev/null'
 
 if (( EUID == 0 )); then
   strace -qq -e trace=openat,write -o "$ROOT_TRACE" sh -c "$ROOT_COMMAND" > "$ROOT_OUTPUT"
 elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+  # shellcheck disable=SC2024  # the redirect is the caller's on purpose: only the traced command needs root
   sudo -n strace -qq -e trace=openat,write -o "$ROOT_TRACE" \
     sh -c "$ROOT_COMMAND" > "$ROOT_OUTPUT"
 elif [[ -t 0 ]] && command -v sudo >/dev/null 2>&1; then
   echo "sudo authentication is required for the UID 0 observation"
+  # shellcheck disable=SC2024  # the redirect is the caller's on purpose: only the traced command needs root
   sudo strace -qq -e trace=openat,write -o "$ROOT_TRACE" \
     sh -c "$ROOT_COMMAND" > "$ROOT_OUTPUT"
 else

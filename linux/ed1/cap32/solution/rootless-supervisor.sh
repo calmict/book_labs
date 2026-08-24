@@ -36,6 +36,7 @@ trap cleanup EXIT INT TERM HUP
 container_launcher=$!
 printf '%s\n' "$container_launcher" > "$wrapper_file"
 
+# shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
 for attempt in {1..100}; do
     container_pid=$(ps -o pid= --ppid "$container_launcher" | awk 'NR == 1 { print $1 }')
     [[ $container_pid =~ ^[0-9]+$ ]] && break

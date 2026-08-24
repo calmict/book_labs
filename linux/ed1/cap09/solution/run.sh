@@ -170,6 +170,7 @@ wait_for_file "$FIFO_PID_PATH"
 recorded_fifo_pid=$(sed -n '1p' "$FIFO_PID_PATH")
 [[ "$recorded_fifo_pid" == "$FIFO_PID" ]]
 fifo_state=
+# shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
 for attempt in {1..100}; do
   fifo_state=$(ps -o stat= -p "$FIFO_PID" 2>/dev/null | awk '{ print $1 }')
   [[ "$fifo_state" == S* ]] && break

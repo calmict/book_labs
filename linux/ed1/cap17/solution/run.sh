@@ -20,6 +20,7 @@ trap cleanup EXIT INT TERM
 wait_for_stage() {
   local expected=$1
   local attempt
+  # shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
   for attempt in {1..100}; do
     if [[ -f "$WORK_DIR/labcap17-stage" ]] && [[ $(<"$WORK_DIR/labcap17-stage") == "$expected" ]]; then
       return 0

@@ -22,6 +22,7 @@ else
     exit 77
 fi
 
+# shellcheck disable=SC2016  # single quotes on purpose: the string is expanded by the shell that receives it
 output=$(
     "$runtime" run --rm --name "$container_name" "$image_name" sh -ceu '
         adduser -D labcap23owner

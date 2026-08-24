@@ -58,6 +58,7 @@ namespace_created=1
 ip -n "$namespace" link set lo up
 
 udp_rcvbuf_errors() {
+    # shellcheck disable=SC2016  # single quotes on purpose: the program is expanded by awk, not by this shell
     ip netns exec "$namespace" awk '
         $1 == "Udp:" && $2 == "InDatagrams" {
             for (i = 2; i <= NF; i++) name[i] = $i

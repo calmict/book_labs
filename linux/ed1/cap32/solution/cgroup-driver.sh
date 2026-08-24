@@ -98,6 +98,7 @@ setsid unshare --user --map-root-user --net --mount --propagation private --fork
     "$script_dir/rootless-supervisor.sh" "$script_dir" "$scratch_dir" &
 supervisor_pid=$!
 
+# shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
 for attempt in {1..2400}; do
     [[ -s $scratch_dir/wrapper.pid ]] && break
     kill -0 "$supervisor_pid" 2>/dev/null || {

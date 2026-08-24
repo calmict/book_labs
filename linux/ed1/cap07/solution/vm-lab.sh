@@ -92,6 +92,7 @@ echo "Overlay backing-file verification: PASS"
 echo "Base image opened only through the qcow2 backing chain: $BASE_IMAGE"
 echo "Persistent disposable overlay for all four stages: $OVERLAY"
 
+# shellcheck disable=SC2054  # the commas belong to the qemu argument syntax, they do not separate elements
 QEMU_ARGS=(
   -enable-kvm
   -cpu host

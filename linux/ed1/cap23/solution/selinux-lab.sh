@@ -52,6 +52,7 @@ if ps -eZ 2>/dev/null | awk '$1 ~ /:httpd_t:/ { found=1 } END { exit !found }'; 
 fi
 
 mkdir -p -- "$document_dir"
+# shellcheck disable=SC2012  # ls -Z is the point here: it prints the SELinux context, find does not
 original_context=$(ls -Zd "$scratch_dir" | awk '{print $1}')
 printf 'labcap23 protected content\n' > "$secret_file"
 chmod 0644 "$secret_file"
@@ -67,6 +68,7 @@ mode_before=$(stat -c %a "$secret_file")
 runcon -u system_u -r system_r -t httpd_t -- "$runtime_file" "$server_program" "$port" "$document_dir" >"$scratch_dir/server.log" 2>&1 &
 server_pid=$!
 
+# shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
 for attempt in {1..30}; do
     if kill -0 "$server_pid" 2>/dev/null; then
         http_code=$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${port}/" || true)

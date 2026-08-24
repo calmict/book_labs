@@ -5,6 +5,7 @@ set -Eeuo pipefail
 rootfs=$1
 network_ready=$2
 
+# shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
 for attempt in {1..100}; do
     [[ -e $network_ready ]] && break
     sleep 0.1

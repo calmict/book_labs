@@ -78,6 +78,7 @@ cat /proc/cmdline > "$WORK_DIR/host-cmdline.txt"
 echo "Host kernel command line (read-only acquisition):"
 cat "$WORK_DIR/host-cmdline.txt"
 
+# shellcheck disable=SC2054  # the commas belong to the qemu argument syntax, they do not separate elements
 QEMU_ARGS=(
   -enable-kvm
   -cpu host

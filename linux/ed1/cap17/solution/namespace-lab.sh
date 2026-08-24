@@ -21,6 +21,7 @@ trap cleanup EXIT INT TERM
 wait_for_ack() {
   local name=$1
   local attempt
+  # shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
   for attempt in {1..100}; do
     [[ -f "$WORK_DIR/labcap17-continue-$name" ]] && return 0
     sleep 0.05

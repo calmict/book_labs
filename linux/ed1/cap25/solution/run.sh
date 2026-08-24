@@ -17,6 +17,7 @@ if [[ $count -ne 0 ]]; then
 fi
 
 count=0
+# shellcheck disable=SC2034  # the loop counts lines, it does not read them
 while IFS= read -r line; do
     count=$((count + 1))
 done < <(printf '%s\n' one two three)

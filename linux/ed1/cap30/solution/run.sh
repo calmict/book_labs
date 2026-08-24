@@ -31,6 +31,7 @@ host_hostname=$(hostname)
 host_net_ns=$(readlink /proc/self/ns/net)
 
 printf '%s\n' 'Starting the isolated shell'
+# shellcheck disable=SC2016  # single quotes on purpose: the string is expanded by the shell that receives it
 setsid unshare --user --map-root-user --pid --net --uts --mount --propagation private --fork \
     /bin/sh -c '
         hostname labcap30-shell
@@ -51,6 +52,7 @@ setsid unshare --user --map-root-user --pid --net --uts --mount --propagation pr
     ' labcap30-inner "$inside_file" "$ready_file" &
 launcher_pid=$!
 
+# shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
 for attempt in {1..50}; do
     [[ -e $ready_file ]] && break
     kill -0 "$launcher_pid" 2>/dev/null || {
@@ -90,6 +92,7 @@ inside_net_ns=$(awk -F= '/^inside_net_ns=/ { print $2 }' "$inside_file")
 [[ $(awk 'found { print $2; exit } /^inside_uid_map:/ { found=1 }' "$inside_file") == "$host_uid" ]]
 
 printf '%s\n' 'Entering the namespaces from the host with nsenter'
+# shellcheck disable=SC2016  # single quotes on purpose: the string is expanded by the shell that receives it
 timeout 5 nsenter --target "$shell_pid" --user --mount --uts --net --pid --preserve-credentials \
     /bin/sh -c '
         printf "nsenter_pid=%s\n" "$$"

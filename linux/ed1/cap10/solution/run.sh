@@ -71,6 +71,7 @@ wait_for_file "$ZOMBIE_STATE/zombie-parent.pid"
 wait_for_file "$ZOMBIE_STATE/zombie-child.pid"
 ZOMBIE_PARENT=$(<"$ZOMBIE_STATE/zombie-parent.pid")
 ZOMBIE_CHILD=$(<"$ZOMBIE_STATE/zombie-child.pid")
+# shellcheck disable=SC2034  # the retry counter is deliberately unused: the loop only bounds the wait
 for attempt in {1..50}; do
   ZOMBIE_STAT=$(ps -o stat= -p "$ZOMBIE_CHILD" | tr -d ' ')
   [[ "$ZOMBIE_STAT" == Z* ]] && break

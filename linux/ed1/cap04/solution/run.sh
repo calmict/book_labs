@@ -13,6 +13,7 @@ if [[ ! -r /etc/os-release ]]; then
   exit 2
 fi
 
+# shellcheck disable=SC1091  # os-release is read at run time, it is not an input to check
 . /etc/os-release
 : "${ID:?ID is missing from /etc/os-release}"
 : "${PRETTY_NAME:?PRETTY_NAME is missing from /etc/os-release}"
