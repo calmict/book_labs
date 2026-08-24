@@ -26,7 +26,7 @@ measure() {  # $1 = suffix ; $2.. = extra docker run flags
   docker stop -t "$GRACE" "$n" >/dev/null
   t1=$(date +%s%N)
   echo "$(( (t1 - t0) / 1000000 )) $(docker inspect -f '{{.State.ExitCode}}' "$n")"
-  docker rm "$n" >/dev/null
+  docker rm "$n" >/dev/null 2>&1 || true
 }
 
 # Start a zombie generator, wait for its children to exit, and print the number
