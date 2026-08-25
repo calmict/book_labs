@@ -2,8 +2,9 @@
 # cap13 - solution test. Proves the lifecycle of data: a file written to the
 # container's writable layer is gone from a fresh container (ephemeral); a file
 # written to a named volume is read back after the writing container is removed
-# (persistent); and the volume still exists with no container using it. Throwaway
-# containers, uniquely named volume, no restart, no privileges.
+# (persistent); the same writable layer survives stop/start but not removal; and
+# docker system df exposes a structured Local Volumes count. Unique resources,
+# targeted cleanup, no daemon restart, no privileges.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -20,6 +21,9 @@ val() { grep "^$2=" "$1" | cut -d= -f2-; }
 ephemeral=$(val "$WORK/data.txt" ephemeral)
 persisted=$(val "$WORK/data.txt" persisted)
 vol_exists=$(val "$WORK/data.txt" vol_exists)
+after_restart=$(val "$WORK/data.txt" after_restart)
+after_recreate=$(val "$WORK/data.txt" after_recreate)
+volume_df_count=$(val "$WORK/data.txt" volume_df_count)
 
 # 1. the container's writable layer is ephemeral: a fresh container has no file
 if [ "$ephemeral" != "GONE" ]; then
@@ -38,6 +42,24 @@ if [ "$vol_exists" != "1" ]; then
   echo "UNEXPECTED: the volume is not present as a first-class object (vol_exists=$vol_exists)" >&2; exit 1
 fi
 echo "OK 3 - the volume is a first-class object: still present with no container attached"
+
+# 4. stop/start preserves one container's layer; remove/recreate does not
+if [ "$after_restart" != "hi" ]; then
+  echo "UNEXPECTED: stop/start lost the writable-layer file (after_restart=$after_restart), expected hi" >&2; exit 1
+fi
+if [ "$after_recreate" != "GONE" ]; then
+  echo "UNEXPECTED: a recreated container saw the old writable-layer file (after_recreate=$after_recreate), expected GONE" >&2; exit 1
+fi
+echo "OK 4 - stop/start preserves the writable layer; remove/recreate makes the file GONE"
+
+# 5. docker system df provides a readable, machine-independent volume count
+if ! [[ "$volume_df_count" =~ ^[0-9]+$ ]]; then
+  echo "UNEXPECTED: docker system df did not provide a numeric Local Volumes count (volume_df_count=$volume_df_count)" >&2; exit 1
+fi
+if [ "$volume_df_count" -lt 1 ]; then
+  echo "UNEXPECTED: docker system df counted no volumes while the exercise volume exists" >&2; exit 1
+fi
+echo "OK 5 - docker system df reports a readable Local Volumes count ($volume_df_count)"
 
 echo
 echo "ALL CHECKS PASSED"

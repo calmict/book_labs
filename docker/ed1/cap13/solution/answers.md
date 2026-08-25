@@ -15,6 +15,21 @@
     persisted=$(docker run --rm -v "$VOL:/data" busybox sh -c 'cat /data/persisted.txt 2>/dev/null || echo GONE')
     vol_exists=$(docker volume ls -q | grep -cx "$VOL" || true)
 
+**TODO 4 (13.2) — distinguish stop/start from remove/recreate:**
+
+    docker run -d --name "$LIFE_CONTAINER" busybox sleep 300 >/dev/null
+    docker exec "$LIFE_CONTAINER" sh -c 'echo hi > /lifecycle.txt'
+    docker stop "$LIFE_CONTAINER" >/dev/null
+    docker start "$LIFE_CONTAINER" >/dev/null
+    after_restart=$(docker exec "$LIFE_CONTAINER" cat /lifecycle.txt)
+    docker rm -f "$LIFE_CONTAINER" >/dev/null
+    docker run -d --name "$LIFE_CONTAINER" busybox sleep 300 >/dev/null
+    after_recreate=$(docker exec "$LIFE_CONTAINER" sh -c 'cat /lifecycle.txt 2>/dev/null || echo GONE')
+
+**TODO 5 (13.4) — read the structured Local Volumes count:**
+
+    volume_df_count=$(docker system df --format '{{.Type}}|{{.TotalCount}}' | awk -F'|' '$1 == "Local Volumes" {print $2}')
+
 ## Reflection questions
 
 **a. Why is the writable layer not the place to keep data?**
@@ -50,3 +65,20 @@ consume disk, and — more seriously — a volume may hold sensitive data (datab
 contents, secrets a container wrote) that survives long after the container is gone,
 until someone deliberately deletes it. Persistence is a responsibility as much as a
 feature.
+
+**d. Why does stop/start preserve layer data while remove/recreate does not, and
+what can docker system df tell you?**
+
+Stopping changes a container's runtime state but does not delete the container or
+its writable layer. Starting that same container attaches it to the same layer, so
+data written before the stop is still present. Docker rm deletes the container and
+that layer; creating another container from the same image gives it a new writable
+layer, which cannot contain the old file. The image is the same, but the container
+and its writable state are not.
+
+Docker system df summarizes the disk space known to the daemon for images,
+containers, local volumes, and build cache. Its structured output lets automation
+identify the Local Volumes row and read its count. Exact byte totals and changes
+depend on the daemon's other resources, storage driver, and current workload, so a
+portable exercise should assert the row and numeric count, not a universal size or
+timing threshold.

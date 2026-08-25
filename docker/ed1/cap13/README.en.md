@@ -19,6 +19,10 @@ ashore, outlives the ship.
 - Verify the volume survives the removal of the container that wrote it (13.3).
 - Understand that a volume is a first-class object with its own lifecycle,
   independent of any container (13.4).
+- Distinguish stopping, which preserves the writable layer, from removing the
+  container, which deletes it (13.2).
+- Observe the volume count reported by docker system df in structured form, without
+  depending on machine-specific disk usage (13.4).
 
 ## Prerequisites
 
@@ -30,9 +34,10 @@ ashore, outlives the ship.
 ## The scenario
 
 In start/ you will find persistence.sh: a script that should contrast two fates — a file
-written to the container's layer and one written to a volume — but the volume part
-is not done yet. You fill three gaps (TODO 1..3). Throwaway containers (--rm) and a
-uniquely named volume, removed at the end: the shared daemon is not touched.
+written to the container's layer and one written to a volume — but the volume and
+lifecycle checks are not done yet. You fill five gaps (TODO 1..5). Containers and
+the volume have unique names and are removed at the end: the shared daemon is not
+touched.
 
 Prepare the environment:
 
@@ -68,7 +73,33 @@ the volume.
 
     persisted=$(docker run --rm -v "$VOL:/data" busybox sh -c 'cat /data/persisted.txt 2>/dev/null || echo GONE')
 
-Once the three TODOs are filled, run the test:
+### Phase 5 — Stop and start are not rm (13.2 — TODO 4)
+
+Complete **TODO 4**: start a container that stays alive, write once to its layer
+with docker exec, then stop and restart it. Read the data with docker exec: it must
+still be there. Then remove the container and recreate it from the same image: the
+data must not exist in the new layer. The main command is sleep and does not rewrite
+the file when the container restarts.
+
+    docker run -d --name "$LIFE_CONTAINER" busybox sleep 300 >/dev/null
+    docker exec "$LIFE_CONTAINER" sh -c 'echo hi > /lifecycle.txt'
+    docker stop "$LIFE_CONTAINER" >/dev/null
+    docker start "$LIFE_CONTAINER" >/dev/null
+    after_restart=$(docker exec "$LIFE_CONTAINER" cat /lifecycle.txt)
+    docker rm -f "$LIFE_CONTAINER" >/dev/null
+    docker run -d --name "$LIFE_CONTAINER" busybox sleep 300 >/dev/null
+    after_recreate=$(docker exec "$LIFE_CONTAINER" sh -c 'cat /lifecycle.txt 2>/dev/null || echo GONE')
+
+### Phase 6 — Where disk usage grows (13.4 — TODO 5)
+
+Complete **TODO 5**: query docker system df with a structured format and extract the
+count from the Local Volumes row. The number depends on other volumes on the
+machine: the test compares neither bytes nor thresholds, but only verifies that the
+count is readable and includes at least the volume the script just created.
+
+    volume_df_count=$(docker system df --format '{{.Type}}|{{.TotalCount}}' | awk -F'|' '$1 == "Local Volumes" {print $2}')
+
+Once the five TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -78,7 +109,10 @@ Once the three TODOs are filled, run the test:
 - persistence.sh creates the named volume (TODO 1).
 - It writes a file into the volume from a throwaway container (TODO 2).
 - It reads the file back from a new container mounting the same volume (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- It proves stop and start preserve data written once to the layer, while removing
+  and recreating the container deletes it (TODO 4).
+- It reads the volume count from structured docker system df output (TODO 5).
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -90,6 +124,10 @@ solution/run.sh runs the scenario and checks, point by point:
   new container, after the first was removed (result hi).
 - **OK 3** — the volume has its own lifecycle: it still exists, listed by the daemon,
   even with no container using it.
+- **OK 4** — the same data in the writable layer survives stop and start; the
+  countercheck shows it is absent after rm and container recreation.
+- **OK 5** — docker system df exposes a Local Volumes row with a readable numeric
+  count while the exercise volume exists.
 
 ## Reflection questions
 
@@ -106,11 +144,16 @@ other's writable layers?
 imply for disk space (orphan volumes) and for sensitive data left in a volume nobody
 deletes?
 
+**d.** Why do stop and start preserve data in the writable layer, while rm and
+recreation from the same image make it disappear? What does docker system df
+measure, and why is a fixed byte threshold incorrect across different machines?
+
 ## Cleanup
 
-Nothing to tear down by hand: the containers are throwaway (--rm) and the named
-volume is removed by the script (docker volume rm, plus a safety trap) at the end.
-The busybox base image stays in cache (shared). The daemon is never restarted.
+Nothing to tear down by hand: throwaway containers remove themselves with --rm;
+the stop/start test container and the named volume are removed by targeted commands
+in the script, plus a safety trap, at the end. The busybox base image stays in cache
+(shared). The daemon is never restarted.
 
 ## Where it leads
 
