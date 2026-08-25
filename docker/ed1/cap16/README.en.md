@@ -18,10 +18,10 @@ compare your own rule with the one Docker really wrote on the host.
 - See that a container has its own network namespace, different from the host's
   (16.1).
 - Recognise that each container has its own eth0 and its own address, distinct from
-  the others (16.4).
+  the others (16.1-16.2).
 - Understand that eth0 is one end of a veth pair: its peer is on the other side, on
-  the host (16.2).
-- Connect it all to the docker0 bridge as the shared switchboard (16.3).
+  the host (16.1).
+- Connect it all to the docker0 bridge as the shared switchboard (16.2).
 - Build namespaces, veth and a bridge by hand without real privileges.
 - Apply a MASQUERADE rule and prove it with end-to-end traffic to a simulated
   external network.
@@ -74,7 +74,7 @@ its own.
 
     c1_ns=$(docker exec "$C1" readlink /proc/self/ns/net)
 
-### Phase 2 — An address for each (16.4 — TODO 2)
+### Phase 2 — An address for each (16.1-16.2 — TODO 2)
 
 Complete **TODO 2**: read the eth0 IP of both containers. Running together on the
 same bridge, they receive two different addresses — proof that each stack is
@@ -83,7 +83,7 @@ independent.
     c1_ip=$(docker exec "$C1" sh -c 'ip addr show eth0 | grep -w inet | grep -oE "[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+" | head -1')
     c2_ip=$(docker exec "$C2" sh -c 'ip addr show eth0 | grep -w inet | grep -oE "[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+" | head -1')
 
-### Phase 3 — The virtual cable: veth (16.2 — TODO 3)
+### Phase 3 — The virtual cable: veth (16.1 — TODO 3)
 
 Complete **TODO 3**: eth0 is one end of a veth pair. Read the local index (ifindex)
 and the peer's (iflink): they differ, because the cable's other end is in another

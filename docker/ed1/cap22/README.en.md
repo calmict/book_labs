@@ -133,9 +133,10 @@ values separate from the configuration file useful even for non-secret values
 
 **b.** Why is a secret better than an environment variable for sensitive data? Think
 about where an env var ends up — visible in docker inspect, in docker ps, inherited by
-child processes, often printed in logs — versus a secret, mounted as a
-restricted-permission file in /run/secrets (on a tmpfs, not on disk) and absent from
-the environment. What changes for someone who manages to inspect the container?
+child processes, often printed in logs — versus a secret, mounted as a file in
+/run/secrets with the effective permissions of the host file used as a bind mount and
+absent from the environment. What changes for someone who manages to inspect the
+container?
 
 **c.** Compose secrets are file-based, a first step. In production the values come from
 a secret manager (Vault, the cloud's secrets) instead of a file on disk. How is the

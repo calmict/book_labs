@@ -18,7 +18,7 @@ ashore, outlives the ship.
 - Create a named volume and write into it (13.3).
 - Verify the volume survives the removal of the container that wrote it (13.3).
 - Understand that a volume is a first-class object with its own lifecycle,
-  independent of any container (13.4).
+  independent of any container (13.3).
 - Distinguish stopping, which preserves the writable layer, from removing the
   container, which deletes it (13.2).
 - Observe the volume count reported by docker system df in structured form, without

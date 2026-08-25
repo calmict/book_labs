@@ -18,8 +18,8 @@ unchanged: UID N inside is UID N on the host.
 - Reproduce the problem: a container with a UID that does not own the folder cannot
   write (15.2).
 - Fix it by running the container with the UID that owns the files (--user) (15.3).
-- Verify the UID is not translated: the file the container creates is owned by the
-  same UID on the host (15.4).
+- Verify that, without user namespace remapping, the UID is not translated: the file
+  the container creates is owned by the same UID on the host (15.1).
 
 ## Prerequisites
 

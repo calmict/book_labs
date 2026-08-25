@@ -19,7 +19,7 @@ demone a terra, sopravvive alla nave.
 - Verificare che il volume sopravvive alla rimozione del container che l'ha scritto
   (13.3).
 - Capire che il volume è un oggetto di prima classe, con un ciclo di vita proprio,
-  indipendente da qualsiasi container (13.4).
+  indipendente da qualsiasi container (13.3).
 - Distinguere lo stop, che conserva lo strato scrivibile, dalla rimozione del
   container, che lo elimina (13.2).
 - Osservare in forma strutturata il conteggio dei volumi riportato da docker system

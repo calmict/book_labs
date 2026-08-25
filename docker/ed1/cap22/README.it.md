@@ -134,8 +134,8 @@ diversi, stessa app)?
 
 **b.** Perché per un dato sensibile un secret è meglio di una variabile d'ambiente?
 Pensa a dove finisce una env var — visibile in docker inspect, in docker ps, ereditata
-dai processi figli, spesso stampata nei log — contro un secret, montato come file a
-permessi ristretti in /run/secrets (su un tmpfs, non su disco) e assente
+dai processi figli, spesso stampata nei log — contro un secret, montato come file in
+/run/secrets con i permessi effettivi del file host usato come bind mount e assente
 dall'ambiente. Cosa cambia per chi riesce a ispezionare il container?
 
 **c.** I secrets di Compose sono file-based, un primo passo. In produzione i valori

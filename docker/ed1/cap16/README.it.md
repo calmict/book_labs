@@ -19,10 +19,10 @@ sull'host.
 - Vedere che un container ha il proprio network namespace, diverso da quello
   dell'host (16.1).
 - Riconoscere che ogni container ha il suo eth0 e il suo indirizzo, distinto da
-  quello degli altri (16.4).
+  quello degli altri (16.1-16.2).
 - Capire che eth0 è un'estremità di una veth pair: il suo peer sta dall'altra parte,
-  sull'host (16.2).
-- Collegare il tutto al bridge docker0 come centralina condivisa (16.3).
+  sull'host (16.1).
+- Collegare il tutto al bridge docker0 come centralina condivisa (16.2).
 - Costruire namespace, veth e bridge a mano senza privilegi reali.
 - Applicare una regola MASQUERADE e provarla con traffico end-to-end verso una rete
   esterna simulata.
@@ -75,7 +75,7 @@ diverso: il container non condivide lo stack di rete della macchina, ne ha uno s
 
     c1_ns=$(docker exec "$C1" readlink /proc/self/ns/net)
 
-### Fase 2 — Un indirizzo per ciascuno (16.4 — TODO 2)
+### Fase 2 — Un indirizzo per ciascuno (16.1-16.2 — TODO 2)
 
 Completa il **TODO 2**: leggi l'IP di eth0 di entrambi i container. Girando insieme
 sullo stesso bridge, ricevono due indirizzi diversi — la prova che ogni stack è
@@ -84,7 +84,7 @@ indipendente.
     c1_ip=$(docker exec "$C1" sh -c 'ip addr show eth0 | grep -w inet | grep -oE "[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+" | head -1')
     c2_ip=$(docker exec "$C2" sh -c 'ip addr show eth0 | grep -w inet | grep -oE "[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+" | head -1')
 
-### Fase 3 — Il cavo virtuale: veth (16.2 — TODO 3)
+### Fase 3 — Il cavo virtuale: veth (16.1 — TODO 3)
 
 Completa il **TODO 3**: eth0 è un'estremità di una veth pair. Leggi l'indice locale
 (ifindex) e quello del peer (iflink): sono diversi, perché l'altra estremità del

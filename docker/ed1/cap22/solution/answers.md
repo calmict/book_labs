@@ -69,8 +69,8 @@ An environment variable is remarkably leaky. It shows up in docker inspect and i
 process list, it is inherited by every child process the app spawns, it is easy to
 print by accident in a stack trace or a debug log, and it sits in the container's
 environment for the whole run. A secret avoids all of that: Compose mounts it as a
-file under /run/secrets, on a tmpfs (in memory, not on disk), with restricted
-permissions, and it is absent from the environment entirely. So someone who inspects
+file under /run/secrets using a bind mount, with the effective permissions of the host
+file, and it is absent from the environment entirely. So someone who inspects
 the container, reads its env, or scrapes its logs finds nothing — the value is only in
 a file the app reads deliberately. Same data, far smaller exposure.
 

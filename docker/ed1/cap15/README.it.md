@@ -19,8 +19,8 @@ attraversa il confine tale e quale: l'UID N dentro è l'UID N sull'host.
   scrivere (15.2).
 - Risolverlo facendo girare il container con l'UID che possiede i file (--user)
   (15.3).
-- Verificare che l'UID non viene tradotto: il file creato dal container è di
-  proprietà dello stesso UID sull'host (15.4).
+- Verificare che, senza rimappatura tramite user namespace, l'UID non viene tradotto:
+  il file creato dal container è di proprietà dello stesso UID sull'host (15.1).
 
 ## Prerequisiti
 
