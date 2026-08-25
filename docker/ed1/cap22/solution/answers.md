@@ -18,10 +18,31 @@
     secrets:
       - db_password
 
-The .env and db_password.txt (never committed):
+**TODO 4 (22.2) — inject variables from an env file:** under the app service,
+
+    env_file:
+      - ./app.env
+
+**TODO 5 (22.2) — create deterministic source collisions:** under the app service,
+
+    environment:
+      SOURCE_PRIORITY: from-environment
+      SHELL_PRIORITY: ${SHELL_PRIORITY}
+
+The .env, app.env, and db_password.txt (never committed):
 
     APP_ENV=production
+    DOTENV_ONLY=from-dotenv
+    SHELL_PRIORITY=from-dotenv
+    ENV_FILE_ONLY=from-env-file
+    SOURCE_PRIORITY=from-env-file
     s3cr3t-pw
+
+DOTENV_ONLY is deliberately never referenced in compose.yaml, so it does not enter
+the container. ENV_FILE_ONLY does enter through app.env. SOURCE_PRIORITY proves that
+an environment entry wins over the same key in env_file. When Compose is launched as
+SHELL_PRIORITY=from-shell docker compose ..., the process shell supplies the value
+for ${SHELL_PRIORITY} instead of the value in .env.
 
 ## Reflection questions
 
@@ -36,6 +57,11 @@ only the .env differs. And .env belongs in .gitignore because it is where real v
 land, including credentials: committing it would publish them and freeze one
 environment's settings into the repo. You commit an example (documented in the README
 here, since book_labs even gitignores .env.*), never the real file.
+
+The exercise also makes the boundary executable: an unreferenced key in .env is
+absent from the container, whereas a key in the service's env_file is injected. For
+the collisions demonstrated here, environment overrides env_file, and a value
+exported by the process shell overrides the same interpolation value in .env.
 
 **b. Why a secret beats an environment variable for sensitive data.**
 

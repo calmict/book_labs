@@ -1,13 +1,18 @@
 # cap22 solution - configuration with env vars and secrets. app gets an environment
-# variable whose value comes from .env (kept out of the repo); a sensitive value is
-# given as a secret, defined from a file and mounted into the container at
-# /run/secrets/db_password - a restricted file, not an environment variable.
+# variable whose value comes from .env (kept out of the repo); app.env injects
+# service variables; environment overrides app.env; and the process shell overrides
+# .env during interpolation. A sensitive value is given as a secret, defined from a
+# file and mounted at /run/secrets/db_password, not as an environment variable.
 services:
   app:
     image: busybox
     command: ["sh", "-c", "sleep 3600"]
+    env_file:
+      - ./app.env
     environment:
       APP_ENV: ${APP_ENV}
+      SOURCE_PRIORITY: from-environment
+      SHELL_PRIORITY: ${SHELL_PRIORITY}
     secrets:
       - db_password
 secrets:

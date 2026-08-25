@@ -11,7 +11,8 @@ sensitive data mounted into the container as restricted-permission files, not wr
 into the environment where anyone inspecting the container would see them. In this lab
 you configure a service with a variable taken from .env and give it a password as a
 secret — and verify that the secret is in the right file and does not leak into the
-environment.
+environment. Finally, you distinguish what .env interpolates from what env_file
+injects and verify two real precedence relationships among configuration sources.
 
 ## Objectives
 
@@ -19,6 +20,9 @@ environment.
 - Take its value from a .env file, kept out of the repository (22.2).
 - Give sensitive data as a secret, mounted as a file in /run/secrets (22.3).
 - See why a secret does not end up in the environment, unlike an env var (22.4).
+- Distinguish .env interpolation from env_file injection (22.2).
+- Verify that environment overrides env_file and that the process shell overrides
+  .env during interpolation (22.2).
 
 ## Prerequisites
 
@@ -29,15 +33,16 @@ environment.
 ## The scenario
 
 In start/ you will find compose.yaml: the app service has no configuration and no
-secret. You fill three gaps (TODO 1..3). You need two files that are **not committed**
+secret. You fill five gaps (TODO 1..5). You need three files that are **not committed**
 (that is the point of the chapter): create them before testing your solution —
 
     cd docker/ed1/cap22/start
-    printf 'APP_ENV=production\n' > .env
+    printf 'APP_ENV=production\nDOTENV_ONLY=from-dotenv\nSHELL_PRIORITY=from-dotenv\n' > .env
+    printf 'ENV_FILE_ONLY=from-env-file\nSOURCE_PRIORITY=from-env-file\n' > app.env
     printf 's3cr3t-pw' > db_password.txt
 
 The Compose project has a unique name and is removed at the end; the daemon is not
-touched. (solution/run.sh generates these two files itself in a temporary directory,
+touched. (solution/run.sh generates these three files itself in a temporary directory,
 so the test depends on nothing committed.)
 
 ### Phase 1 — The variable from .env (22.1, 22.2 — TODO 1)
@@ -66,7 +71,29 @@ container as a file at /run/secrets/db_password — not as an environment variab
     secrets:
       - db_password
 
-Once the three TODOs are filled, run the test:
+### Phase 4 — .env interpolates, env_file injects (22.2 — TODO 4)
+
+Complete **TODO 4**: connect app.env to the service with env_file. DOTENV_ONLY exists
+only in .env and is not referenced in the compose file, so Compose does not inject it
+into the container. ENV_FILE_ONLY, on the other hand, reaches the container because
+app.env is the service's env_file.
+
+    env_file:
+      - ./app.env
+
+### Phase 5 — Which source wins (22.2 — TODO 5)
+
+Complete **TODO 5** with two keys in environment. SOURCE_PRIORITY has a literal value
+and the same key exists in app.env: environment wins. SHELL_PRIORITY is interpolated
+and also appears in .env: solution/run.sh starts Compose with
+SHELL_PRIORITY=from-shell explicitly in the process environment, so the shell wins
+over the value in .env.
+
+    environment:
+      SOURCE_PRIORITY: from-environment
+      SHELL_PRIORITY: ${SHELL_PRIORITY}
+
+Once the five TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -75,7 +102,11 @@ Once the three TODOs are filled, run the test:
 
 - app receives APP_ENV with a value taken from .env (TODO 1).
 - The secret db_password is defined from a file (TODO 2) and assigned to app (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED.
+- The key present only in .env does not enter the container, while the key in env_file
+  does (TODO 4).
+- environment overrides env_file, and the process shell overrides .env during
+  interpolation (TODO 5).
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -87,6 +118,10 @@ solution/run.sh brings the application up and checks, point by point:
   the expected value.
 - **OK 3** — the secret does NOT leak into the environment: its value does not appear
   among the container's environment variables.
+- **OK 4** — an unreferenced key from .env stays outside the container, while a key
+  supplied by env_file is injected.
+- **OK 5** — environment overrides the same key from env_file; for an interpolated
+  key, the Compose process shell overrides .env.
 
 ## Reflection questions
 
@@ -110,10 +145,10 @@ Kubernetes Secrets, and why is this model safer than pasting the key into a vari
 ## Cleanup
 
 Nothing to tear down by hand: run.sh closes the project with docker compose down and
-removes the temporary directory (with the generated .env and secret file), through a
-trap. If you created .env and db_password.txt in start/ to test your own solution,
-remember to delete them. The busybox base image stays in cache. The daemon is never
-restarted.
+removes the temporary directory (with the generated .env, env_file, and secret file),
+through a trap. If you created the files in start/ to test your own solution, remember
+to delete .env, app.env, and db_password.txt. The busybox base image stays in cache.
+The daemon is never restarted.
 
 ## Where it leads
 

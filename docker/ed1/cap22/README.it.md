@@ -11,7 +11,8 @@ cassaforte: dati sensibili montati nel container come file a permessi ristretti,
 scritti nell'ambiente dove chiunque ispezioni il container li vedrebbe. In questo
 laboratorio configuri un servizio con una variabile presa da .env e gli dai una
 password come secret — e verifichi che il segreto è nel file giusto e non trapela
-nell'ambiente.
+nell'ambiente. Infine distingui ciò che .env interpola da ciò che env_file inietta e
+verifichi due precedenze reali tra sorgenti di configurazione.
 
 ## Obiettivi
 
@@ -20,6 +21,9 @@ nell'ambiente.
 - Dare un dato sensibile come secret, montato come file in /run/secrets (22.3).
 - Vedere perché un secret non finisce nell'ambiente, a differenza di una env var
   (22.4).
+- Distinguere l'interpolazione di .env dall'iniezione di env_file (22.2).
+- Verificare che environment prevale su env_file e che la shell del processo prevale
+  su .env durante l'interpolazione (22.2).
 
 ## Prerequisiti
 
@@ -30,15 +34,16 @@ nell'ambiente.
 ## Lo scenario
 
 In start/ trovi compose.yaml: il servizio app non ha configurazione né secret. Colmi
-tre lacune (TODO 1..3). Servono due file che **non si committano** (è il punto del
+cinque lacune (TODO 1..5). Servono tre file che **non si committano** (è il punto del
 capitolo): creali prima di provare la tua soluzione —
 
     cd docker/ed1/cap22/start
-    printf 'APP_ENV=production\n' > .env
+    printf 'APP_ENV=production\nDOTENV_ONLY=from-dotenv\nSHELL_PRIORITY=from-dotenv\n' > .env
+    printf 'ENV_FILE_ONLY=from-env-file\nSOURCE_PRIORITY=from-env-file\n' > app.env
     printf 's3cr3t-pw' > db_password.txt
 
 Il progetto Compose ha un nome unico e viene rimosso alla fine; il demone non si
-tocca. (solution/run.sh genera da sé questi due file in una cartella temporanea, così
+tocca. (solution/run.sh genera da sé questi tre file in una cartella temporanea, così
 il test non dipende da nulla di committato.)
 
 ### Fase 1 — La variabile da .env (22.1, 22.2 — TODO 1)
@@ -67,7 +72,29 @@ container come file in /run/secrets/db_password — non come variabile d'ambient
     secrets:
       - db_password
 
-Quando i tre TODO sono colmati, esegui il test:
+### Fase 4 — .env interpola, env_file inietta (22.2 — TODO 4)
+
+Completa il **TODO 4**: collega app.env al servizio con env_file. DOTENV_ONLY esiste
+solo in .env e non è referenziata nel compose, quindi Compose non la inietta nel
+container. ENV_FILE_ONLY, invece, arriva nel container perché app.env è un env_file
+del servizio.
+
+    env_file:
+      - ./app.env
+
+### Fase 5 — Chi vince fra le sorgenti (22.2 — TODO 5)
+
+Completa il **TODO 5** con due chiavi in environment. SOURCE_PRIORITY ha un valore
+letterale e la stessa chiave esiste in app.env: vince environment. SHELL_PRIORITY è
+interpolata e compare anche in .env: solution/run.sh avvia Compose passando
+esplicitamente SHELL_PRIORITY=from-shell nell'ambiente del processo, quindi la shell
+vince sul valore di .env.
+
+    environment:
+      SOURCE_PRIORITY: from-environment
+      SHELL_PRIORITY: ${SHELL_PRIORITY}
+
+Quando i cinque TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -76,7 +103,11 @@ Quando i tre TODO sono colmati, esegui il test:
 
 - app riceve APP_ENV con valore preso da .env (TODO 1).
 - Il secret db_password è definito da un file (TODO 2) e assegnato ad app (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED.
+- La chiave presente solo in .env non entra nel container, mentre quella in env_file
+  sì (TODO 4).
+- environment prevale su env_file e la shell del processo prevale su .env durante
+  l'interpolazione (TODO 5).
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -88,6 +119,10 @@ solution/run.sh porta su l'applicazione e verifica, punto per punto:
   valore atteso.
 - **OK 3** — il secret NON trapela nell'ambiente: il suo valore non compare tra le
   variabili d'ambiente del container.
+- **OK 4** — una chiave non referenziata di .env resta fuori dal container, mentre
+  una chiave fornita da env_file viene iniettata.
+- **OK 5** — environment prevale sulla stessa chiave di env_file; per una chiave
+  interpolata, la shell del processo Compose prevale su .env.
 
 ## Domande di riflessione
 
@@ -112,9 +147,10 @@ incollare la chiave in una variabile?
 ## Pulizia
 
 Niente da smontare a mano: run.sh chiude il progetto con docker compose down e rimuove
-la cartella temporanea (con .env e file segreto generati), tramite un trap. Se hai
-creato .env e db_password.txt in start/ per provare la tua soluzione, ricordati di
-cancellarli. L'immagine base busybox resta in cache. Il demone non viene mai riavviato.
+la cartella temporanea (con .env, env_file e file segreto generati), tramite un trap.
+Se hai creato i file in start/ per provare la tua soluzione, ricordati di cancellare
+.env, app.env e db_password.txt. L'immagine base busybox resta in cache. Il demone non
+viene mai riavviato.
 
 ## Dove porta
 
