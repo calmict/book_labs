@@ -9,5 +9,8 @@ COPY --from=build /appbin /appbin
 COPY --from=build --chown=10001:10001 /app/app.txt /app/app.txt
 COPY --from=build /etc/passwd /etc/passwd
 USER appuser
+LABEL org.opencontainers.image.title="cap12-hardened" \
+      org.opencontainers.image.source="https://github.com/calmict/book_labs" \
+      org.opencontainers.image.licenses="MIT"
 HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
 ENTRYPOINT ["/appbin"]

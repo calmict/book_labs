@@ -29,7 +29,8 @@ must not.
 
 In start/ you will find an incomplete Dockerfile and app.txt. The Dockerfile builds
 an image with a static application in a final scratch stage, but it does not drop
-privileges or declare a health check. You fill two gaps (TODO 1..2) to make it
+privileges or declare a health check, and says nothing about itself. You fill three gaps
+(TODO 1..3) to make it
 production-grade. Throwaway image, no privileges on the host, the shared daemon is
 not touched.
 
@@ -67,7 +68,18 @@ healthy.
 
     HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
 
-Once the two TODOs are filled, run the test:
+### Phase 5 — The image speaks for itself (12.3 — TODO 3)
+
+Complete **TODO 3**: label the image with the OCI keys. They change nothing about what
+the container does, but they travel inside the image and answer whoever finds it: what
+it is, where it comes from, under which licence. You read them with docker inspect,
+without unpacking anything.
+
+    LABEL org.opencontainers.image.title="cap12-hardened" \
+          org.opencontainers.image.source="https://github.com/calmict/book_labs" \
+          org.opencontainers.image.licenses="MIT"
+
+Once the three TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -76,8 +88,9 @@ Once the two TODOs are filled, run the test:
 
 - The Dockerfile declares USER to run non-root (TODO 1).
 - It declares a real HEALTHCHECK (TODO 2).
+- It declares the three OCI labels (TODO 3).
 - The final stage contains neither a shell nor a package manager.
-- run.sh prints OK 1..5 and ALL CHECKS PASSED.
+- run.sh prints OK 1..6 and ALL CHECKS PASSED.
 
 ## How it is verified
 
@@ -91,6 +104,8 @@ solution/run.sh builds the image and checks, point by point:
 - **OK 4** — the declared health check reaches healthy.
 - **OK 5** — no shell or common package manager is executable in the final
   scratch stage.
+- **OK 6** — the three OCI labels are in the image config and are read with docker
+  inspect, without extracting anything.
 
 ## Reflection questions
 

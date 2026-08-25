@@ -41,9 +41,11 @@ kernel's OOM counter, and always remove it through a trap:
 a. The exit code 137 is 128 + 9: by convention a process killed by signal N ends
 with code 128+N, and signal 9 is SIGKILL. The OOM killer, when a cgroup exceeds
 memory.max and no memory can be reclaimed, terminates a process inside that cgroup
-with SIGKILL - hence 137. It is the same signature you will read in chapter 26 to
-diagnose a container that "dies on its own": 137 almost always means it exceeded
-its --memory, not an application bug.
+with SIGKILL - hence 137. Careful, though: 137 says the process was killed with
+SIGKILL, not who sent it. A docker kill, an orchestrator or an operator produce the
+same code with OOMKilled=false. In chapter 26 you will use 137 as the first clue and
+confirm the OOM where it is recorded: State.OOMKilled in docker inspect, the oom_kill
+counter in memory.events - the one this lab reads - or the kernel log.
 
 b. The cap is the killer, not the allocation. Under a 40 MiB ceiling the greedy
 process is OOM-killed; without the ceiling the very same 200 MiB allocation

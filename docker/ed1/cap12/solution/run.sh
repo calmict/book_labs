@@ -58,5 +58,14 @@ for tool in /bin/sh /bin/ash /bin/bash /sbin/apk /usr/bin/apt /usr/bin/dnf; do
 done
 echo "OK 5 - scratch final image contains no shell or package manager"
 
+# 6. the OCI labels travel inside the image, readable without unpacking it.
+title=$(docker inspect -f '{{index .Config.Labels "org.opencontainers.image.title"}}' "$TAG")
+source=$(docker inspect -f '{{index .Config.Labels "org.opencontainers.image.source"}}' "$TAG")
+licenses=$(docker inspect -f '{{index .Config.Labels "org.opencontainers.image.licenses"}}' "$TAG")
+if [ "$title" != "cap12-hardened" ] || [ -z "$source" ] || [ -z "$licenses" ]; then
+  echo "UNEXPECTED: OCI labels missing or wrong (title='$title' source='$source' licenses='$licenses')" >&2; exit 1
+fi
+echo "OK 6 - OCI labels travel with the image (title=$title, source and licenses set)"
+
 echo
 echo "ALL CHECKS PASSED"

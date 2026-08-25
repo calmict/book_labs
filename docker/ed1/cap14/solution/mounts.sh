@@ -2,7 +2,8 @@
 # cap14 solution - the three mount types side by side. A bind mount: the
 # container's write lands on the chosen host folder (two-way). A named volume:
 # daemon-managed, read back from a fresh container (persistent). A tmpfs: an
-# in-memory mount (type tmpfs in /proc/mounts), not persisted and never on disk.
+# in-memory mount (type tmpfs in /proc/mounts), not persisted - a tmpfs can be
+# swapped out by the host, so it is volatile, not disk-proof.
 # Throwaway containers, a uniquely named volume and a temp folder: safe anywhere.
 set -euo pipefail
 
@@ -25,7 +26,7 @@ docker run --rm -v "$VOL:/data" busybox sh -c 'echo fromvol > /data/v.txt'
 # TODO 2 (14.1): read it back from a fresh container mounting the same volume.
 vol_persist=$(docker run --rm -v "$VOL:/data" busybox sh -c 'cat /data/v.txt 2>/dev/null || echo GONE')
 
-# 3) TMPFS: in-memory, never on disk/host, not persisted.
+# 3) TMPFS: in-memory, not persisted, no volume and no host path behind it.
 # TODO 3 (14.3): mount a tmpfs at /cache, write to it, report the mount type.
 tmpfs_type=$(docker run --rm --tmpfs /cache busybox sh -c 'echo x > /cache/t.txt; grep -q " /cache tmpfs " /proc/mounts && echo TMPFS || echo other')
 

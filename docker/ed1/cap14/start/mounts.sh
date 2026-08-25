@@ -25,7 +25,7 @@ docker run --rm -v "$VOL:/data" busybox sh -c 'echo fromvol > /data/v.txt'
 #     vol_persist=$(docker run --rm -v "$VOL:/data" busybox sh -c 'cat /data/v.txt 2>/dev/null || echo GONE')
 vol_persist=""
 
-# 3) TMPFS: in-memory, never on disk/host, not persisted.
+# 3) TMPFS: in-memory, not persisted, no volume and no host path behind it.
 # TODO 3 (14.3): mount a tmpfs at /cache, write to it, report the mount type:
 #     tmpfs_type=$(docker run --rm --tmpfs /cache busybox sh -c 'echo x > /cache/t.txt; grep -q " /cache tmpfs " /proc/mounts && echo TMPFS || echo other')
 tmpfs_type=""

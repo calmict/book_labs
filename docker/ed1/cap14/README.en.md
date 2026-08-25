@@ -8,14 +8,15 @@ is the port warehouse: the daemon manages it, it is portable and made for data. 
 bind mount is a dock shared with the host: you mount a folder of your machine inside
 the container, and what you write is seen on both sides — handy in development,
 delicate with permissions. The tmpfs is the ship's fast locker: it lives in memory,
-never touches disk, and empties on arrival. In this lab you use all three and verify
+keeps nothing after the container, and empties on arrival. In this lab you use all three and verify
 the trait that sets each apart.
 
 ## Objectives
 
 - Use a bind mount: a host folder mounted inside, with two-way writes (14.2).
 - Use a daemon-managed volume, persistent across containers (14.1).
-- Use a tmpfs: an in-memory mount, not persisted and never on disk (14.3).
+- Use a tmpfs: an in-memory mount, not persisted, which can however end up in the host's
+  swap (14.3).
 - Recognise which to choose and why (14.4).
 
 ## Prerequisites
@@ -80,7 +81,8 @@ solution/run.sh runs the scenario and checks, point by point:
 - **OK 2** — volume: the file written to the volume is read back by a new container
   (persistence managed by the daemon).
 - **OK 3** — tmpfs: the /cache mount is of type tmpfs (in memory), so it is not
-  persisted and never on disk.
+  persisted. In memory does not mean out of the disk's reach: a tmpfs can end up in swap, and a
+  truly sensitive secret needs swap disabled or encrypted.
 
 ## Reflection questions
 

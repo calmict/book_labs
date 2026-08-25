@@ -11,7 +11,8 @@ systemd's delegation (3.7) gives you a piece of the cgroup tree with no need for
 ## Objectives
 
 - Impose a memory ceiling on a cgroup with systemd-run --user, without sudo (3.4, 3.7).
-- Trigger the OOM killer and recognise its signature: exit code 137 (3.5).
+- Trigger the OOM killer and read the two pieces of evidence that identify it: exit code 137
+  and the oom_kill counter in memory.events (3.5).
 - Prove the ceiling isolates the damage: without it the same allocation is harmless (3.4).
 - Connect 137 to its cause (128 + 9 = SIGKILL), the diagnosis of chapter 26 (3.5).
 
@@ -96,8 +97,8 @@ solution/run.sh imposes the ceiling and checks, point by point:
 ## Reflection questions
 
 **a.** Why is the exit code exactly 137? Break the number down and connect each piece to what happened.
-Why, meeting a container dead with code 137 in chapter 26, will you already know the diagnosis without
-opening anything?
+And why is 137 alone not enough to say «OOM»: what other evidence do you need, and where do you
+find it?
 
 **b.** With the cap the greedy process dies, without the cap the same 200 MiB allocation completes. What
 does this contrast prove about the role of the limit? And why, in production, is raising the cap blindly

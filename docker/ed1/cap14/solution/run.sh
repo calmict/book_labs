@@ -2,7 +2,8 @@
 # cap14 - solution test. Proves the trait of each mount type: a bind mount makes
 # the container's write appear on the chosen host folder; a named volume persists
 # across container removal (read back by a fresh container); a tmpfs mount is of
-# type tmpfs (in memory), not persisted and never on disk. Throwaway containers,
+# type tmpfs (in memory), not persisted - though a tmpfs can be swapped out by the
+# host, so it is volatile, not disk-proof. Throwaway containers,
 # uniquely named volume, temp folder, no restart, no privileges.
 set -euo pipefail
 
@@ -37,7 +38,7 @@ echo "OK 2 - volume: read back '$vol_persist' from a new container (daemon-manag
 if [ "$tmpfs_type" != "TMPFS" ]; then
   echo "UNEXPECTED: /cache is not a tmpfs mount (tmpfs_type=$tmpfs_type)" >&2; exit 1
 fi
-echo "OK 3 - tmpfs: /cache is an in-memory tmpfs mount (not persisted, not on disk)"
+echo "OK 3 - tmpfs: /cache is an in-memory tmpfs mount (not persisted, no volume behind it)"
 
 echo
 echo "ALL CHECKS PASSED"

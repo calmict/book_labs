@@ -16,7 +16,8 @@ tutti e tre e ne verifichi il tratto che li distingue.
 - Usare un bind mount: una cartella dell'host montata dentro, con scrittura
   bidirezionale (14.2).
 - Usare un volume gestito dal demone, persistente tra i container (14.1).
-- Usare un tmpfs: montaggio in memoria, non persistito e mai su disco (14.3).
+- Usare un tmpfs: montaggio in memoria, non persistito, che pero' puo' finire nello swap
+  dell'host (14.3).
 - Riconoscere quale scegliere e perché (14.4).
 
 ## Prerequisiti
@@ -81,7 +82,8 @@ solution/run.sh esegue lo scenario e verifica, punto per punto:
 - **OK 2** — volume: il file scritto nel volume viene riletto da un container nuovo
   (persistenza gestita dal demone).
 - **OK 3** — tmpfs: il montaggio su /cache è di tipo tmpfs (in memoria), quindi non
-  persistito e mai su disco.
+  persistito. In memoria non vuol dire al riparo dal disco: un tmpfs puo' finire nello swap,
+  e per un segreto davvero sensibile serve swap disabilitato o cifrato.
 
 ## Domande di riflessione
 

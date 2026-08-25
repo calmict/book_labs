@@ -30,7 +30,8 @@ serve — e verifichi, permesso alla mano, che non può scrivere dove non deve.
 
 In start/ trovi un Dockerfile incompleto e app.txt. Il Dockerfile costruisce
 un'immagine finale scratch con un'app statica, ma non abbassa i privilegi e non
-dichiara il controllo di salute. Colmi due lacune (TODO 1..2) perché l'immagine
+dichiara il controllo di salute, e non dice di sé nemmeno una parola. Colmi tre lacune
+(TODO 1..3) perché l'immagine
 sia da produzione. Immagine usa-e-getta, nessun privilegio sull'host, il demone
 condiviso non si tocca.
 
@@ -67,7 +68,18 @@ Il final stage scratch non contiene shell né gestore di pacchetti. Completa il
 
     HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
 
-Quando i due TODO sono colmati, esegui il test:
+### Fase 5 — L'immagine dice di sé (12.3 — TODO 3)
+
+Completa il **TODO 3**: etichetta l'immagine con le chiavi OCI. Non cambiano cosa fa
+il container, ma viaggiano dentro l'immagine e rispondono a chi la trova: che cos'è,
+da dove viene, con quale licenza. Si leggono con docker inspect, senza spacchettare
+niente.
+
+    LABEL org.opencontainers.image.title="cap12-hardened" \
+          org.opencontainers.image.source="https://github.com/calmict/book_labs" \
+          org.opencontainers.image.licenses="MIT"
+
+Quando i tre TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -76,8 +88,9 @@ Quando i due TODO sono colmati, esegui il test:
 
 - Il Dockerfile dichiara USER per girare non-root (TODO 1).
 - Dichiara un HEALTHCHECK reale (TODO 2).
+- Dichiara le tre label OCI (TODO 3).
 - Il final stage non contiene shell né gestore di pacchetti.
-- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
+- run.sh stampa OK 1..6 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
@@ -91,6 +104,8 @@ solution/run.sh costruisce l'immagine e verifica, punto per punto:
 - **OK 4** — il controllo dichiarato raggiunge lo stato healthy.
 - **OK 5** — nel final stage scratch non sono eseguibili shell né gestori di
   pacchetti comuni.
+- **OK 6** — le tre label OCI sono nella config dell'immagine e si leggono con
+  docker inspect, senza estrarre nulla.
 
 ## Domande di riflessione
 

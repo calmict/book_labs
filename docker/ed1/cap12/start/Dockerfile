@@ -12,4 +12,9 @@ COPY --from=build /etc/passwd /etc/passwd
 # TODO 1 (12.2): declare the dedicated non-root account: USER appuser
 # TODO 2 (12.4): declare the real health probe:
 #   HEALTHCHECK --interval=1s --timeout=1s --retries=5 CMD ["/appbin", "health"]
+# TODO 3 (12.3): label the image with the OCI keys, so that what it is and where it
+# comes from travel with the image itself:
+#   LABEL org.opencontainers.image.title="cap12-hardened" \
+#         org.opencontainers.image.source="https://github.com/calmict/book_labs" \
+#         org.opencontainers.image.licenses="MIT"
 ENTRYPOINT ["/appbin"]

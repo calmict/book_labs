@@ -11,7 +11,8 @@ rootless, perché la delega di systemd (§3.7) ti dà un pezzo dell'albero dei c
 ## Obiettivi
 
 - Imporre un tetto di memoria a un cgroup con systemd-run --user, senza sudo (3.4, 3.7).
-- Provocare l'OOM killer e riconoscere la sua firma: exit code 137 (3.5).
+- Provocare l'OOM killer e leggere le due prove che lo identificano: exit code 137 e il
+  contatore oom_kill in memory.events (3.5).
 - Dimostrare che il tetto isola il danno: senza tetto la stessa allocazione è innocua (3.4).
 - Collegare il 137 alla causa (128 + 9 = SIGKILL), la diagnosi del capitolo 26 (3.5).
 
@@ -96,8 +97,7 @@ solution/run.sh impone il tetto e verifica, punto per punto:
 ## Domande di riflessione
 
 **a.** Perché l'exit code è esattamente 137? Scomponi il numero e collega ogni pezzo a ciò che è
-accaduto. Perché, incontrando un container morto con codice 137 nel capitolo 26, saprai già la diagnosi
-senza aprire nulla?
+accaduto. E perché il 137, da solo, non basta a dire «OOM»: quale altra prova serve, e dove la trovi?
 
 **b.** Con il tetto il vorace muore, senza il tetto la stessa allocazione da 200 MiB va a buon fine.
 Cosa dimostra questo contrasto sul ruolo del limite? E perché, in produzione, alzare a caso il tetto è

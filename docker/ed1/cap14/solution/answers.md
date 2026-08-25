@@ -38,7 +38,7 @@ memory is freed and the contents vanish, leaving no trace on disk. That makes it
 ideal for two cases: scratch data you want fast and do not need to keep (a build
 cache, a scratch dir), and sensitive data — decrypted secrets, tokens — that you
 specifically do not want persisted to disk where it could be recovered later. It
-appears in no volume and not on the host precisely because it was never on disk at
+appears in no volume and not on the host precisely because it lives in memory at
 all.
 
 **c. Which to choose, and why is a bind fragile in production?**
