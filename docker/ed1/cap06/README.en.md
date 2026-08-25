@@ -13,11 +13,13 @@ container changes: because the config.json is the container.
 - Build an OCI bundle by hand and run it with runc, with no Docker in the loop (6.3).
 - Read in config.json the Part 1 mechanisms listed as data (namespaces) (6.3).
 - Prove runc is a faithful executor: changing the recipe changes the container (6.3).
-- Understand why the OCI standard makes the parts interchangeable (6.4).
+- Change the UTS namespace in the recipe and observe its effect on the hostname (6.3).
+- Run the same bundle with two different runtimes and prove their interchangeability (6.4).
 
 ## Prerequisites
 
-- A Linux with runc (part of Docker Engine) and python3. Docker is used only to build the minimal rootfs
+- A Linux with runc (part of Docker Engine), python3, and a second OCI runtime. The default is crun; you
+  can select another one with CAP06_RUNTIME2. Docker is used only to build the minimal rootfs
   (by exporting busybox): from there on runc works on its own, without Docker.
 - No root: we use a --rootless spec (a USER namespace and uid mapping), so no sudo.
 - Part 1 as context: here you find it written down as a recipe.
@@ -25,8 +27,8 @@ container changes: because the config.json is the container.
 ## The scenario
 
 In start/ you will find recipe.sh: a script that should generate the OCI recipe and run it, but
-generates nothing and runs nothing. You fill three gaps (TODO 1..3) so the recipe exists, runc executes
-it, and a change to it is reflected in the container.
+generates nothing and runs nothing. You fill five gaps (TODO 1..5) so the recipe exists, runc executes
+it, a change to it is reflected in the container, and the same bundle works with two runtimes.
 
 Prepare the environment:
 
@@ -48,6 +50,9 @@ generate the runtime-spec recipe, rootless, and record the namespaces it lists �
 
 A --rootless spec adds a USER namespace and a uid mapping, so runc runs without sudo.
 
+
+Mind how you paste it in: the body of a heredoc and the PY line that closes it must
+start at column 0, even inside an indented function, or bash never sees its end.
 ### Phase 3 — Changing the recipe (6.3 — TODO 2)
 
 Inside the run_recipe function, complete **TODO 2**: edit the recipe — set the command (echo of the
@@ -69,7 +74,24 @@ Complete **TODO 3**: run the bundle with runc, which reads config.json and execu
 
 The script runs the recipe twice with different words: if runc is faithful, the output follows the recipe.
 
-Once the three TODOs are filled, run the test:
+### Phase 5 — Changing a namespace (6.3 — TODO 4)
+
+Complete **TODO 4**: set the recipe command to hostname, give it a private hostname, and run it with the
+UTS namespace present. Then remove the uts entry from linux.namespaces, remove the hostname field, and
+run it again. The first container reads the recipe hostname; the second shares the host UTS namespace and
+reads the host hostname.
+
+Both elements must be removed together: if hostname remains in the recipe without a private UTS
+namespace, runc rejects it because it cannot set a hostname in the host namespace. This constraint shows
+that config.json is a coherent contract, not a collection of independent notes.
+
+### Phase 6 — The same bundle, two runtimes (6.4 — TODO 5)
+
+Complete **TODO 5**: prepare a single recipe that prints same-oci-recipe and run the same bundle first
+with runc and then with the runtime selected by CAP06_RUNTIME2, crun by default. Use distinct --root
+directories for the two runtimes' state. Neither the recipe nor the rootfs changes: only the engine does.
+
+Once the five TODOs are filled, run the test:
 
     cd ../solution
     ./run.sh
@@ -78,8 +100,10 @@ Once the three TODOs are filled, run the test:
 
 - recipe.sh generates the recipe and records the namespaces (TODO 1).
 - run_recipe edits the config.json (command + terminal) (TODO 2) and runs it with runc (TODO 3).
-- run.sh prints OK 1..3 and ALL CHECKS PASSED: the recipe lists the Part 1 namespaces, runc executes it,
-  and changing the recipe changes the output.
+- recipe.sh changes the UTS namespace and hostname field as parts of the same contract (TODO 4).
+- recipe.sh runs the same bundle with runc and a second OCI runtime (TODO 5).
+- run.sh prints OK 1..5 and ALL CHECKS PASSED: the recipe lists the Part 1 namespaces, its changes alter
+  the container, and two runtimes execute the same bundle with identical output.
 
 ## How it is verified
 
@@ -88,6 +112,8 @@ solution/run.sh builds and runs the OCI bundle and checks, point by point:
 - **OK 1** — the config.json recipe lists the Part 1 namespaces as data (pid, mount, user, ...).
 - **OK 2** — runc executes the recipe: the container prints the given word.
 - **OK 3** — changing the recipe makes the container follow: the config.json is the container.
+- **OK 4** — a private UTS uses the recipe hostname; without it, the host hostname is observed.
+- **OK 5** — runc and the second runtime execute the same OCI bundle with identical output.
 
 ## Reflection questions
 
@@ -103,11 +129,15 @@ with crun, or run the same bundle under Docker, Podman or Kubernetes?
 also the bridge to the Kubernetes book — what does Kubernetes orchestrate, and through which link of the
 chain from chapter 5?
 
+**d.** Why must the hostname field be removed together with the private UTS namespace? What does this
+constraint reveal about the nature of config.json?
+
 ## Cleanup
 
-Nothing to tear down: each runc run ends with the container process and its state lives in a temporary
-directory the test cleans up; the rootfs is built and deleted in the same ephemeral directory. No
-persistent Docker container, no resource left on the host.
+Nothing to tear down: each run by either runtime ends with the container process and its state lives in
+distinct directories inside a temporary directory the test cleans up; the rootfs is built and deleted in
+the same ephemeral directory. The temporary Docker container used to export busybox is removed even on
+error. No persistent container, no resource left on the host.
 
 ## Where it leads
 

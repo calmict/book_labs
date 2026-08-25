@@ -13,11 +13,13 @@ ricetta e il container cambierà: perché il config.json è il container.
 - Costruire un bundle OCI a mani nude ed eseguirlo con runc, senza Docker nel ciclo (6.3).
 - Leggere nel config.json i meccanismi della Parte 1 elencati come dati (namespace) (6.3).
 - Dimostrare che runc è un esecutore fedele: cambiando la ricetta cambia il container (6.3).
-- Capire perché lo standard OCI rende i pezzi intercambiabili (6.4).
+- Modificare il namespace UTS nella ricetta e osservarne l'effetto sull'hostname (6.3).
+- Eseguire lo stesso bundle con due runtime diversi e dimostrarne l'intercambiabilità (6.4).
 
 ## Prerequisiti
 
-- Un Linux con runc (parte di Docker Engine) e python3. Docker serve solo a costruire il rootfs minimale
+- Un Linux con runc (parte di Docker Engine), python3 e un secondo runtime OCI. Il default è crun; puoi
+  indicarne un altro impostando CAP06_RUNTIME2. Docker serve solo a costruire il rootfs minimale
   (esportando busybox): da lì in poi runc lavora da solo, senza Docker.
 - Nessun root: usiamo uno spec --rootless (USER namespace e mappatura degli UID), quindi niente sudo.
 - La Parte 1 come contesto: qui la ritrovi scritta come ricetta.
@@ -25,8 +27,8 @@ ricetta e il container cambierà: perché il config.json è il container.
 ## Lo scenario
 
 In start/ trovi recipe.sh: uno script che dovrebbe generare la ricetta OCI ed eseguirla, ma non genera
-nulla e non esegue nulla. Colmi tre lacune (TODO 1..3) perché la ricetta esista, runc la esegua, e una
-sua modifica si rifletta nel container.
+nulla e non esegue nulla. Colmi cinque lacune (TODO 1..5) perché la ricetta esista, runc la esegua, una
+sua modifica si rifletta nel container e lo stesso bundle funzioni con due runtime.
 
 Prepara l'ambiente:
 
@@ -48,6 +50,10 @@ la ricetta runtime-spec, rootless, e registra i namespace che elenca —
 
 Uno spec --rootless aggiunge un USER namespace e una mappatura degli UID, così runc gira senza sudo.
 
+
+Attenzione a come lo incolli: il corpo di un heredoc e la riga PY che lo chiude
+devono partire dalla colonna 0, anche dentro una funzione indentata, altrimenti bash
+non ne vede la fine.
 ### Fase 3 — Modificare la ricetta (6.3 — TODO 2)
 
 Dentro la funzione run_recipe, completa il **TODO 2**: modifica la ricetta — imposta il comando (echo del
@@ -69,7 +75,24 @@ Completa il **TODO 3**: esegui il bundle con runc, che legge il config.json e lo
 
 Lo script esegue la ricetta due volte con parole diverse: se runc è fedele, l'output segue la ricetta.
 
-Quando i tre TODO sono colmati, esegui il test:
+### Fase 5 — Cambiare un namespace (6.3 — TODO 4)
+
+Completa il **TODO 4**: imposta nella ricetta il comando hostname e un hostname privato, quindi eseguila
+con il namespace UTS presente. Poi rimuovi la voce uts da linux.namespaces, rimuovi il campo hostname ed
+esegui di nuovo. Il primo container legge l'hostname della ricetta; il secondo condivide il namespace UTS
+dell'host e ne legge l'hostname.
+
+I due elementi vanno rimossi insieme: se hostname resta nella ricetta senza un namespace UTS privato,
+runc la rifiuta perché non può impostare un hostname nel namespace dell'host. Questo vincolo mostra che
+config.json è un contratto coerente, non una raccolta di appunti indipendenti.
+
+### Fase 6 — Lo stesso bundle, due runtime (6.4 — TODO 5)
+
+Completa il **TODO 5**: prepara una sola ricetta che stampa same-oci-recipe ed esegui lo stesso bundle
+prima con runc e poi con il runtime indicato da CAP06_RUNTIME2, crun per default. Usa directory --root
+distinte per lo stato dei due runtime. La ricetta e il rootfs non cambiano: cambia soltanto il motore.
+
+Quando i cinque TODO sono colmati, esegui il test:
 
     cd ../solution
     ./run.sh
@@ -78,8 +101,10 @@ Quando i tre TODO sono colmati, esegui il test:
 
 - recipe.sh genera la ricetta e registra i namespace (TODO 1).
 - run_recipe modifica il config.json (comando + terminale) (TODO 2) ed esegue con runc (TODO 3).
-- run.sh stampa OK 1..3 e ALL CHECKS PASSED: la ricetta elenca i namespace della Parte 1, runc la esegue,
-  e cambiando la ricetta cambia l'output.
+- recipe.sh modifica il namespace UTS e il campo hostname come parti dello stesso contratto (TODO 4).
+- recipe.sh esegue lo stesso bundle con runc e con un secondo runtime OCI (TODO 5).
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED: la ricetta elenca i namespace della Parte 1, le modifiche
+  cambiano il container e due runtime eseguono lo stesso bundle con output identico.
 
 ## Come viene verificato
 
@@ -88,6 +113,8 @@ solution/run.sh costruisce ed esegue il bundle OCI e verifica, punto per punto:
 - **OK 1** — la ricetta config.json elenca i namespace della Parte 1 come dati (pid, mount, user, …).
 - **OK 2** — runc esegue la ricetta: il container stampa la parola indicata.
 - **OK 3** — cambiando la ricetta il container segue: il config.json è il container.
+- **OK 4** — con UTS privato vale l'hostname della ricetta; senza UTS privato vale quello dell'host.
+- **OK 5** — runc e il secondo runtime eseguono lo stesso bundle OCI con output identico.
 
 ## Domande di riflessione
 
@@ -103,11 +130,15 @@ sostituire runc con crun, o di eseguire lo stesso bundle sotto Docker, Podman o 
 ponte verso il Manuale di Kubernetes — cosa orchestra Kubernetes, e attraverso quale anello della catena
 del capitolo 5?
 
+**d.** Perché il campo hostname deve essere rimosso insieme al namespace UTS privato? Cosa rivela questo
+vincolo sulla natura del config.json?
+
 ## Pulizia
 
-Niente da smontare: ogni runc run termina con il processo del container e lo stato vive in una cartella
-temporanea che il test ripulisce; il rootfs è costruito e cancellato nella stessa cartella effimera.
-Nessun container Docker persistente, nessuna risorsa lasciata sull'host.
+Niente da smontare: ogni esecuzione dei due runtime termina con il processo del container e lo stato vive
+in directory distinte dentro una cartella temporanea che il test ripulisce; il rootfs è costruito e
+cancellato nella stessa cartella effimera. Anche il container Docker temporaneo usato per esportare
+busybox viene rimosso in caso di errore. Nessun container persistente, nessuna risorsa lasciata sull'host.
 
 ## Dove porta
 

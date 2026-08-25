@@ -24,6 +24,15 @@ TODO 3 (6.3) - run the bundle with runc. It reads config.json and executes it:
 
     runc --root "$BUNDLE/state" run "oci-$1"
 
+TODO 4 (6.3) - run hostname with a private UTS namespace and a recipe hostname,
+then remove both the uts namespace entry and the hostname field and run it again.
+The two fields form a contract: runc correctly rejects a recipe that asks it to
+set a hostname without giving the container a private UTS namespace.
+
+TODO 5 (6.4) - set one recipe to print same-oci-recipe and execute the unchanged
+bundle with runc and with CAP06_RUNTIME2 (crun by default). The runtimes use
+distinct state roots, but consume the same config.json and rootfs.
+
 ## Reflection answers
 
 a. A container on disk is just two things: a rootfs directory (the filesystem,
@@ -49,3 +58,10 @@ to the next volume of the series: Kubernetes orchestrates exactly these OCI
 containers, through containerd, without Docker in the middle. What you learn here
 about config.json does not expire when you change tools; it is the common
 foundation.
+
+d. hostname is a property of a UTS namespace. If the recipe omits a private UTS
+namespace, the process shares the host's namespace and the runtime must not change
+its hostname. Keeping the hostname field would therefore make the instructions
+contradictory, and runc rejects them. Removing both demonstrates that config.json
+is a validated contract whose fields describe one coherent container, rather than
+unrelated hints a runtime may apply selectively.
