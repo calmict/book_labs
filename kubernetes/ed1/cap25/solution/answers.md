@@ -1,5 +1,11 @@
 # Chapter 25 — Answers (model solution)
 
+## The completed TODOs
+
+- TODO 1 adds the node scrape job targeting node-exporter:9100.
+- TODO 2 selects app=node-exporter and its named metrics port.
+- TODO 3 defines count(up==1), node_memory_MemAvailable_bytes, and the rate over prometheus_http_requests_total.
+
 ## The meter face
 
     node_load1 0.65
@@ -16,7 +22,7 @@
     node_memory_MemAvailable_bytes  node           => 12743221248
     sum(rate(prometheus_http_requests_total[1m]))  => 0.104
 
-## The three questions
+## Reflection questions
 
 **a. The pull model (25.1-25.2): why does Prometheus pull instead of
 receive pushes, what does up measure, and what is an exporter?**

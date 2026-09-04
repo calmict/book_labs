@@ -1,5 +1,11 @@
 # Chapter 22 — Answers (model solution)
 
+## The completed TODOs
+
+- TODO 1 selects every Pod for Ingress and grants no incoming traffic.
+- TODO 2 selects app=safe and permits only role=app on TCP 8080.
+- TODO 3 selects app=safe for Egress and grants no outgoing traffic.
+
 ## The open corridor
 
     app   -> safe: gioielli

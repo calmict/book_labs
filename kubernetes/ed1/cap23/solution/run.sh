@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Chapter 23 solution — the cardboard king: root inside a container only
-# looks like a king. We inspect its powers, strip them with a
-# securityContext, then post a namespace-wide guard (Pod Security
-# Standards) that refuses non-compliant pods at admission time.
+# Chapter 23 solution test. Contrasts a default root container with a
+# restricted SecurityContext, then proves namespace-wide Pod Security
+# admission. Uses one throwaway namespace and requires no host privileges.
 
 DIR=$(cd "$(dirname "$0")" && pwd)
 
-kubectl get nodes >/dev/null || {
-  echo "ERROR: no reachable cluster — see chapter 7" >&2
-  exit 1
-}
+command -v kubectl >/dev/null || { echo "ERROR: kubectl is required" >&2; exit 1; }
+kubectl get nodes >/dev/null || { echo "ERROR: no reachable cluster" >&2; exit 1; }
+echo "PRECHECK cluster reachable; Pod Security admission will be measured"
 
 cleanup() {
-  kubectl delete namespace throne --ignore-not-found >/dev/null 2>&1 || true
+  kubectl delete namespace throne --ignore-not-found --wait=true >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
-kubectl delete namespace throne --ignore-not-found >/dev/null 2>&1 || true
+cleanup
 
 echo -n "making sure the throne namespace is gone "
 waited=0
@@ -58,31 +56,35 @@ echo "== 1. The naked king (no securityContext) =="
 kubectl apply -f "$DIR/../start/king.yaml" >/dev/null
 kubectl -n throne wait --for=condition=Ready pod/king --timeout=60s >/dev/null
 inspect king
-if kubectl -n throne exec king -- sh -c 'echo treasure > /root/proof' >/dev/null 2>&1; then
-  echo "  root filesystem: WRITABLE"
-else
-  echo "  root filesystem: read-only (unexpected for the king)" >&2
+king_id=$(kubectl -n throne exec king -- id -u)
+king_cap=$(kubectl -n throne exec king -- grep CapEff /proc/self/status | cut -f2)
+king_seccomp=$(kubectl -n throne exec king -- grep Seccomp: /proc/self/status | cut -f2)
+if [ "$king_id" != 0 ] || [ "$king_cap" = 0000000000000000 ] || [ "$king_seccomp" != 0 ] || ! kubectl -n throne exec king -- sh -c 'echo treasure > /root/proof'; then
+  echo "UNEXPECTED: the plain pod does not expose the expected baseline" >&2; exit 1
 fi
-echo "  (uid 0, CapEff a80425fb — the very number from chapter 4 — Seccomp 0)"
+echo "OK 1 - the plain container is uid 0 with capabilities, no seccomp filter, and writable root"
 echo
 
 echo "== 2. Stripping the king (securityContext) =="
 kubectl apply -f "$DIR/hardened.yaml" >/dev/null
 kubectl -n throne wait --for=condition=Ready pod/hardened --timeout=60s >/dev/null
 inspect hardened
-if kubectl -n throne exec hardened -- sh -c 'echo treasure > /proof' >/dev/null 2>&1; then
-  echo "  root filesystem: WRITABLE (the hardening did not take!)" >&2
-else
-  echo "  root filesystem: read-only (write refused)"
+hardened_id=$(kubectl -n throne exec hardened -- id -u)
+hardened_cap=$(kubectl -n throne exec hardened -- grep CapEff /proc/self/status | cut -f2)
+hardened_seccomp=$(kubectl -n throne exec hardened -- grep Seccomp: /proc/self/status | cut -f2)
+if [ "$hardened_id" != 65534 ] || [ "$hardened_cap" != 0000000000000000 ] || [ "$hardened_seccomp" != 2 ] || kubectl -n throne exec hardened -- sh -c 'echo treasure > /proof' >/dev/null 2>&1; then
+  echo "UNEXPECTED: one or more hardening controls are ineffective" >&2; exit 1
 fi
-echo "  (uid 65534/nobody, CapEff all zeros, Seccomp 2 — the crown was cardboard)"
+echo "OK 2 - the hardened container is non-root, capability-free, seccomp-filtered, and read-only"
 echo
 
 echo "== 3. The checkpoint (Pod Security Standards) =="
 kubectl label namespace throne \
   pod-security.kubernetes.io/enforce=restricted --overwrite >/dev/null 2>&1
-echo "labelled enforce=restricted; the king already running is NOT evicted:"
-echo "  king is $(kubectl -n throne get pod king -o jsonpath='{.status.phase}')"
+if [ "$(kubectl -n throne get pod king -o jsonpath='{.status.phase}')" != Running ]; then
+  echo "UNEXPECTED: admission policy evicted the existing king" >&2; exit 1
+fi
+echo "OK 3 - the admission label does not retroactively evict the running king"
 echo "trying a NEW root intruder under restricted (expect a refusal):"
 if kubectl -n throne run intruder --image=busybox:stable --restart=Never \
      -- sleep infinity >/dev/null 2>&1; then
@@ -91,16 +93,16 @@ if kubectl -n throne run intruder --image=busybox:stable --restart=Never \
   echo "  if it is off, restricted labels do nothing (chapter 19 deja vu)." >&2
   exit 1
 else
-  echo "  intruder REFUSED at admission (as it should be)"
+  echo "OK 4 - the gate bites: restricted admission refuses a new unprotected root pod"
 fi
 echo "re-creating the hardened pod under restricted (expect admission):"
 kubectl -n throne delete pod hardened --wait=true >/dev/null 2>&1 || true
 if kubectl apply -f "$DIR/hardened.yaml" >/dev/null 2>&1; then
   kubectl -n throne wait --for=condition=Ready pod/hardened --timeout=60s >/dev/null
-  echo "  hardened ADMITTED and Running — defence at scale, one label"
+  echo "OK 5 - the restricted SecurityContext is admitted and reaches Running"
 else
   echo "  ERROR: the hardened pod was refused — it does not meet restricted" >&2
   exit 1
 fi
 echo
-echo "=== all three acts passed: the crown was cardboard, the guard is real ==="
+echo "ALL CHECKS PASSED"

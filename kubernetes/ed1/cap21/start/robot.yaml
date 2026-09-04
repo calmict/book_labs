@@ -3,13 +3,16 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: robot
+  namespace: lab-cap21
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: robot
+  namespace: lab-cap21
 spec:
-  # TODO: make the pod wear the robot identity (serviceAccountName)
+  # TODO 2 (21.2): set serviceAccountName to robot, so the workload gets
+  # its own mounted identity instead of the namespace's default identity.
   containers:
     - name: robot
       image: curlimages/curl:latest

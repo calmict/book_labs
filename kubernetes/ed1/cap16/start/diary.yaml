@@ -18,7 +18,8 @@ kind: StatefulSet
 metadata:
   name: diary
 spec:
-  # TODO: tie the set to its headless Service (serviceName)
+  # TODO 1 (16.2): tie the set to its headless Service with serviceName,
+  # so each ordinal receives a predictable DNS identity.
   replicas: 3
   selector:
     matchLabels:
@@ -33,6 +34,7 @@ spec:
           image: alpine:3
           # one diary line per awakening: counting lines tells the lives
           command: ["sh", "-c", "echo \"$(hostname) alive at $(date)\" >> /data/diary.txt; cat /data/diary.txt; sleep infinity"]
-          # TODO: mount the personal disk (volume name data) on /data
-  # TODO: the volumeClaimTemplates — a claim named data, ReadWriteOnce,
-  # 10Mi: one disk per replica, born with it
+          # TODO 2 (16.3): mount the personal volume named data on /data,
+          # so every awakening appends to the same identity's diary.
+  # TODO 3 (16.3): add volumeClaimTemplates for a claim named data,
+  # ReadWriteOnce and 10Mi, so every ordinal receives its own disk.

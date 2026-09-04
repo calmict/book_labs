@@ -1,5 +1,11 @@
 # Chapter 26 — Answers (model solution)
 
+## The completed TODOs
+
+- TODO 1 points source at the in-cluster repository, main revision, and manifests path.
+- TODO 2 targets the demo namespace.
+- TODO 3 enables automated sync, self-heal, pruning, and namespace creation.
+
 ## The auditor's first sync
 
     application: sync=Synced health=Healthy
@@ -20,7 +26,7 @@
       f443b4f scale web to 5 (oops)
       92dbc20 initial: web at 1 replica
 
-## The three questions
+## Reflection questions
 
 **a. The GitOps principle (26.1): why Git as the single source of truth,
 what changes versus kubectl apply by hand, and why is ArgoCD's pull model

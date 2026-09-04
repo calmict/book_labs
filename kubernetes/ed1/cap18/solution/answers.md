@@ -1,5 +1,10 @@
 # Chapter 18 — Answers (model solution)
 
+## The completed TODOs
+
+TODO 1 selects app=helpdesk. TODO 2 exposes port 80. TODO 3 routes it to
+targetPort 8080. The completed manifest is solution/helpdesk.yaml.
+
 ## The dead direct number
 
     helpdesk-...-qbp9l   10.244.0.112   -> deleted

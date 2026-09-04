@@ -9,9 +9,9 @@
 
 By the end of this lab you will be able to:
 
-- read the DaemonSet as a geographic contract: no replicas field — the cluster decides the count, one watchman per node (with chapter 11's toleration to cover the control plane too);
-- meet the first object that wants to finish: the Job, with the difference between restarting a container and retrying a Pod (backoffLimit), and the honest failure of a Job that cannot make it;
-- watch a CronJob punch the clock: the CronJob → Job → Pod chain, one minute after the apply.
+- read the DaemonSet as a geographic contract (§17.1);
+- distinguish Job completion, container restart, and Pod retry (§17.2);
+- follow the CronJob → Job → Pod chain (§17.3).
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ By the end of this lab you will be able to:
 - **kind** and Docker: the 3-node cluster is needed (start/kind-workers.yaml provided, name book-labs-crew) — a DaemonSet with no extra nodes has nothing to say. Mind the inotify limits ([SETUP.md](../../SETUP.md)).
 - Three manifests in start/ with TODOs: watchman.yaml, jobs.yaml, tick.yaml.
 
-## Instructions
+## The scenario
 
 1. The yard. Create the 3-node cluster:
 
@@ -81,3 +81,31 @@ By the end of this lab you will be able to:
 - [ ] The CronJob's first punch: a tick-<timestamp> Job with the date in its logs.
 - [ ] answers.md answers the three questions (trades table included).
 - [ ] The book-labs-crew cluster has been deleted.
+
+## How it is verified
+
+solution/run.sh creates a dedicated kind cluster, verifies its three nodes,
+proves that the taint excludes the control plane without a toleration, and that
+the toleration completes the map. It then checks same-node rebirth, both Job
+outcomes, and the CronJob → Job → Pod chain.
+
+## Reflection questions
+
+a. Where is a DaemonSet's Pod count written, and what does same-node rebirth
+prove?
+
+b. Why is Always forbidden for a Job, and how do backoffLimit and a kubelet
+container restart differ?
+
+c. Which question distinguishes Deployment, StatefulSet, DaemonSet, Job, and
+CronJob?
+
+## Cleanup
+
+The script destroys the dedicated book-labs-crew cluster if it created it. If
+the cluster already existed, it removes only the book-labs-cap17 namespace.
+
+## Where this leads
+
+With the workload picture complete, Chapter 18 introduces the stable address
+that lets clients reach workloads while Pods change.

@@ -1,69 +1,96 @@
-# Cap. 28 — Il passaporto del portiere (Ingress-Nginx e Cert-Manager)
-
-> Esercizio del **Capitolo 28 — Ingress-Nginx e Cert-Manager: TLS automatico** del
-> *Manuale di Kubernetes* (collana Calm ICT — [calmict.com](https://calmict.com)).
+# Capitolo 28 — Il passaporto del portiere
 
 **Livello:** Cloud Architect
 
+Il viaggio si chiude dando al portiere assunto nel capitolo 19 un'identità verificabile. In questo
+laboratorio costruisci una CA locale, chiedi a Cert-Manager di emettere il certificato e dimostri che
+Ingress-Nginx serve il negozio in HTTPS senza chiavi o certificati creati a mano.
+
 ## Obiettivi
 
-Al termine di questo laboratorio saprai:
-
-- inquadrare il problema dei certificati TLS: il portiere (Ingress-Nginx del cap. 19) deve provare l'identità del palazzo a ogni visitatore via HTTPS, ma i certificati si generano, si installano e — soprattutto — scadono;
-- montare una fabbrica di passaporti automatica con Cert-Manager: un'autorità (CA), e certificati emessi e rinnovati da soli;
-- ottenere HTTPS end-to-end con una sola annotazione sull'Ingress, e verificare il certificato contro la tua CA — capendo dove, in produzione, entrerebbe Let's Encrypt via ACME.
+- Inquadrare acquisizione, scadenza e rinnovo dei certificati TLS (28.2).
+- Osservare la catena SelfSigned, CA e certificato foglia gestita da Cert-Manager (28.3).
+- Ottenere HTTPS automatico con annotazione e sezione tls dell'Ingress (28.4).
+- Verificare autorità emittente, SAN e risposta applicativa attraverso Ingress-Nginx (28.1, 28.4).
 
 ## Prerequisiti
 
-- Cap. 19 (Ingress e Ingress Controller: il portiere che instrada per host; qui gli diamo il passaporto TLS). Familiarità con Deployment/Service/Ingress.
-- kind installato. ATTENZIONE: ingress-nginx e cert-manager installano risorse cluster-wide (CRD, webhook); come nei cap. 26–27 il lab usa un cluster dedicato usa-e-getta (book-labs-tls), cancellato a fine lavoro.
-- In start/: issuer.yaml (dato, la catena SelfSigned→CA→CA issuer), app.yaml (dato, il negozio dietro il portiere) e ingress.yaml (TODO, l'Ingress da rendere HTTPS).
+- Docker, kind, kubectl, OpenSSL e accesso alla rete.
+- Almeno 3 GiB liberi nel filesystem usato da Docker; run.sh esegue il precheck prima di creare il
+  cluster.
+- Familiarità con Deployment, Service e Ingress, in particolare il capitolo 19.
+- Il laboratorio usa il cluster dedicato usa-e-getta book-labs-tls. Non usa né modifica il cluster
+  principale del manuale.
 
-## Consegna
+## Lo scenario
 
-1. La fabbrica dei passaporti. Crea il cluster, etichetta il nodo per l'ingress, installa portiere e fabbrica, poi costruisci l'autorità locale:
+In start/ trovi l'autorità locale e il negozio già predisposti. start/ingress.yaml instrada il traffico
+HTTP, ma gli mancano tre informazioni: quale autorità deve emettere il certificato, quale hostname deve
+coprire e in quale Secret deve salvarlo.
 
-       kind create cluster --name book-labs-tls
-       kubectl label node book-labs-tls-control-plane ingress-ready=true
-       kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.0/deploy/static/provider/kind/deploy.yaml
-       kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.2/cert-manager.yaml
-       kubectl -n ingress-nginx wait --for=condition=Available deploy/ingress-nginx-controller --timeout=180s
-       kubectl -n cert-manager wait --for=condition=Available deploy --all --timeout=180s
-       kubectl apply -f issuer.yaml
+### Fase 1 — L'autorità locale (28.3)
 
-   issuer.yaml costruisce l'autorità: un ClusterIssuer SelfSigned firma un certificato CA (la radice di fiducia locale), e un secondo ClusterIssuer usa quella CA per firmare i certificati veri. In produzione questa autorità sarebbe Let's Encrypt via ACME; qui, senza un DNS pubblico, siamo noi la nostra autorità.
+issuer.yaml crea un ClusterIssuer SelfSigned, il certificato della CA locale e il ClusterIssuer che
+userà quella CA. In produzione al suo posto useresti un issuer ACME e un dominio verificabile
+pubblicamente; la riconciliazione successiva resterebbe la stessa.
 
-2. Un passaporto chiesto da solo. Completa ingress.yaml: aggiungi l'annotazione cert-manager.io/cluster-issuer: local-ca e una sezione tls che indichi l'host (shop.book-labs.local) e il nome del Secret dove finirà il certificato (shop-tls). Applica app e ingress:
+### Fase 2 — La richiesta automatica (28.4 — TODO 1)
 
-       kubectl apply -f app.yaml
-       kubectl apply -f ingress.yaml
-       kubectl -n web get certificate,secret shop-tls
+In start/ingress.yaml completa il TODO 1 aggiungendo la mappa annotations e selezionando il
+ClusterIssuer local-ca. È il segnale che chiede a Cert-Manager di procurare il certificato.
 
-   In pochi secondi Cert-Manager, visto l'Ingress, crea da solo un oggetto Certificate e lo emette nel Secret shop-tls (tipo kubernetes.io/tls). Non hai generato né una chiave né un certificato: li ha chiesti e firmati la fabbrica.
+### Fase 3 — Identità e deposito (28.4 — TODO 2 e TODO 3)
 
-3. Il visitatore controlla il passaporto. Chiama il negozio in HTTPS, validando contro la TUA CA (niente -k). L'ingress è raggiungibile via ClusterIP: usa il client interno con la CA montata:
+Completa la sezione tls: nel TODO 2 inserisci shop.book-labs.local fra gli host, perché la SAN deve
+corrispondere al nome visitato; nel TODO 3 indica shop-tls come secretName, punto d'incontro fra
+Cert-Manager e Ingress-Nginx.
 
-       IP=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.spec.clusterIP}')
-       kubectl -n web exec tlsclient -- curl -sS --cacert /ca/ca.crt --resolve shop.book-labs.local:443:$IP https://shop.book-labs.local/
-       kubectl -n web get secret shop-tls -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -issuer -ext subjectAltName
+Confronta il risultato con solution/ingress.yaml, poi esegui il controllo completo:
 
-   Risposta secure shop su HTTPS, e il certificato mostra issuer=book-labs-local-ca (la tua CA) e la SAN shop.book-labs.local, che Cert-Manager ha riempito da solo leggendo l'host dell'Ingress. HTTPS end-to-end, automatico e rinnovabile.
+    bash solution/run.sh
 
-4. Il quadro completo (28.4). Portiere + fabbrica + autorità: una richiesta HTTP arriva al controller, viene servita in TLS con un certificato che nessuno ha creato a mano e che Cert-Manager rinnoverà prima della scadenza. In produzione basta cambiare l'issuer da CA locale a un issuer ACME (Let's Encrypt) e lo stesso identico Ingress ottiene un certificato valido pubblicamente.
-
-5. Smonta il cantiere:
-
-       kind delete cluster --name book-labs-tls
-
-## Le domande per answers.md
-
-- (a) Il problema dei certificati (28.1–28.2). Perché servire in HTTPS richiede un certificato firmato da un'autorità di cui il client si fida, e perché farlo a mano è un problema (generazione, installazione, e soprattutto la scadenza/rinnovo)? Che ruolo ha qui il portiere Ingress-Nginx del cap. 19?
-- (b) Cert-Manager e ACME (28.3). Cosa fa Cert-Manager quando vede l'annotazione sull'Ingress, e cos'è l'oggetto Certificate? Spiega la catena SelfSigned→CA→certificato foglia che hai costruito. Cos'è il protocollo ACME e perché in produzione l'autorità sarebbe Let's Encrypt e non tu: cosa serve (che qui manca) perché ACME funzioni?
-- (c) Il quadro completo (28.4). Racconta il percorso di una richiesta dal visitatore al negozio in HTTPS. Da dove è spuntata la SAN del certificato? E cosa cambierebbe, e cosa NO, passando dalla CA locale a un issuer ACME reale?
+Lo script crea il cluster dedicato, installa le versioni fissate di ingress-nginx e Cert-Manager,
+prova prima l'Ingress incompleto e poi applica la soluzione.
 
 ## Criteri di "fatto"
 
-- [ ] ingress-nginx e cert-manager in esecuzione; la catena issuer pronta (CA Ready).
-- [ ] L'Ingress completato fa emettere a Cert-Manager il Secret shop-tls da solo.
-- [ ] curl HTTPS validato contro la CA locale risponde secure shop; il certificato ha la SAN dell'host.
-- [ ] answers.md risponde alle tre domande; il cluster dedicato è stato cancellato.
+- I TODO 1..3 descrivono autorità, hostname TLS e Secret.
+- La CA locale e il Certificate shop-tls risultano Ready.
+- La chiamata HTTPS validata contro la CA locale restituisce secure shop.
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED, compresa la controprova senza annotazione e sezione tls.
+
+## Come viene verificato
+
+solution/run.sh verifica, punto per punto:
+
+- **OK 1** — la catena SelfSigned produce un ClusterIssuer CA pronto.
+- **OK 2** — il cancello morde: l'Ingress incompleto non produce né Certificate né Secret shop-tls.
+- **OK 3** — l'Ingress completo fa creare a Cert-Manager un Certificate pronto e un Secret TLS.
+- **OK 4** — Ingress-Nginx serve secure shop in HTTPS e il client si fida della CA locale.
+- **OK 5** — il certificato contiene la SAN richiesta ed è firmato dalla CA locale.
+
+## Domande di riflessione
+
+**a.** Perché HTTPS richiede un certificato firmato da un'autorità fidata, perché la gestione manuale
+diventa fragile al rinnovo e quale ruolo svolge Ingress-Nginx (28.1–28.2)?
+
+**b.** Cosa crea Cert-Manager leggendo annotazione e sezione tls? Spiega la catena SelfSigned, CA e
+foglia, poi indica quale verifica ACME richiederebbe in produzione (28.3).
+
+**c.** Segui una richiesta HTTPS dal client al Pod: da dove proviene la SAN e cosa cambia passando a
+un vero issuer ACME, senza cambiare il meccanismo dichiarativo (28.4)?
+
+Le risposte modello sono in solution/answers.md.
+
+## Pulizia
+
+Il trap di run.sh cancella il cluster book-labs-tls anche in caso di errore e ripristina il precedente
+contesto kubectl. Se svolgi i passaggi a mano, esegui:
+
+    kind delete cluster --name book-labs-tls
+
+## Dove porta
+
+Hai chiuso il percorso dal Pod all'HTTPS automatico: Service, Ingress, controller, Certificate e Secret
+formano ora un solo ciclo riconciliato. Le appendici del manuale diventano gli strumenti di consultazione
+per applicare e diagnosticare questo quadro completo nella pratica quotidiana.

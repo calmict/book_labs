@@ -1,6 +1,6 @@
 # The assignment you give the auditor. An Application tells ArgoCD which
 # ledger to read and where to make reality match it.
-# TODO: fill in the three blanks.
+# Complete the three numbered TODOs below.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,7 +9,8 @@ metadata:
 spec:
   project: default
   source:
-    # TODO: the in-cluster ledger, served by gitserver over git://
+# TODO 1 (26.2): identify the ledger, revision, and path so ArgoCD knows
+# which desired state it must pull and reconcile.
     #   repoURL: git://gitserver.gitops.svc.cluster.local:9418/app.git
     #   targetRevision: main
     #   path: manifests
@@ -18,9 +19,9 @@ spec:
     path: CHANGE-ME
   destination:
     server: https://kubernetes.default.svc
-    # TODO: apply the manifests into this namespace
+    # TODO 2 (26.2): choose demo so the destination is explicit and separate.
     namespace: CHANGE-ME
-  # TODO: make the auditor tireless — automated sync, self-heal on drift,
+  # TODO 3 (26.3): make the auditor tireless — automated sync, self-heal on drift,
   # prune removed objects, and create the destination namespace if missing.
   # syncPolicy:
   #   automated:

@@ -8,8 +8,8 @@ spec:
   capacity:
     storage: 50Mi
   accessModes: ["ReadWriteOnce"]
-  # Retain: the dowry survives the marriage
-  persistentVolumeReclaimPolicy: Retain
+  # TODO 3 (20.3): choose Retain so the dowry survives claim deletion.
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: manual
   hostPath:
     path: /tmp/manual-pv
@@ -19,13 +19,16 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: bride
+  namespace: lab-cap20
 spec:
-  # TODO: ask for 30Mi of the manual class, ReadWriteOnce
+  # TODO 1 (20.1): ask for 30Mi of the manual class with ReadWriteOnce,
+  # so the binder can match this claim to the compatible hand-made PV.
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: writer
+  namespace: lab-cap20
 spec:
   volumes:
     - name: data

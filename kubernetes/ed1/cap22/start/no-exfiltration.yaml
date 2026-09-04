@@ -6,5 +6,7 @@ metadata:
   name: no-exfiltration
   namespace: vault
 spec:
-  # TODO: select the safe again, but this time rule Egress — with no
-  # egress rules at all (silence is the deny)
+  # TODO 3 (22.3): select app=safe and govern Egress without allow
+  # rules, because silence prevents the vault from making calls.
+  podSelector: {matchLabels: {todo: replace-me}}
+  policyTypes: ["Egress"]

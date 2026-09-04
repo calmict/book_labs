@@ -9,16 +9,16 @@
 
 Al termine di questo laboratorio saprai:
 
-- toccare la differenza tra Pod fungibili e Pod con identità: la folla rinasce con nomi casuali, diary-1 rinasce diary-1;
-- osservare l'ordinamento rigoroso (0 → 1 → 2 in salita, inverso in discesa) e il DNS prevedibile via headless Service;
-- dimostrare che con volumeClaimTemplates ogni replica ha il SUO disco, e che il disco sopravvive al Pod — e perfino alla cancellazione dell'intero StatefulSet.
+- distinguere Pod fungibili e identità stabili (§16.1);
+- osservare ordinali, ordinamento e DNS prevedibile via headless Service (§16.2);
+- verificare un disco personale per replica e il suo ciclo di vita (§16.3).
 
 ## Prerequisiti
 
 - Cap. 15 completato; il cluster book-labs acceso (la StorageClass di default di kind/minikube basta e avanza).
 - Il manifest di partenza start/diary.yaml coi TODO (serviceName, volumeClaimTemplates, mount).
 
-## Consegna
+## Lo scenario
 
 1. La folla, per confronto. Crea un Deployment qualsiasi e guarda i nomi:
 
@@ -81,3 +81,29 @@ Al termine di questo laboratorio saprai:
 - [ ] Hai visto i 3 PVC personali, ancora vivi dopo la cancellazione dello StatefulSet, e il diario completo dopo la ricreazione.
 - [ ] La nslookup del nome stabile risolve dall'interno.
 - [ ] answers.md risponde alle tre domande e la pulizia include i PVC.
+
+## Come viene verificato
+
+solution/run.sh controlla la sostituzione con un nome diverso nel Deployment, gli
+ordinali dello StatefulSet, la rinascita di diary-1 con i dati precedenti, i tre
+PVC, la loro sopravvivenza al controller e il DNS dei membri. Come controprova
+rimuove il Service headless e pretende che quel nome smetta di risolversi.
+
+## Domande di riflessione
+
+a. Perché un database non può affidare identità e dischi a un Deployment?
+
+b. Perché l'ordine 0→1→2 e la discesa inversa aiutano un sistema con quorum?
+
+c. Perché i PVC sopravvivono allo StatefulSet, quali rischi crea e come si
+puliscono davvero?
+
+## Pulizia
+
+Lo script elimina il namespace book-labs-cap16, inclusi workload, Service e PVC.
+Se lavori a mano, elimina esplicitamente anche i tre PVC dopo lo StatefulSet.
+
+## Dove porta
+
+Identità e persistenza completano lo StatefulSet. Il Capitolo 17 cambia forma del
+carico: uno per nodo, fino al completamento e a orario.

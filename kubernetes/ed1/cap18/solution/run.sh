@@ -1,93 +1,83 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Chapter 18 solution — the address that does not exist.
-# Needs a cluster whose node is a Docker container (kind, or minikube on
-# the docker driver): step 3 reads the node's iptables.
+# Chapter 18 solution: ephemeral Pod addresses, stable Service routing,
+# EndpointSlice reconciliation, node dataplane rules, and cluster DNS.
 
 DIR=$(cd "$(dirname "$0")" && pwd)
-
-kubectl get nodes >/dev/null || {
-  echo "ERROR: no reachable cluster — see chapter 7" >&2
-  exit 1
-}
-NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
-docker exec "$NODE" true 2>/dev/null || {
-  echo "ERROR: cannot enter node $NODE with docker exec (this run.sh" >&2
-  echo " needs kind, or minikube with the docker driver)" >&2
-  exit 1
-}
+NS=book-labs-cap18
 
 cleanup() {
-  kubectl delete -f "$DIR/helpdesk.yaml" --ignore-not-found >/dev/null 2>&1 || true
-  kubectl delete pod client --ignore-not-found >/dev/null 2>&1 || true
+  kubectl delete namespace "$NS" --ignore-not-found --wait=true >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
+
+kubectl get nodes >/dev/null
+NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+docker exec "$NODE" true >/dev/null 2>&1
+echo "PRECHECK node $NODE is reachable through Docker"
 cleanup
+kubectl create namespace "$NS" >/dev/null
+kubectl -n "$NS" apply -f "$DIR/helpdesk.yaml" >/dev/null
+kubectl -n "$NS" rollout status deployment/helpdesk --timeout=180s >/dev/null
+kubectl -n "$NS" run client --image=busybox:stable -- sleep infinity >/dev/null
+kubectl -n "$NS" wait --for=condition=Ready pod/client --timeout=180s >/dev/null
 
-echo "== 1. The problem: direct numbers die with their owners =="
-kubectl apply -f "$DIR/helpdesk.yaml"
-kubectl rollout status deployment/helpdesk --timeout=180s >/dev/null
-kubectl get pods -l app=helpdesk -o wide
-PODIP=$(kubectl get pods -l app=helpdesk -o jsonpath='{.items[0].metadata.name} {.items[0].status.podIP}')
-VICTIM=${PODIP% *}
-OLDIP=${PODIP#* }
-kubectl run client --image=busybox:stable -- sleep infinity >/dev/null
-kubectl wait --for=condition=Ready pod/client --timeout=180s >/dev/null
-echo "--- calling $VICTIM at its direct number $OLDIP ---"
-kubectl exec client -- wget -qO- "http://$OLDIP:8080"
-kubectl delete pod "$VICTIM" >/dev/null
-kubectl rollout status deployment/helpdesk --timeout=180s >/dev/null
-echo "--- $VICTIM is dead; its direct number too ---"
-set +e
-kubectl exec client -- wget -T 3 -qO- "http://$OLDIP:8080" 2>&1 | tail -1
-set -e
-kubectl get pods -l app=helpdesk -o wide
-
-echo
-echo "== 2. The switchboard: one stable address, voices alternating =="
-kubectl get service helpdesk
-VOICES=$(for _ in 1 2 3 4 5 6 7 8 9 10; do
-  kubectl exec client -- wget -qO- http://helpdesk
-done | sort | uniq -c)
-echo "$VOICES"
-UNIQUE=$(echo "$VOICES" | wc -l)
-if [ "$UNIQUE" -ge 2 ]; then
-  echo "(ten calls, $UNIQUE distinct voices: the balancing is real)"
-else
-  echo "WARNING: only one voice answered ten calls" >&2
+pair=$(kubectl -n "$NS" get pods -l app=helpdesk -o jsonpath='{.items[0].metadata.name} {.items[0].status.podIP}')
+victim=${pair% *}
+old_ip=${pair#* }
+kubectl -n "$NS" exec client -- wget -qO- "http://$old_ip:8080" >/dev/null
+kubectl -n "$NS" delete pod "$victim" --wait=true >/dev/null
+kubectl -n "$NS" rollout status deployment/helpdesk --timeout=180s >/dev/null
+new_ips=$(kubectl -n "$NS" get pods -l app=helpdesk -o jsonpath='{range .items[*]}{.status.podIP}{"\n"}{end}')
+if printf '%s\n' "$new_ips" | grep -qx "$old_ip"; then
+  echo "ERROR: deleted Pod address is still assigned" >&2
+  exit 1
 fi
+echo "OK 1 - a replacement Pod received a different ephemeral address"
 
-echo
-echo "== 3. The investigation: that IP does not exist =="
-CIP=$(kubectl get svc helpdesk -o jsonpath='{.spec.clusterIP}')
-echo "ClusterIP: $CIP — searching it on the node's interfaces..."
-if docker exec "$NODE" ip addr | grep -q "$CIP"; then
-  echo "WARNING: the ClusterIP is on an interface?!" >&2
-else
-  echo "(no interface anywhere owns it — yet wget works)"
+cip=$(kubectl -n "$NS" get service helpdesk -o jsonpath='{.spec.clusterIP}')
+voices=$(for _ in 1 2 3 4 5 6 7 8 9 10; do kubectl -n "$NS" exec client -- wget -qO- http://helpdesk; done | sort -u | wc -l)
+if [ "$voices" -lt 2 ]; then
+  echo "ERROR: repeated Service calls did not reach both backends" >&2
+  exit 1
 fi
-echo "--- the trick, where chapter 6 taught you to look ---"
-RULES=$(docker exec "$NODE" iptables-save | grep helpdesk || true)
-if [ -n "$RULES" ]; then
-  echo "$RULES" | head -8
-  echo "(KUBE-SVC with --probability: netfilter's coin; KUBE-SEP with the"
-  echo " DNAT to the pods' real IPs — the ClusterIP is a rewrite, not a place)"
-else
-  echo "(no iptables rules found: this kube-proxy speaks nftables — same"
-  echo " trick, different dialect: docker exec $NODE nft list ruleset)"
+echo "OK 2 - one ClusterIP balanced repeated calls across both operators"
+
+if docker exec "$NODE" ip addr | grep -Fq "$cip"; then
+  echo "ERROR: ClusterIP unexpectedly belongs to a node interface" >&2
+  exit 1
 fi
+rules=$(docker exec "$NODE" iptables-save 2>/dev/null || true)
+if printf '%s\n' "$rules" | grep -Fq "$cip"; then
+  printf '%s\n' "$rules" | grep -F "$cip" | head -1
+elif docker exec "$NODE" nft list ruleset 2>/dev/null | grep -Fq "$cip"; then
+  docker exec "$NODE" nft list ruleset 2>/dev/null | grep -F "$cip" | head -1
+else
+  echo "ERROR: ClusterIP is absent from both iptables and nftables rules" >&2
+  exit 1
+fi
+echo "OK 3 - the ClusterIP is virtual and present in the node dataplane rules"
 
-echo
-echo "== 4. Who updates the phonebook: EndpointSlice =="
-kubectl get endpointslices -l kubernetes.io/service-name=helpdesk -o wide
-kubectl scale deployment helpdesk --replicas=3 >/dev/null
-kubectl rollout status deployment/helpdesk --timeout=180s >/dev/null
-echo "--- scaled to 3: the phonebook followed ---"
-kubectl get endpointslices -l kubernetes.io/service-name=helpdesk -o wide
+before=$(kubectl -n "$NS" get endpointslice -l kubernetes.io/service-name=helpdesk -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]}{"\n"}{end}' | sort -u | wc -l)
+kubectl -n "$NS" scale deployment helpdesk --replicas=3 >/dev/null
+kubectl -n "$NS" rollout status deployment/helpdesk --timeout=180s >/dev/null
+after=$(kubectl -n "$NS" get endpointslice -l kubernetes.io/service-name=helpdesk -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]}{"\n"}{end}' | sort -u | wc -l)
+if [ "$before" -ne 2 ] || [ "$after" -ne 3 ]; then
+  echo "ERROR: EndpointSlice did not follow the scale from two to three" >&2
+  exit 1
+fi
+echo "OK 4 - EndpointSlice reconciled from two ready addresses to three"
 
-echo
-echo "== 5. The only truly stable thing: the name =="
-kubectl exec client -- nslookup helpdesk.default.svc.cluster.local 2>&1 | tail -3
-echo "(it resolves to the ClusterIP, not to the pods: compare with chapter"
-echo " 16's headless diary — stability hierarchy: pod IP < ClusterIP < name)"
+resolved=$(kubectl -n "$NS" exec client -- nslookup helpdesk.book-labs-cap18.svc.cluster.local)
+if ! printf '%s\n' "$resolved" | grep -Fq "$cip"; then
+  echo "ERROR: CoreDNS did not resolve the Service name to its ClusterIP" >&2
+  exit 1
+fi
+kubectl -n "$NS" delete service helpdesk >/dev/null
+if kubectl -n "$NS" exec client -- wget -T 3 -qO- http://helpdesk >/dev/null 2>&1; then
+  echo "ERROR: Service traffic still passed after removing the Service" >&2
+  exit 1
+fi
+echo "OK 5 - CoreDNS resolves the Service, and removing it closes the routing gate"
+echo "ALL CHECKS PASSED"

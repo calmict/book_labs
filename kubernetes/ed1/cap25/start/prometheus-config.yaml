@@ -1,6 +1,6 @@
 # The reader's round: which doors to visit and how often.
-# Right now Prometheus only scrapes itself. TODO: add a second job named
-# "node" that scrapes the node-exporter Service at node-exporter:9100, so
+# Right now Prometheus only scrapes itself. TODO 1 (25.1-25.2): add a
+# second job named "node" that scrapes node-exporter:9100, so
 # the reader also walks past the meter on the wall. After editing, apply
 # this file and restart the prometheus deployment so it re-reads the round.
 apiVersion: v1
@@ -16,7 +16,7 @@ data:
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
-      # TODO: add the node job here, e.g.
+      # TODO 1 (25.1-25.2): add the node job so pull discovery reaches the meter.
       # - job_name: node
       #   static_configs:
       #     - targets: ["node-exporter:9100"]

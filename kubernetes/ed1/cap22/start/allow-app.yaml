@@ -5,5 +5,7 @@ metadata:
   name: allow-app
   namespace: vault
 spec:
-  # TODO: select the safe (app: safe), rule Ingress, and allow one thing
-  # only — from pods labelled role: app, on TCP port 8080
+  # TODO 2 (22.3): select app=safe and allow Ingress only from role=app
+  # on TCP 8080, because labels and ports define the network contract.
+  podSelector: {matchLabels: {todo: replace-me}}
+  policyTypes: ["Ingress"]

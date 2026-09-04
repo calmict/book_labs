@@ -7,8 +7,8 @@ metadata:
 spec:
   template:
     spec:
-      # TODO: the restartPolicy a Job demands (hint: Always is forbidden
-      # here — ask yourself why)
+      # TODO 2 (17.2): set the restartPolicy a Job demands; Always is
+      # forbidden because successful termination must remain observable.
       containers:
         - name: counter
           image: alpine:3
@@ -19,10 +19,10 @@ kind: Job
 metadata:
   name: flaky
 spec:
-  # TODO: allow exactly 2 retries after the first attempt (backoffLimit)
+  backoffLimit: 2
   template:
     spec:
-      # TODO: same restartPolicy as above
+      restartPolicy: Never
       containers:
         - name: flaky
           image: alpine:3

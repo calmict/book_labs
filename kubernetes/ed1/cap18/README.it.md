@@ -9,9 +9,9 @@
 
 Al termine di questo laboratorio saprai:
 
-- toccare il problema che i Service risolvono: Pod effimeri, IP che cambiano a ogni rinascita;
-- usare un ClusterIP stabile e bilanciato — e poi smascherarlo: non esiste su nessuna interfaccia, è un trucco di iptables (DNAT più una moneta di netfilter, il cap. 6 in grande stile);
-- seguire la catena che tiene aggiornata la lista: EndpointSlice che si accorge di ogni nascita e morte, e CoreDNS che dà al tutto l'unico nome davvero stabile.
+- osservare il cambio di IP dei Pod effimeri (§18.1);
+- usare un ClusterIP e riconoscerne la realizzazione nel dataplane (§18.2–18.3);
+- seguire EndpointSlice e la risoluzione stabile di CoreDNS (§18.4–18.5).
 
 ## Prerequisiti
 
@@ -19,7 +19,7 @@ Al termine di questo laboratorio saprai:
 - Il cluster book-labs acceso; accesso al nodo con docker exec (kind, o minikube su driver Docker).
 - Il manifest start/helpdesk.yaml col TODO sul Service.
 
-## Consegna
+## Lo scenario
 
 1. Il problema. Nel manifest start/helpdesk.yaml il Deployment è già dato: due centralinisti che rispondono col proprio nome (busybox httpd che serve l'hostname). Applica e prova a chiamarli per IP:
 
@@ -85,3 +85,28 @@ Al termine di questo laboratorio saprai:
 - [ ] Hai la prova che il ClusterIP non esiste su nessuna interfaccia, e le regole KUBE-SVC/KUBE-SEP con probability e DNAT.
 - [ ] Hai visto gli EndpointSlice inseguire lo scale, e il DNS risolvere il nome sul ClusterIP.
 - [ ] answers.md risponde alle tre domande e il laboratorio è smontato.
+
+## Come viene verificato
+
+solution/run.sh controlla il cambio dell'IP del Pod, il bilanciamento del
+ClusterIP, l'assenza dell'indirizzo dalle interfacce e la sua presenza nelle
+regole del dataplane. Verifica inoltre lo scale degli EndpointSlice e CoreDNS;
+come controprova elimina il Service e pretende che il traffico si chiuda.
+
+## Domande di riflessione
+
+a. Ricostruisci il viaggio del pacchetto e spiega dove avviene la DNAT.
+
+b. Come cambia la selezione dei backend quando un Pod muore o non è Ready?
+
+c. Che cosa risolve il DNS per un Service normale e per uno headless?
+
+## Pulizia
+
+Lo script elimina il namespace book-labs-cap18 e ogni risorsa contenuta. Se
+lavori a mano, elimina helpdesk.yaml e il Pod client.
+
+## Dove porta
+
+Il Service offre un indirizzo stabile dentro il cluster. Il Capitolo 19 porta
+questa idea al livello HTTP con Ingress e il suo controller.

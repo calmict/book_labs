@@ -9,4 +9,5 @@ metadata:
   namespace: mesh
 spec:
   mtls:
-    mode: STRICT
+    # TODO 2 (27.3): require mutual TLS so plaintext callers are rejected.
+    mode: CHANGE-ME

@@ -1,4 +1,19 @@
-# Chapter 28 — Answers (model solution)
+# Chapter 28 — Answers
+
+## The completed TODOs
+
+TODO 1 selects the local CA issuer on the Ingress:
+
+    annotations:
+      cert-manager.io/cluster-issuer: local-ca
+
+TODO 2 declares the hostname that the certificate must cover, and TODO 3 names
+the Secret shared by cert-manager and ingress-nginx:
+
+    tls:
+      - hosts:
+          - shop.book-labs.local
+        secretName: shop-tls
 
 ## The certificate, issued automatically
 
@@ -15,7 +30,7 @@
     X509v3 Subject Alternative Name: critical
         DNS:shop.book-labs.local
 
-## The three questions
+## Reflection questions
 
 **a. The certificate problem (28.1-28.2): why does HTTPS need a certificate
 from a trusted authority, why is doing it by hand a problem (especially

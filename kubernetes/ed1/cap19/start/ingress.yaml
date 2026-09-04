@@ -3,9 +3,13 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: labs
+  namespace: lab-cap19
 spec:
   ingressClassName: nginx
+  # TODO 1 (19.2): replace the empty list with one rule for each host,
+  # so a single L7 entry point can distinguish uno from due by Host.
   rules: []
-  # TODO: replace the empty rules with two host-based entries:
-  # - host uno.labs.local -> path / (Prefix) -> service uno, port 80
-  # - host due.labs.local -> path / (Prefix) -> service due, port 80
+  # TODO 2 (19.2): in each rule add path / with pathType Prefix,
+  # because the Ingress must declare which HTTP paths it matches.
+  # TODO 3 (19.2): point the two backends to Services uno and due on
+  # port 80, so the controller can turn each rule into a real route.

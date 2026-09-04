@@ -15,9 +15,11 @@ metadata:
   name: node-exporter
   namespace: monitoring
 spec:
+  # TODO 2 (25.3): select Services labelled app=node-exporter, because the
+  # operator needs a stable declaration while Pods and their IPs change.
   selector:
-    matchLabels:
-      app: node-exporter
+    matchLabels: {}
   endpoints:
-    - port: metrics
+    # TODO 2 (25.3): replace CHANGE-ME with the named Service port to scrape.
+    - port: CHANGE-ME
       interval: 5s

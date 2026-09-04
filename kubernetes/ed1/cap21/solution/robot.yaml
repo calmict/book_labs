@@ -3,11 +3,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: robot
+  namespace: lab-cap21
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: robot
+  namespace: lab-cap21
 spec:
   serviceAccountName: robot
   containers:

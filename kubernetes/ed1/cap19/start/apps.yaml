@@ -4,6 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: uno
+  namespace: lab-cap19
   labels:
     app: uno
 spec:
@@ -25,6 +26,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: uno
+  namespace: lab-cap19
 spec:
   selector:
     app: uno
@@ -36,6 +38,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: due
+  namespace: lab-cap19
   labels:
     app: due
 spec:
@@ -57,6 +60,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: due
+  namespace: lab-cap19
 spec:
   selector:
     app: due

@@ -1,22 +1,22 @@
-# The intern's job description: read pods in default, nothing else.
+# The intern's job description: read pods in lab-cap21, nothing else.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: pod-reader
-  namespace: default
+  namespace: lab-cap21
 rules: []
-# TODO: one rule — core apiGroup (""), resources pods,
-# verbs get, list, watch. Nothing more: that is the whole point.
+# TODO 1 (21.3): add one rule for core pods with get, list and watch,
+# then add User stagista as the subject below. Together they define the
+# minimum job and assign it, leaving every other permission denied.
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: stagista-pod-reader
-  namespace: default
+  namespace: lab-cap21
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: pod-reader
 subjects: []
-# TODO: one subject — kind User, name stagista
-# (apiGroup rbac.authorization.k8s.io)
+# Complete this subject as part of TODO 1 above.

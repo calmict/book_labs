@@ -1,11 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  # TODO: {{ .Release.Name }}
+  # Continue TODO 1 for the Service name and selector.
   name: CHANGE-ME
 spec:
   selector:
-    # TODO: {{ .Release.Name }}
     app: CHANGE-ME
   ports:
     - port: 80

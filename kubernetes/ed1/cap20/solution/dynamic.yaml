@@ -5,6 +5,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: cloud
+  namespace: lab-cap20
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
@@ -15,6 +16,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: tenant
+  namespace: lab-cap20
 spec:
   volumes:
     - name: data

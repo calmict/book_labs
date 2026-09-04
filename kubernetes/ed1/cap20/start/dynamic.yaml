@@ -5,14 +5,16 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: cloud
+  namespace: lab-cap20
 spec:
-  # TODO: 30Mi, ReadWriteOnce — and NO storageClassName at all:
-  # the default class will answer
+  # TODO 2 (20.2): request 30Mi with ReadWriteOnce and omit
+  # storageClassName, so the default class provisions a PV on demand.
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: tenant
+  namespace: lab-cap20
 spec:
   volumes:
     - name: data

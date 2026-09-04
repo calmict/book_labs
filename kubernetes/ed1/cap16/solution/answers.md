@@ -1,5 +1,11 @@
 # Chapter 16 — Answers (model solution)
 
+## The completed TODOs
+
+TODO 1 sets serviceName to diary. TODO 2 mounts data at /data. TODO 3
+defines a ReadWriteOnce, 10Mi claim template named data. The completed
+manifest is solution/diary.yaml.
+
 ## Crowd versus registry
 
     crowd-66c788cb8b-68pws  ->  deleted  ->  crowd-66c788cb8b-gkk26

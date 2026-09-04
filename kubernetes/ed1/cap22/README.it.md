@@ -1,74 +1,65 @@
-# Cap. 22 — La cassaforte e il corridoio (NetworkPolicy e zero-trust)
-
-> Esercizio del **Capitolo 22 — NetworkPolicy e l'approccio zero-trust** del
-> *Manuale di Kubernetes* (collana Calm ICT — [calmict.com](https://calmict.com)).
+# Capitolo 22 — La cassaforte e il corridoio
 
 **Livello:** Avanzato
 
+RBAC ha chiuso il confine dell'API; ora chiudi i percorsi tra i workload con un contratto di rete.
+
 ## Obiettivi
 
-Al termine di questo laboratorio saprai:
-
-- toccare il problema del default allow: nel condominio Kubernetes ogni pod raggiunge ogni pod, cassaforte inclusa;
-- invertire la regola con un default deny di tre righe, e poi riaprire SOLO la porta giusta: label come regole firewall, porte come contratto;
-- chiudere anche l'uscita (egress): la cassaforte che riceve ma non telefona — e scoprire chi realizza davvero le policy (il CNI), con il test di enforcement come abitudine igienica.
+- Osservare il default allow e invertirlo con un default deny (22.1, 22.2).
+- Ammettere solo un client etichettato sulla porta TCP 8080 (22.3).
+- Negare l'egress e verificare che il CNI applichi la policy (22.3, 22.4).
 
 ## Prerequisiti
 
-- Cap. 18 e 21 completati (Service e minimo privilegio: qui il minimo privilegio arriva alla rete).
-- Il cluster book-labs acceso. ATTENZIONE: le NetworkPolicy le realizza il CNI — il kind recente le applica; su minikube standard NO (serve minikube start --cni=calico). Il passo 2 include il test per scoprirlo subito.
-- Quattro manifest in start/: pods.yaml e deny-all.yaml (dati), allow-app.yaml e no-exfiltration.yaml (TODO).
+- Capitoli 18 e 21 completati, kubectl disponibile e un cluster raggiungibile.
+- Un CNI che supporti NetworkPolicy. run.sh misura l'enforcement prima di fidarsene.
 
-## Consegna
+## Lo scenario
 
-1. Il corridoio aperto. Crea il namespace del laboratorio e i tre inquilini:
+Completa i TODO 1..3 in start/: default deny ingress, eccezione per label e deny egress.
+Il test crea il namespace vault e tre Pod: safe, app e guest.
 
-       kubectl create namespace vault
-       kubectl apply -f pods.yaml
-       kubectl -n vault get pods --show-labels
+    cd kubernetes/ed1/cap22/solution
+    ./run.sh
 
-   safe (la cassaforte, etichetta app=safe, serve i gioielli sulla 8080), app (role=app, l'applicazione legittima) e guest (nessun ruolo). Prova ENTRAMBI gli accessi:
+### Fase 1 — Il corridoio aperto (22.1, 22.2)
 
-       SAFE=$(kubectl -n vault get pod safe -o jsonpath='{.status.podIP}')
-       kubectl -n vault exec app -- wget -T 3 -qO- http://$SAFE:8080
-       kubectl -n vault exec guest -- wget -T 3 -qO- http://$SAFE:8080
+Entrambi i client raggiungono la cassaforte prima delle policy. L'insieme vuoto di permessi ingress deve poi bloccarli.
 
-   Gioielli per tutti: default allow. Nessuno ha mai autorizzato niente — semplicemente, nessuno ha mai vietato.
+### Fase 2 — La porta con la targhetta (22.3)
 
-2. L'inversione. deny-all.yaml è già scritto (leggilo: podSelector vuoto = tutti i pod del namespace, policyTypes Ingress, nessuna regola = nessun ingresso). Applicalo e rifai i due wget:
+L'eccezione additiva ammette role=app solo su TCP 8080; il guest senza label resta fuori.
 
-       kubectl apply -f deny-all.yaml
-       kubectl -n vault exec app -- wget -T 3 -qO- http://$SAFE:8080
-       kubectl -n vault exec guest -- wget -T 3 -qO- http://$SAFE:8080
+### Fase 3 — Nessuna chiamata dalla cassaforte (22.3, 22.4)
 
-   Timeout per entrambi: il corridoio è murato. Questo è anche il TEST DI ENFORCEMENT: se i gioielli arrivano ancora, il tuo CNI sta ignorando le policy (l'oggetto senza esecutore — il déjà vu del cap. 19) e devi cambiarlo prima di proseguire.
-
-3. La porta con la targhetta. Completa allow-app.yaml: una policy che seleziona la cassaforte (app=safe) e ammette ingress SOLO dai pod role=app, SOLO sulla porta TCP 8080. Applica e riprova entrambi:
-
-       kubectl apply -f allow-app.yaml
-       kubectl -n vault exec app -- wget -T 3 -qO- http://$SAFE:8080
-       kubectl -n vault exec guest -- wget -T 3 -qO- http://$SAFE:8080
-
-   app passa, guest resta fuori. Nota la grammatica: le policy sono ADDITIVE — hai scritto un permesso, mai un divieto esplicito; il divieto è il silenzio.
-
-4. La cassaforte non telefona. Completa no-exfiltration.yaml: policy su app=safe, policyTypes Egress, nessuna regola egress. Applica e prova la chiamata in uscita:
-
-       kubectl apply -f no-exfiltration.yaml
-       APP=$(kubectl -n vault get pod app -o jsonpath='{.status.podIP}')
-       kubectl -n vault exec safe -- wget -T 3 -qO- http://$APP:8080
-
-   Timeout: chi buca la cassaforte non può portare fuori niente. (Avvertenza da professionisti: un egress deny blocca anche il DNS — qui usiamo IP diretti; nel mondo reale si riapre la 53 verso kube-dns.)
-
-5. Le domande per answers.md: (a) da default allow a default deny: perché la rete piatta è IL problema, cosa dice esattamente il podSelector vuoto, e perché nella grammatica delle policy esistono solo permessi (il deny è il silenzio); (b) leggi le tue tre policy come contratto di rete: chi parla con chi, su quale porta, e cosa servirebbe per far entrare guest — cambiare la policy o... cambiargli l'etichetta? Rifletti su cosa questo dice del modello; (c) chi realizza le policy? Racconta il test di enforcement e il déjà vu del cap. 19, spiega il ruolo del CNI (22.4) e l'avvertenza DNS dell'egress deny.
-
-6. Smonta il caveau:
-
-       kubectl delete namespace vault
+La policy egress blocca una chiamata per IP grezzo da safe, senza confondere il percorso verificato con il DNS.
 
 ## Criteri di "fatto"
 
-- [ ] Prima delle policy: gioielli per tutti (default allow toccato con mano).
-- [ ] Col deny-all: timeout per tutti — e il test di enforcement superato.
-- [ ] Con allow-app: app dentro, guest fuori; con no-exfiltration: la cassaforte non chiama.
-- [ ] answers.md risponde alle tre domande.
-- [ ] Il namespace vault è stato cancellato.
+- [ ] I tre TODO sono completi.
+- [ ] Default allow, deny ingress, allow per label e deny egress si comportano come descritto.
+- [ ] run.sh stampa OK 1..4 e ALL CHECKS PASSED.
+
+## Come viene verificato
+
+- OK 1 prova il default allow con due richieste riuscite.
+- OK 2 è il primo cancello: il default deny blocca entrambi e prova l'enforcement del CNI.
+- OK 3 prova l'eccezione per label e porta mantenendo il deny del guest.
+- OK 4 è il secondo cancello: safe non può iniziare la richiesta in uscita.
+
+## Domande di riflessione
+
+**a.** Perché una rete piatta è rischiosa, cosa seleziona un podSelector vuoto e perché le policy sono additive?
+
+**b.** Chi può parlare con chi, su quale porta, e come cambierebbe il contratto rietichettando guest?
+
+**c.** Chi trasforma NetworkPolicy in filtri reali e perché nelle policy egress reali va considerato il DNS?
+
+## Pulizia
+
+run.sh elimina il namespace vault e tutti i suoi oggetti, anche in caso di errore.
+
+## Dove porta
+
+Il confine di rete è chiuso. Il Capitolo 23 restringe ciò che ogni container può chiedere al kernel condiviso.

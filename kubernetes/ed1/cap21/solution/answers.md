@@ -1,24 +1,15 @@
 # Chapter 21 — Answers (model solution)
 
-## The hiring
+## The completed TODOs
 
-    certificatesigningrequest.certificates.k8s.io/stagista approved
-    Username  stagista
-    Groups    [tirocinanti system:authenticated]
+TODO 1 (21.3) gives pod-reader get, list and watch on core pods, then binds
+User stagista to that Role inside lab-cap21.
 
-## The borders
+TODO 2 (21.2) sets serviceAccountName to robot, so the workload receives its
+dedicated mounted identity instead of the default ServiceAccount.
 
-    get pods                  -> No resources found (allowed!)
-    run test                  -> Forbidden: cannot create pods
-    get secrets               -> Forbidden: cannot list secrets
-    get pods -n kube-system   -> Forbidden: wrong namespace
-    can-i --list: pods [get list watch] plus the selfsubject reviews
-    everyone has — the whole job description in five lines
-
-## The robot
-
-    before the binding:  "reason": "Forbidden", "code": 403
-    after the binding:   { "kind": "PodList", ... }
+TODO 3 (21.3) binds ServiceAccount robot in lab-cap21 to pod-reader only after
+the initial 403 has demonstrated the missing authorization.
 
 ## The three questions
 
@@ -41,7 +32,7 @@ CAN delete instantly) is the real off switch.
 three Forbidden, and why least privilege is made of borders.**
 
 The Role says: verbs get/list/watch, resources pods, and — implicit in the
-object's own namespace — default. Three coordinates, three walls: run test
+object's own namespace — lab-cap21. Three coordinates, three walls: run test
 fails on the VERB wall (create is not in the list); get secrets fails on
 the RESOURCE wall (secrets are not pods, even in the right namespace);
 kube-system fails on the NAMESPACE wall (a Role cannot see beyond its own
@@ -65,4 +56,4 @@ least-privilege logic applied to software: shared identities mean shared
 permissions (the union of everyone's needs) and unreadable audit logs.
 With its own account, the robot's compromise is bounded by its own
 binding, its token dies young, and the audit trail says exactly who did
-what — system:serviceaccount:default:robot, black on white.
+what — system:serviceaccount:lab-cap21:robot, black on white.

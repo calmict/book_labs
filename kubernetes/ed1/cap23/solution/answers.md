@@ -1,5 +1,11 @@
 # Chapter 23 — Answers (model solution)
 
+## The completed TODOs
+
+- TODO 1 runs the container as non-root uid 65534.
+- TODO 2 forbids escalation, drops all capabilities, and makes the root filesystem read-only.
+- TODO 3 enables the RuntimeDefault seccomp profile.
+
 ## The naked king
 
     id:      uid=0(root) gid=0(root) groups=0(root),10(wheel)

@@ -1,23 +1,17 @@
 # Chapter 20 — Answers (model solution)
 
-## The marriage and the spinster
+## The completed TODOs
 
-    manual-pv   50Mi   RWO   Retain   Bound   default/bride   manual
-    bride       Bound  manual-pv
-    spinster    Pending                        manual
+TODO 1 (20.1) completes the static claim with the manual StorageClass,
+ReadWriteOnce, and a 30Mi request, so it matches the hand-made PV.
 
-## The automatic matchmaker
+TODO 2 (20.2) gives the dynamic claim the same access mode and size but
+deliberately omits storageClassName. The default StorageClass can therefore
+provision a new PV for it.
 
-    cloud   Bound   pvc-bf2b0c40-...   30Mi   RWO   standard
-    standard (default)   rancher.io/local-path   Delete   WaitForFirstConsumer
-    manual-pv   Retain  |  pvc-bf2b0c40-...   Delete
-
-## Two different deaths
-
-    (after deleting the claims)
-    manual-pv   50Mi   RWO   Retain   Released   default/bride   manual
-    (the pvc-... volume is gone)
-    docker exec <node> cat /tmp/manual-pv/dote.txt  ->  dote
+TODO 3 (20.3) changes manual-pv's reclaim policy to Retain. Deleting bride
+releases the PV and preserves its data, in contrast with the dynamically
+provisioned PV whose Delete policy removes it.
 
 ## The three questions
 

@@ -1,20 +1,18 @@
-# The doorman's routing rule — and the request for a passport.
-# TODO: make this Ingress serve HTTPS automatically:
-#   1. add the annotation   cert-manager.io/cluster-issuer: local-ca
-#      (this is what tells cert-manager to issue a certificate for it)
-#   2. add a tls: block naming the host and the secret to store the cert:
-#        tls:
-#          - hosts: ["shop.book-labs.local"]
-#            secretName: shop-tls
+# The doorman's routing rule. It routes HTTP already, but the three gaps below
+# must be filled before cert-manager can give it a TLS passport.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: shop
   namespace: web
-  # TODO: cert-manager.io/cluster-issuer annotation goes here
+  # TODO 1 (28.4): add an annotations map that selects the local-ca
+  # ClusterIssuer, so cert-manager knows which authority must issue the cert.
 spec:
   ingressClassName: nginx
-  # TODO: tls block goes here
+  # TODO 2 (28.4): add a tls block with shop.book-labs.local in its hosts list,
+  # so the certificate identity matches the hostname used by the visitor.
+  # TODO 3 (28.4): set that tls entry's secretName to shop-tls, so
+  # cert-manager and ingress-nginx agree where the key and certificate live.
   rules:
     - host: shop.book-labs.local
       http:

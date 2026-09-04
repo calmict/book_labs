@@ -6,5 +6,7 @@ metadata:
   name: deny-all
   namespace: vault
 spec:
-  podSelector: {}
+  # TODO 1 (22.2): select every pod and govern Ingress without allow
+  # rules, because an empty permission set turns default allow into deny.
+  podSelector: {matchLabels: {todo: replace-with-empty-selector}}
   policyTypes: ["Ingress"]

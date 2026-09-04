@@ -1,22 +1,15 @@
 # Chapter 19 — Answers (model solution)
 
-## The request with no doorman
+## The completed TODOs
 
-    curl http://localhost:8081  -> connection refused
-    labs   nginx   uno.labs.local,due.labs.local   <ADDRESS empty>   80
+TODO 1 (19.2) replaces the empty rules list with two HTTP hosts,
+uno.labs.local and due.labs.local.
 
-## The door at work
+TODO 2 (19.2) gives each host a Prefix path rooted at /, so the whole site
+matches rather than only one exact URL.
 
-    Host: uno.labs.local -> app-uno
-    Host: due.labs.local -> app-due
-    no Host header       -> HTTP 404
-    labs   nginx   ...   localhost   80    <- ADDRESS populated now
-
-## The doorman's words
-
-    ... "GET / HTTP/1.1" 200 ... [default-uno-80] ... 10.244.0.5:8080 ...
-    ... "GET / HTTP/1.1" 200 ... [default-due-80] ... 10.244.0.6:8080 ...
-    (the chosen upstream, in brackets: the L7 decision, logged)
+TODO 3 (19.2) completes each backend with its Service, uno or due, on port
+80. The controller can now turn the declarations into two real routes.
 
 ## The three questions
 

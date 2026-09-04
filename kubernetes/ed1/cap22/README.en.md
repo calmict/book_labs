@@ -1,74 +1,65 @@
-# Chapter 22 — The Vault and the Corridor (NetworkPolicy and Zero-Trust)
-
-> Exercise for **Chapter 22 — NetworkPolicy and the Zero-Trust Approach** of the
-> *Kubernetes Manual* (Calm ICT series — [calmict.com](https://calmict.com)).
+# Chapter 22 — The Vault and the Corridor
 
 **Level:** Advanced
 
+RBAC closed the API boundary; now you close the paths between workloads with a network contract.
+
 ## Objectives
 
-By the end of this lab you will be able to:
-
-- feel the default-allow problem: in the Kubernetes condo every pod reaches every pod, vault included;
-- invert the rule with a three-line default deny, then reopen ONLY the right door: labels as firewall rules, ports as a contract;
-- close the exit too (egress): a vault that receives but never phones out — and discover who actually realises the policies (the CNI), with the enforcement test as a hygiene habit.
+- Observe default allow and invert it with a default deny (22.1, 22.2).
+- Allow only a labelled client on TCP 8080 (22.3).
+- Deny egress and verify that the CNI enforces the policy (22.3, 22.4).
 
 ## Prerequisites
 
-- Chapters 18 and 21 completed (Services and least privilege: here least privilege reaches the network).
-- The book-labs cluster running. WARNING: NetworkPolicies are realised by the CNI — recent kind enforces them; standard minikube does NOT (it needs minikube start --cni=calico). Step 2 includes the test that tells you immediately.
-- Four manifests in start/: pods.yaml and deny-all.yaml (given), allow-app.yaml and no-exfiltration.yaml (TODO).
+- Chapters 18 and 21 completed, kubectl available, and a reachable cluster.
+- A CNI that supports NetworkPolicy. run.sh measures enforcement before trusting it.
 
-## Instructions
+## The scenario
 
-1. The open corridor. Create the lab namespace and the three tenants:
+Complete TODOs 1..3 in start/: the ingress default deny, the labelled exception, and the egress deny.
+The test creates namespace vault and three Pods: safe, app, and guest.
 
-       kubectl create namespace vault
-       kubectl apply -f pods.yaml
-       kubectl -n vault get pods --show-labels
+    cd kubernetes/ed1/cap22/solution
+    ./run.sh
 
-   safe (the vault, label app=safe, serving the jewels on 8080), app (role=app, the legitimate application) and guest (no role). Try BOTH accesses:
+### Phase 1 — The open corridor (22.1, 22.2)
 
-       SAFE=$(kubectl -n vault get pod safe -o jsonpath='{.status.podIP}')
-       kubectl -n vault exec app -- wget -T 3 -qO- http://$SAFE:8080
-       kubectl -n vault exec guest -- wget -T 3 -qO- http://$SAFE:8080
+Both clients reach the safe before any policy. The empty ingress permission set must then block both.
 
-   Jewels for everyone: default allow. Nobody ever authorised anything — simply, nobody ever forbade.
+### Phase 2 — The nameplate door (22.3)
 
-2. The inversion. deny-all.yaml is already written (read it: empty podSelector = every pod in the namespace, policyTypes Ingress, no rules = no entry). Apply it and redo both wgets:
+The additive exception admits role=app only on TCP 8080; the unlabelled guest remains outside.
 
-       kubectl apply -f deny-all.yaml
-       kubectl -n vault exec app -- wget -T 3 -qO- http://$SAFE:8080
-       kubectl -n vault exec guest -- wget -T 3 -qO- http://$SAFE:8080
+### Phase 3 — No calls from the vault (22.3, 22.4)
 
-   Timeout for both: the corridor is walled up. This is also the ENFORCEMENT TEST: if the jewels still flow, your CNI is ignoring the policies (the object with no executor — chapter 19 déjà vu) and you must change it before going on.
-
-3. The door with a nameplate. Complete allow-app.yaml: a policy selecting the vault (app=safe) that admits ingress ONLY from role=app pods, ONLY on TCP port 8080. Apply and try both again:
-
-       kubectl apply -f allow-app.yaml
-       kubectl -n vault exec app -- wget -T 3 -qO- http://$SAFE:8080
-       kubectl -n vault exec guest -- wget -T 3 -qO- http://$SAFE:8080
-
-   app gets in, guest stays out. Note the grammar: policies are ADDITIVE — you wrote a permission, never an explicit prohibition; the prohibition is the silence.
-
-4. The vault makes no calls. Complete no-exfiltration.yaml: a policy on app=safe, policyTypes Egress, no egress rules at all. Apply and try the outgoing call:
-
-       kubectl apply -f no-exfiltration.yaml
-       APP=$(kubectl -n vault get pod app -o jsonpath='{.status.podIP}')
-       kubectl -n vault exec safe -- wget -T 3 -qO- http://$APP:8080
-
-   Timeout: whoever cracks the vault carries nothing out. (Professional warning: an egress deny blocks DNS too — here we used raw IPs; in the real world you reopen port 53 towards kube-dns.)
-
-5. The questions for answers.md: (a) from default allow to default deny: why is the flat network THE problem, what exactly does the empty podSelector say, and why does the policy grammar contain only permissions (the deny is the silence)? (b) read your three policies as a network contract: who talks to whom, on which port — and what would it take to let guest in: changing the policy or... changing its label? Reflect on what that says about the model; (c) who realises the policies? Tell the enforcement test and the chapter 19 déjà vu, explain the CNI's role (22.4) and the DNS caveat of the egress deny.
-
-6. Tear the vault down:
-
-       kubectl delete namespace vault
+The egress policy blocks a raw-IP call from safe and avoids confusing DNS with the tested path.
 
 ## Definition of "done"
 
-- [ ] Before any policy: jewels for everyone (default allow, felt firsthand).
-- [ ] With deny-all: timeout for everyone — and the enforcement test passed.
-- [ ] With allow-app: app in, guest out; with no-exfiltration: the vault makes no calls.
-- [ ] answers.md answers the three questions.
-- [ ] The vault namespace has been deleted.
+- [ ] The three TODOs are complete.
+- [ ] Default allow, ingress deny, labelled allow, and egress deny behave as described.
+- [ ] run.sh prints OK 1..4 and ALL CHECKS PASSED.
+
+## How it is verified
+
+- OK 1 proves default allow with two successful requests.
+- OK 2 is the first biting gate: the default deny blocks both clients and proves CNI enforcement.
+- OK 3 proves the label-and-port exception while preserving the guest denial.
+- OK 4 is the second biting gate: the safe cannot initiate the outgoing request.
+
+## Reflection questions
+
+**a.** Why is a flat network risky, what does an empty podSelector select, and why are policies additive?
+
+**b.** Who may talk to whom, on which port, and how would relabelling guest change that contract?
+
+**c.** Who turns NetworkPolicy objects into packet filtering, and why must DNS be considered for real egress policies?
+
+## Cleanup
+
+run.sh deletes namespace vault and every object in it, including on failure.
+
+## Where this leads
+
+The network boundary is closed. Chapter 23 narrows what each container can ask of the shared kernel.

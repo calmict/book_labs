@@ -1,74 +1,75 @@
-# Cap. 19 — Il portone e il portiere (Ingress e Ingress Controller)
-
-> Esercizio del **Capitolo 19 — Ingress e Ingress Controller** del
-> *Manuale di Kubernetes* (collana Calm ICT — [calmict.com](https://calmict.com)).
+# Capitolo 19 — Il portone e il portiere
 
 **Livello:** Intermedio
 
+Dopo i Service del capitolo 18, il palazzo ha molti ingressi ma non sa ancora leggere il nome scritto
+sulla richiesta HTTP. Qui separi le regole dichiarative da chi le realizza e osservi il routing L7.
+
 ## Obiettivi
 
-Al termine di questo laboratorio saprai:
-
-- capire perché i Service (L4) non bastano: l'Ingress legge ciò che loro non vedono — host e path;
-- toccare la separazione dei ruoli con un esperimento: le regole Ingress applicate SENZA controller non fanno nulla — l'oggetto è la richiesta scritta, il controller è chi la esegue;
-- installare ingress-nginx su kind e vedere il routing L7 dal vivo: due host sullo stesso IP e porta, ognuno alla sua app, e il default backend per gli sconosciuti.
+- Distinguere il bilanciamento L4 dei Service dal routing per host e path dell'Ingress (19.1).
+- Dichiarare due regole Ingress e constatare che senza controller restano inerti (19.2, 19.3).
+- Installare ingress-nginx e seguire una richiesta fino al Service e al Pod corretti (19.3, 19.4).
 
 ## Prerequisiti
 
-- Cap. 18 completato (Service e ClusterIP).
-- **kind** e Docker: serve un cluster dedicato con la porta 8081 dell'host mappata (fornito start/kind-ingress.yaml; se la 8081 è occupata, cambiala lì). Primo capitolo che installa un componente esterno: serve rete per scaricare ingress-nginx. (Su minikube il percorso è diverso: addon ingress + minikube tunnel — qui si resta su kind.)
-- Due manifest in start/: apps.yaml (dato completo) e ingress.yaml (le regole sono i TODO).
+- Capitolo 18 completato; Docker, kind, kubectl, curl e accesso alla rete.
+- Almeno 3 GiB liberi sul filesystem di Docker per il cluster dedicato.
+- Una porta locale libera; run.sh ne sceglie una da 18081 in poi, oppure usa CAP19_PORT.
 
-## Consegna
+## Lo scenario
 
-1. Il palazzo. Crea il cluster con la porta d'ingresso mappata e le due app coi loro Service:
+Due applicazioni condividono lo stesso IP e la stessa porta. Completa start/ingress.yaml colmando i
+TODO 1..3: dichiara i due host, i path e i backend. Il test crea il cluster dedicato
+book-labs-ingress, applica prima le regole senza controller e poi installa ingress-nginx.
 
-       kind create cluster --config start/kind-ingress.yaml
-       kubectl apply -f start/apps.yaml
-       kubectl get pods,svc
+    cd kubernetes/ed1/cap19/solution
+    ./run.sh
 
-   Due inquilini (uno e due, ognuno risponde col proprio nome) e i loro centralini interni (cap. 18). Ma dall'esterno del palazzo, nessuno li raggiunge.
+### Fase 1 — Le regole senza portiere (19.2, 19.3)
 
-2. La richiesta scritta, senza il portiere. Completa start/ingress.yaml: due regole host-based — uno.labs.local verso il service uno, due.labs.local verso il service due (i TODO guidano rules, host, backend). Applica e prova a bussare:
+Il primo controllo applica l'Ingress quando nessun controller è presente: la porta non risponde e
+ADDRESS resta vuoto. È la controprova che l'oggetto dichiara un desiderio ma non lo realizza.
 
-       kubectl apply -f ingress.yaml
-       kubectl get ingress
-       curl http://localhost:8081
+### Fase 2 — Una porta, due host (19.1, 19.2)
 
-   Connessione rifiutata, e la colonna ADDRESS dell'Ingress è vuota. Le regole sono scritte, protocollate... e ignorate: hai dichiarato un oggetto che nessun controller realizza. Kubernetes non protesta — è il pattern del cap. 10: gli oggetti sono desideri, i controller sono chi li esaudisce.
+Ingress-nginx legge l'header Host e manda uno.labs.local a app-uno e due.labs.local a app-due. Un
+host sconosciuto riceve il 404 del backend predefinito.
 
-3. Arriva il portiere. Installa ingress-nginx nella variante per kind (versione pinnata):
+### Fase 3 — L'anatomia (19.4)
 
-       kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.0/deploy/static/provider/kind/deploy.yaml
-       kubectl wait -n ingress-nginx --for=condition=Ready pod -l app.kubernetes.io/component=controller --timeout=300s
-       kubectl get pods -n ingress-nginx
-
-   Guarda cos'è il portiere: un Deployment come gli altri (nginx più un processo che osserva gli oggetti Ingress via watch — il cap. 9 — e riscrive la propria configurazione).
-
-4. Il portone funziona. Stessa porta, stesso IP, due destinazioni:
-
-       curl -H "Host: uno.labs.local" http://localhost:8081
-       curl -H "Host: due.labs.local" http://localhost:8081
-       curl http://localhost:8081
-
-   app-uno, app-due, e un 404 per chi non dice il nome giusto: il routing L7 che nessun Service può fare (il Service vede solo IP e porta; l'header Host vive dentro l'HTTP). Riguarda anche kubectl get ingress: ora ADDRESS è popolata.
-
-5. L'anatomia (19.4). Segui una richiesta nei log del portiere:
-
-       kubectl logs -n ingress-nginx -l app.kubernetes.io/component=controller --tail=5
-
-   Riconosci le tue curl: host, path, upstream scelto. Il viaggio completo: porta 8081 dell'host → porta 80 del nodo (extraPortMapping) → pod del controller (hostPort) → decisione L7 sull'header Host → Service dell'app (cap. 18: ClusterIP e moneta) → pod.
-
-   Le domande per answers.md: (a) L4 contro L7: cosa vede un Service e cosa vede l'Ingress? Perché il routing per host è impossibile a livello 4? (b) l'esperimento del passo 2: perché Kubernetes accetta oggetti che nessuno realizza, e cosa hanno in comune Ingress-senza-controller e i controller del cap. 10? (rifletti: oggetti = desideri, controller = esecutori — è il pattern che rende il sistema estensibile); (c) l'anatomia completa: elenca le stazioni del viaggio dal tuo curl al pod di app-uno, indicando a ogni passaggio chi decide (portmapping, hostPort, nginx, ClusterIP...).
-
-6. Smonta il palazzo:
-
-       kind delete cluster --name book-labs-ingress
+Il test cerca nei log del controller la richiesta appena inviata, collegando port mapping, controller,
+decisione L7, Service e Pod.
 
 ## Criteri di "fatto"
 
-- [ ] Con le regole applicate ma senza controller: curl rifiutato e ADDRESS vuota.
-- [ ] Dopo l'installazione: uno.labs.local → app-uno, due.labs.local → app-due, host ignoto → 404.
-- [ ] Hai riconosciuto le tue richieste nei log del controller.
-- [ ] answers.md risponde alle tre domande.
-- [ ] Il cluster book-labs-ingress è stato cancellato.
+- [ ] start/ingress.yaml contiene i tre TODO completati.
+- [ ] Senza controller la regola è inerte; con il controller i due host raggiungono app diverse.
+- [ ] run.sh stampa OK 1..6 e ALL CHECKS PASSED.
+
+## Come viene verificato
+
+- OK 1 dimostra che il cancello morde: senza controller non c'è routing e ADDRESS è vuoto.
+- OK 2 verifica che ingress-nginx diventi Ready.
+- OK 3 e OK 4 verificano i due host sullo stesso IP e porta.
+- OK 5 verifica il 404 per un host sconosciuto.
+- OK 6 trova la richiesta e l'upstream scelto nei log del controller.
+
+## Domande di riflessione
+
+**a.** Cosa vede un Service L4, cosa vede un Ingress L7 e perché il routing per host richiede L7?
+
+**b.** Perché Kubernetes accetta un Ingress che nessun controller realizza? Come richiama il
+reconciliation loop del capitolo 10?
+
+**c.** Quali stazioni attraversa la richiesta dal curl al Pod di app-uno, e chi decide a ogni passo?
+
+## Pulizia
+
+run.sh elimina il cluster kind creato e ripristina il contesto kubectl precedente. Se il cluster
+dedicato esisteva già, elimina soltanto i namespace usati dal laboratorio.
+
+## Dove porta
+
+Il routing ha collegato richieste e applicazioni; il capitolo 20 applica lo stesso disaccoppiamento
+allo storage, separando ciò che un'app chiede dal volume reale che il cluster le assegna.

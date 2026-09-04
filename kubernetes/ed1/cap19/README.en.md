@@ -1,74 +1,75 @@
-# Chapter 19 — The Door and the Doorman (Ingress and Ingress Controller)
-
-> Exercise for **Chapter 19 — Ingress and Ingress Controller** of the
-> *Kubernetes Manual* (Calm ICT series — [calmict.com](https://calmict.com)).
+# Chapter 19 — The Door and the Doorman
 
 **Level:** Intermediate
 
+After chapter 18's Services, the building has many entrances but still cannot read the name written
+inside an HTTP request. Here you separate declarative rules from their executor and observe L7 routing.
+
 ## Objectives
 
-By the end of this lab you will be able to:
-
-- understand why Services (L4) are not enough: the Ingress reads what they cannot see — host and path;
-- feel the separation of roles through an experiment: Ingress rules applied WITHOUT a controller do nothing — the object is the written request, the controller is who executes it;
-- install ingress-nginx on kind and watch L7 routing live: two hosts on the same IP and port, each to its own app, and the default backend for strangers.
+- Distinguish Service L4 load balancing from Ingress host and path routing (19.1).
+- Declare two Ingress rules and prove they remain inert without a controller (19.2, 19.3).
+- Install ingress-nginx and follow a request to the correct Service and Pod (19.3, 19.4).
 
 ## Prerequisites
 
-- Chapter 18 completed (Services and ClusterIP).
-- **kind** and Docker: a dedicated cluster with the host's port 8081 mapped is needed (start/kind-ingress.yaml provided; if 8081 is taken, change it there). First chapter installing an external component: network access is needed to download ingress-nginx. (On minikube the path differs: the ingress addon plus minikube tunnel — here we stay on kind.)
-- Two manifests in start/: apps.yaml (given complete) and ingress.yaml (the rules are the TODOs).
+- Chapter 18 completed; Docker, kind, kubectl, curl, and network access.
+- At least 3 GiB free on Docker's filesystem for the dedicated cluster.
+- A free local port; run.sh chooses one from 18081 upward, or uses CAP19_PORT.
 
-## Instructions
+## The scenario
 
-1. The building. Create the cluster with the mapped door and the two apps with their Services:
+Two applications share the same IP address and port. Complete TODOs 1..3 in start/ingress.yaml by
+declaring the two hosts, paths, and backends. The test creates the dedicated book-labs-ingress cluster,
+applies the rules without a controller, and then installs ingress-nginx.
 
-       kind create cluster --config start/kind-ingress.yaml
-       kubectl apply -f start/apps.yaml
-       kubectl get pods,svc
+    cd kubernetes/ed1/cap19/solution
+    ./run.sh
 
-   Two tenants (uno and due, each answering with its own name) and their internal switchboards (chapter 18). But from outside the building, nobody reaches them.
+### Phase 1 — Rules without a doorman (19.2, 19.3)
 
-2. The written request, with no doorman. Complete start/ingress.yaml: two host-based rules — uno.labs.local towards service uno, due.labs.local towards service due (the TODOs guide rules, host, backend). Apply and try knocking:
+The first check applies the Ingress while no controller exists: the port does not answer and ADDRESS
+remains empty. This is the counterexample proving that the object declares intent but cannot enact it.
 
-       kubectl apply -f ingress.yaml
-       kubectl get ingress
-       curl http://localhost:8081
+### Phase 2 — One door, two hosts (19.1, 19.2)
 
-   Connection refused, and the Ingress's ADDRESS column is empty. The rules are written, filed... and ignored: you declared an object that no controller realises. Kubernetes does not complain — it is chapter 10's pattern: objects are wishes, controllers are who grants them.
+Ingress-nginx reads the Host header and sends uno.labs.local to app-uno and due.labs.local to app-due.
+An unknown host receives the default backend's 404 response.
 
-3. The doorman arrives. Install ingress-nginx in its kind flavour (pinned version):
+### Phase 3 — The anatomy (19.4)
 
-       kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.0/deploy/static/provider/kind/deploy.yaml
-       kubectl wait -n ingress-nginx --for=condition=Ready pod -l app.kubernetes.io/component=controller --timeout=300s
-       kubectl get pods -n ingress-nginx
-
-   Look at what the doorman is: a Deployment like any other (nginx plus a process watching Ingress objects — chapter 9 — and rewriting its own configuration).
-
-4. The door works. Same port, same IP, two destinations:
-
-       curl -H "Host: uno.labs.local" http://localhost:8081
-       curl -H "Host: due.labs.local" http://localhost:8081
-       curl http://localhost:8081
-
-   app-uno, app-due, and a 404 for whoever does not say the right name: the L7 routing no Service can do (a Service only sees IP and port; the Host header lives inside HTTP). Look at kubectl get ingress again: ADDRESS is now populated.
-
-5. The anatomy (19.4). Follow a request in the doorman's logs:
-
-       kubectl logs -n ingress-nginx -l app.kubernetes.io/component=controller --tail=5
-
-   Recognise your curls: host, path, chosen upstream. The full journey: host port 8081 → node port 80 (extraPortMapping) → controller pod (hostPort) → L7 decision on the Host header → the app's Service (chapter 18: ClusterIP and the coin) → the pod.
-
-   The questions for answers.md: (a) L4 versus L7: what does a Service see and what does the Ingress see? Why is host-based routing impossible at layer 4? (b) the step 2 experiment: why does Kubernetes accept objects nobody realises, and what do Ingress-without-controller and chapter 10's controllers have in common? (think: objects = wishes, controllers = executors — the pattern that makes the system extensible); (c) the full anatomy: list the stations of the journey from your curl to app-uno's pod, noting at each hop who decides (portmapping, hostPort, nginx, ClusterIP...).
-
-6. Tear the building down:
-
-       kind delete cluster --name book-labs-ingress
+The test finds the latest request in the controller log, connecting port mapping, controller, L7
+decision, Service, and Pod.
 
 ## Definition of "done"
 
-- [ ] With the rules applied but no controller: curl refused and ADDRESS empty.
-- [ ] After the installation: uno.labs.local → app-uno, due.labs.local → app-due, unknown host → 404.
-- [ ] You recognised your requests in the controller's logs.
-- [ ] answers.md answers the three questions.
-- [ ] The book-labs-ingress cluster has been deleted.
+- [ ] The three TODOs in start/ingress.yaml are complete.
+- [ ] Without a controller the rule is inert; with it, the two hosts reach different applications.
+- [ ] run.sh prints OK 1..6 and ALL CHECKS PASSED.
+
+## How it is verified
+
+- OK 1 proves the gate bites: without a controller there is no routing and ADDRESS is empty.
+- OK 2 verifies that ingress-nginx becomes Ready.
+- OK 3 and OK 4 verify the two hosts on the same IP address and port.
+- OK 5 verifies the 404 response for an unknown host.
+- OK 6 finds the request and selected upstream in the controller log.
+
+## Reflection questions
+
+**a.** What can an L4 Service see, what can an L7 Ingress see, and why does host routing require L7?
+
+**b.** Why does Kubernetes accept an Ingress that no controller realizes? How does this echo chapter
+10's reconciliation loop?
+
+**c.** Which stations does the request cross from curl to app-uno's Pod, and who decides at each one?
+
+## Cleanup
+
+run.sh deletes the kind cluster it creates and restores the previous kubectl context. If the dedicated
+cluster already existed, it removes only the namespaces used by the lab.
+
+## Where this leads
+
+Routing connected requests to applications; chapter 20 applies the same decoupling to storage by
+separating what an application requests from the real volume the cluster assigns.

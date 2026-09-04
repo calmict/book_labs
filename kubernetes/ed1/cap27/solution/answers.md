@@ -1,5 +1,11 @@
 # Chapter 27 — Answers (model solution)
 
+## The completed TODOs
+
+- TODO 1 enables automatic sidecar injection on the mesh namespace.
+- TODO 2 sets PeerAuthentication to STRICT.
+- TODO 3 assigns 80 percent to v1 and 20 percent to v2.
+
 ## Injection
 
     POD                       CONTAINERS
@@ -18,7 +24,7 @@
      5 v2
     (~80/20 over 30 requests)
 
-## The three questions
+## Reflection questions
 
 **a. The problem and the two planes (27.1-27.2): why is network logic in
 every app a problem, what changes with a sidecar, and what is the

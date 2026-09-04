@@ -13,6 +13,6 @@ spec:
       labels:
         app: watchman
     spec:
-      # TODO: one container named watchman, image alpine:3, sleep infinity
-      # (later, step 2 will ask you to add the control-plane toleration
-      # here — chapter 11 knows which one)
+      # TODO 1 (17.1): add one container named watchman, image alpine:3,
+      # sleeping forever, so the DaemonSet exposes its per-node contract.
+      # Later the scenario asks you to add the control-plane toleration.

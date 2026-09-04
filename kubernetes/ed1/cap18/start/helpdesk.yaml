@@ -26,5 +26,9 @@ kind: Service
 metadata:
   name: helpdesk
 spec:
-  # TODO: the switchboard — a selector matching the operators' label,
-  # and one port: 80 outside, towards 8080 inside (targetPort)
+  # TODO 1 (18.2): select app=helpdesk, so the Service follows the
+  # replaceable operators instead of one ephemeral Pod address.
+  # TODO 2 (18.2): expose Service port 80, so clients have one stable
+  # ClusterIP port while operators come and go.
+  # TODO 3 (18.2): route that port towards targetPort 8080, where the
+  # operators actually listen.

@@ -1,5 +1,11 @@
 # Chapter 17 — Answers (model solution)
 
+## The completed TODOs
+
+TODO 1 defines the watchman container. TODO 2 gives countdown the Never
+restart policy. TODO 3 schedules tick every minute. The completed
+manifests are in solution/.
+
 ## The watchmen
 
     before the toleration:  watchman on worker, watchman on worker2  (2/3)

@@ -9,9 +9,9 @@
 
 By the end of this lab you will be able to:
 
-- feel the problem Services solve: ephemeral Pods, IPs that change at every rebirth;
-- use a stable, balanced ClusterIP — then unmask it: it exists on no interface, it is an iptables trick (DNAT plus a netfilter coin, chapter 6 in full glory);
-- follow the chain that keeps the list fresh: EndpointSlice noticing every birth and death, and CoreDNS giving it all the only truly stable name.
+- observe the changing addresses of ephemeral Pods (§18.1);
+- use a ClusterIP and identify its dataplane implementation (§18.2–18.3);
+- follow EndpointSlice and stable CoreDNS resolution (§18.4–18.5).
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ By the end of this lab you will be able to:
 - The book-labs cluster running; node access via docker exec (kind, or minikube on the Docker driver).
 - The start/helpdesk.yaml manifest with the TODO on the Service.
 
-## Instructions
+## The scenario
 
 1. The problem. In start/helpdesk.yaml the Deployment is already given: two operators answering with their own name (busybox httpd serving the hostname). Apply and try calling them by IP:
 
@@ -85,3 +85,28 @@ By the end of this lab you will be able to:
 - [ ] You have the proof that the ClusterIP exists on no interface, plus the KUBE-SVC/KUBE-SEP rules with probability and DNAT.
 - [ ] You watched the EndpointSlices chase the scale, and DNS resolve the name to the ClusterIP.
 - [ ] answers.md answers the three questions and the lab is torn down.
+
+## How it is verified
+
+solution/run.sh checks the Pod IP change, ClusterIP balancing, the address's
+absence from interfaces, and its presence in dataplane rules. It also verifies
+EndpointSlice scaling and CoreDNS; as a countercheck, it deletes the Service and
+requires traffic to stop.
+
+## Reflection questions
+
+a. Reconstruct the packet journey and explain where DNAT occurs.
+
+b. How does backend selection change when a Pod dies or is not Ready?
+
+c. What does DNS resolve for a normal Service and for a headless one?
+
+## Cleanup
+
+The script deletes the book-labs-cap18 namespace and every resource in it. When
+working manually, delete helpdesk.yaml and the client Pod.
+
+## Where this leads
+
+A Service provides a stable address inside the cluster. Chapter 19 takes this
+idea to HTTP with Ingress and its controller.

@@ -9,9 +9,9 @@
 
 Al termine di questo laboratorio saprai:
 
-- leggere il DaemonSet come contratto geografico: nessun campo replicas — il numero lo decide il cluster, un guardiano per nodo (e la toleration del cap. 11 per coprire anche il control-plane);
-- incontrare il primo oggetto che vuole finire: il Job, con la differenza tra riavviare un container e riprovare un Pod (backoffLimit), e il fallimento onesto di un Job che non ce la fa;
-- vedere un CronJob timbrare il cartellino: la catena CronJob → Job → Pod, un minuto dopo l'apply.
+- leggere il DaemonSet come contratto geografico (§17.1);
+- distinguere completamento, riavvio e nuovi tentativi di un Job (§17.2);
+- seguire la catena CronJob → Job → Pod (§17.3).
 
 ## Prerequisiti
 
@@ -19,7 +19,7 @@ Al termine di questo laboratorio saprai:
 - **kind** e Docker: serve il cluster a 3 nodi (fornito start/kind-workers.yaml, nome book-labs-crew) — il DaemonSet senza più nodi non racconta niente. Occhio ai limiti inotify ([SETUP.md](../../SETUP.md)).
 - Tre manifest in start/ coi TODO: watchman.yaml, jobs.yaml, tick.yaml.
 
-## Consegna
+## Lo scenario
 
 1. Il cantiere. Crea il cluster a 3 nodi:
 
@@ -81,3 +81,30 @@ Al termine di questo laboratorio saprai:
 - [ ] Il primo timbro del CronJob: un Job tick-<timestamp> coi log della data.
 - [ ] answers.md risponde alle tre domande (tabella dei mestieri inclusa).
 - [ ] Il cluster book-labs-crew è stato cancellato.
+
+## Come viene verificato
+
+solution/run.sh crea un cluster kind dedicato, verifica i tre nodi, dimostra che
+il taint esclude il control-plane senza toleration e che la toleration completa
+la mappa. Controlla poi la rinascita sullo stesso nodo, i due esiti dei Job e la
+catena CronJob → Job → Pod.
+
+## Domande di riflessione
+
+a. Dove sta scritto quanti Pod crea un DaemonSet, e che cosa prova la rinascita
+sullo stesso nodo?
+
+b. Perché Always è vietato per un Job e come differiscono backoffLimit e un
+riavvio del container da parte del kubelet?
+
+c. Quale domanda distingue Deployment, StatefulSet, DaemonSet, Job e CronJob?
+
+## Pulizia
+
+Lo script distrugge il cluster dedicato book-labs-crew se lo ha creato; se lo ha
+trovato già esistente, elimina soltanto il namespace book-labs-cap17.
+
+## Dove porta
+
+Con il quadro dei workload completo, il Capitolo 18 introduce l'indirizzo stabile
+che permette ai client di raggiungerli mentre i Pod cambiano.

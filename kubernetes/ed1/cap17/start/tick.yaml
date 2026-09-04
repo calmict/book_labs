@@ -3,12 +3,13 @@ kind: CronJob
 metadata:
   name: tick
 spec:
-  # TODO: the schedule — every minute (five characters of cron syntax)
+  # TODO 3 (17.3): schedule this every minute, so you can observe the
+  # CronJob -> Job -> Pod delegation chain.
   jobTemplate:
     spec:
       template:
         spec:
-          # TODO: the restartPolicy (same rule as any Job)
+          restartPolicy: Never
           containers:
             - name: tick
               image: alpine:3

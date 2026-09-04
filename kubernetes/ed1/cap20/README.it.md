@@ -1,73 +1,75 @@
-# Cap. 20 — Il matrimonio combinato (PV, PVC, StorageClass)
+# Capitolo 20 — Il matrimonio combinato
 
-> Esercizio del **Capitolo 20 — Storage: PV, PVC, StorageClass e CSI** del
-> *Manuale di Kubernetes* (collana Calm ICT — [calmict.com](https://calmict.com)).
+**Livello:** Cloud Architect
 
-**Livello:** Intermedio
+Dopo aver instradato le richieste, assegni storage senza legare l'applicazione a un disco preciso:
+il PVC chiede, il PV offre e il binder combina il matrimonio.
 
 ## Obiettivi
 
-Al termine di questo laboratorio saprai:
-
-- combinare un matrimonio statico: un PV creato a mano, un PVC che lo chiede, il binding 1:1 — e la zitella che resta Pending quando i PV finiscono;
-- scatenare il provisioning dinamico: un PVC con la StorageClass e un PV che nasce dal nulla, firmato dal provisioner;
-- leggere le reclaim policy nei fatti: il PV dinamico che muore col suo claim (Delete) e quello manuale che resta vedovo ma custodisce la dote (Retain, stato Released).
+- Legare un PVC a un PV statico compatibile e osservare il vincolo uno-a-uno (20.1).
+- Innescare il provisioning dinamico tramite la StorageClass predefinita (20.2).
+- Confrontare nei fatti le reclaim policy Retain e Delete (20.3).
+- Riconoscere il provisioner come controller e collegarlo all'interfaccia CSI (20.4).
 
 ## Prerequisiti
 
-- Cap. 16 completato (i PVC li hai già incontrati dal lato StatefulSet).
-- Il cluster book-labs acceso; accesso al nodo con docker exec (per verificare la dote sul disco).
-- Tre manifest in start/: marriage.yaml (il PV e il writer sono dati, il PVC "bride" ha i TODO), spinster.yaml (dato) e dynamic.yaml (TODO sul claim).
+- Un cluster kind, oppure minikube col driver Docker, e un nodo raggiungibile con docker exec.
+- Una StorageClass predefinita funzionante.
+- Capitoli 10 e 16 completati per reconciliation loop e storage degli StatefulSet.
 
-## Consegna
+## Lo scenario
 
-1. Il matrimonio combinato. In start/marriage.yaml il PV "manual-pv" è dato (50Mi, hostPath, storageClassName manual, reclaim Retain — leggilo bene); completa il PVC "bride" (chiede 30Mi della classe manual) e applica:
+Completa i TODO 1..3 nei manifest di start/: la richiesta statica, quella dinamica e la policy che
+conserva i dati. Il test lavora nel namespace lab-cap20 e usa un hostPath sul nodo soltanto per rendere
+visibile la persistenza del PV statico.
 
-       kubectl apply -f marriage.yaml
-       kubectl get pv,pvc
+    cd kubernetes/ed1/cap20/solution
+    ./run.sh
 
-   bride è Bound a manual-pv: il claim ha trovato un volume che soddisfa richiesta, accessModes e classe. Nel file c'è anche un pod "writer" che monta la sposa e scrive la dote (/data/dote.txt): verifica che sia Running.
+### Fase 1 — Il matrimonio statico (20.1)
 
-2. La zitella. Applica il secondo claim, identico al primo:
+bride chiede 30Mi della classe manual e si lega al PV compatibile da 50Mi. spinster presenta la stessa
+richiesta dopo che il solo PV è occupato e resta Pending: il binding è esclusivo.
 
-       kubectl apply -f spinster.yaml
-       kubectl get pvc
+### Fase 2 — Il sensale automatico (20.2, 20.4)
 
-   Pending, per sempre: il binding è 1:1 e i PV della classe manual sono finiti. "PVC chiede, PV esiste" — e quando non esiste, si aspetta.
+cloud non nomina una classe: quella predefinita osserva il PVC e crea un nuovo PV quando tenant lo usa.
 
-3. Il sensale automatico. Completa start/dynamic.yaml: un PVC "cloud" da 30Mi SENZA storageClassName (userà la classe di default); nel file c'è anche un pod "tenant" che lo monta — serve davvero: guarda la colonna VOLUMEBINDINGMODE della classe. Applica e osserva:
+### Fase 3 — Due separazioni diverse (20.3)
 
-       kubectl apply -f dynamic.yaml
-       kubectl get pvc cloud
-       kubectl get pv
-       kubectl get storageclass
-
-   Un PV nuovo, nome pvc-<uid>, creato dal provisioner della StorageClass di default (su kind: rancher.io/local-path): nessun amministratore l'ha preparato — un controller (cap. 10, sempre lui) ha visto il claim e ha esaudito. E con WaitForFirstConsumer il sensale aspetta di sapere DOVE serve il volume prima di crearlo: senza il tenant, cloud resterebbe Pending. Confronta le colonne RECLAIM POLICY dei due PV: Retain il manuale, Delete il dinamico.
-
-4. Due morti diverse. Cancella i pod e tutti i claim, poi guarda i destini dei volumi:
-
-       kubectl delete pod writer tenant
-       kubectl delete pvc bride spinster cloud
-       kubectl get pv
-
-   Il PV dinamico è sparito (Delete: morto col suo claim). manual-pv invece è in stato Released: vedovo, non risposabile (il claimRef del defunto resta inciso), ma con la dote intatta. Verificala sul nodo:
-
-       NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
-       docker exec $NODE cat /tmp/manual-pv/dote.txt
-
-   La scrittura del writer è ancora lì: Retain ha mantenuto la promessa.
-
-5. Le domande per answers.md: (a) il matrimonio: con quali criteri il binder sposa un PVC a un PV, perché è 1:1, e cosa aspettava la zitella? (b) le reclaim policy nei fatti: racconta le due morti del passo 4 — quando vuoi Retain, qual è il rischio del default Delete, e cosa serve per rendere di nuovo Available un PV Released? (c) i tre contratti di estensione: CSI sta allo storage come CRI (cap. 5) sta al runtime e CNI (cap. 6) alla rete — perché Kubernetes definisce interfacce invece di implementazioni, e dove hai visto all'opera il pattern provisioner-come-controller?
-
-6. Smonta il laboratorio (il PV Released va rimosso a mano — ora sai perché):
-
-       kubectl delete pv manual-pv
-       docker exec $NODE rm -rf /tmp/manual-pv
+Eliminando i claim, Delete rimuove il volume dinamico; Retain lascia manual-pv Released e conserva il
+file scritto dal Pod.
 
 ## Criteri di "fatto"
 
-- [ ] bride Bound a manual-pv, writer Running, spinster Pending per sempre.
-- [ ] cloud Bound a un PV pvc-<uid> nato dal provisioner, con RECLAIM POLICY Delete contro il Retain del manuale.
-- [ ] Dopo la strage dei claim: PV dinamico sparito, manual-pv Released, e la dote ancora leggibile sul nodo.
-- [ ] answers.md risponde alle tre domande.
-- [ ] PV Released e cartella sul nodo rimossi a mano.
+- [ ] I tre TODO sono completati e i manifest descrivono entrambe le forme di provisioning.
+- [ ] spinster resta Pending mentre bride occupa il PV statico.
+- [ ] run.sh stampa OK 1..6 e ALL CHECKS PASSED.
+
+## Come viene verificato
+
+- OK 1 verifica il binding statico compatibile.
+- OK 2 è il cancello che morde: il secondo claim resta Pending senza un altro PV.
+- OK 3 verifica il PV creato dalla StorageClass predefinita.
+- OK 4 confronta le policy Delete e Retain.
+- OK 5 verifica la scomparsa del PV dinamico.
+- OK 6 verifica lo stato Released e i dati conservati dal PV statico.
+
+## Domande di riflessione
+
+**a.** Su quali criteri il binder abbina PVC e PV, perché il legame è uno-a-uno e cosa attende spinster?
+
+**b.** Quando conviene Retain, qual è il rischio di Delete e come si rende riutilizzabile un PV Released?
+
+**c.** Perché CSI, CRI e CNI sono interfacce? Dove compare il pattern del controller nel provisioner?
+
+## Pulizia
+
+run.sh elimina il namespace lab-cap20, entrambi i PV e la directory hostPath creata nel nodo. Non
+modifica la StorageClass né la configurazione del cluster.
+
+## Dove porta
+
+Hai separato richiesta e implementazione nello storage. Il capitolo 21 applica lo stesso principio
+all'identità e ai permessi: autenticare qualcuno non significa ancora autorizzarlo.

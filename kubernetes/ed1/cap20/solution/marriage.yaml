@@ -19,6 +19,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: bride
+  namespace: lab-cap20
 spec:
   storageClassName: manual
   accessModes: ["ReadWriteOnce"]
@@ -30,6 +31,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: writer
+  namespace: lab-cap20
 spec:
   volumes:
     - name: data

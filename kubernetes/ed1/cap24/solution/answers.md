@@ -1,5 +1,11 @@
 # Chapter 24 — Answers (model solution)
 
+## The completed TODOs
+
+- TODO 1 derives object names, labels, selectors, and references from .Release.Name.
+- TODO 2 reads replicaCount and message from .Values.
+- TODO 3 hashes the rendered ConfigMap into the Pod template annotation checksum/config.
+
 ## The mould renders
 
     kind: ConfigMap
@@ -60,13 +66,13 @@ release namespace — you saw sh.helm.release.v1.greeter.v1, .v2, .v3; that
 is the release state and history, which is why rollback can reconstruct an
 old cast precisely. The ConfigMap trap: a Deployment only rolls its pods
 when its POD TEMPLATE changes. Editing a mounted ConfigMap changes the
-ConfigMap object, not the pod template, so the running pods keep the old
-content (the projected volume updates lazily, but nothing forces a
-restart). The checksum/config annotation puts a sha256 of the ConfigMap
+ConfigMap object, not the pod template, so no rollout occurs; the projected
+volume may update later on kubelet's synchronization schedule. The
+checksum/config annotation puts a sha256 of the ConfigMap
 INTO the pod template's annotations: change the config and the hash
 changes, so the pod template changes, so the Deployment rolls the pods and
-they pick up the new content immediately — which is why our upgrade and
-rollback flipped the served message deterministically.
+they pick up the new content through a deterministic rollout — which is why
+our upgrade and rollback flipped the served message immediately.
 
 **c. Helm in practice (24.4): what is a chart repository, why is
 installing an addon the same helm install with someone else's mould, and

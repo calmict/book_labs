@@ -1,0 +1,9 @@
+# Select every pod for Ingress and grant no incoming traffic.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+  namespace: vault
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress"]

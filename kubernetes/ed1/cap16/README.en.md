@@ -9,16 +9,16 @@
 
 By the end of this lab you will be able to:
 
-- feel the difference between fungible Pods and Pods with an identity: the crowd is reborn with random names, diary-1 is reborn as diary-1;
-- observe the strict ordering (0 → 1 → 2 going up, reverse going down) and the predictable DNS via a headless Service;
-- prove that with volumeClaimTemplates each replica gets its OWN disk, and that the disk outlives the Pod — and even the deletion of the whole StatefulSet.
+- distinguish fungible Pods from stable identities (§16.1);
+- observe ordinals, ordering, and predictable DNS through a headless Service (§16.2);
+- verify one personal disk per replica and its lifecycle (§16.3).
 
 ## Prerequisites
 
 - Chapter 15 completed; the book-labs cluster running (the default StorageClass of kind/minikube is plenty).
 - The starting manifest start/diary.yaml with TODOs (serviceName, volumeClaimTemplates, mount).
 
-## Instructions
+## The scenario
 
 1. The crowd, for contrast. Create any Deployment and look at the names:
 
@@ -81,3 +81,30 @@ By the end of this lab you will be able to:
 - [ ] You saw the 3 personal PVCs, still alive after the StatefulSet's deletion, and the full diary after the recreation.
 - [ ] The nslookup of the stable name resolves from inside.
 - [ ] answers.md answers the three questions and the cleanup includes the PVCs.
+
+## How it is verified
+
+solution/run.sh checks the Deployment replacement's changed name, StatefulSet
+ordinals, diary-1 returning with earlier data, the three PVCs, their survival
+after controller deletion, and member DNS. As a countercheck, it removes the
+headless Service and requires that member name resolution stop working.
+
+## Reflection questions
+
+a. Why can a database not entrust identity and disks to a Deployment?
+
+b. Why do the 0→1→2 order and reverse descent help a quorum system?
+
+c. Why do PVCs outlive the StatefulSet, what risks follow, and how are they
+actually removed?
+
+## Cleanup
+
+The script deletes the book-labs-cap16 namespace, including workloads, Service,
+and PVCs. When working manually, explicitly delete the three PVCs after the
+StatefulSet.
+
+## Where this leads
+
+Identity and persistence complete the StatefulSet. Chapter 17 changes workload
+shape: one per node, until completion, and on schedule.
