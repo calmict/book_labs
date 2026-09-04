@@ -1,80 +1,65 @@
-# Cap. 2 — Un container a mano, senza Docker
-
-> Esercizio del **Capitolo 2 — Linux Namespaces: l'arte dell'illusione** del
-> *Manuale di Kubernetes* (collana Calm ICT — [calmict.com](https://calmict.com)).
+# Capitolo 2 — Un container a mano, senza Docker
 
 **Livello:** Fondamentale
 
+Dopo le due viste del capitolo 1, costruisci tu l'illusione usando soltanto gli strumenti del kernel Linux.
+
 ## Obiettivi
 
-Al termine di questo laboratorio saprai:
-
-- costruire un "container" funzionante usando solo strumenti Linux di base (unshare, chroot), senza alcun container runtime;
-- riconoscere i namespace come il vero ingrediente dell'illusione: PID 1, hostname privato, rete isolata;
-- leggere e confrontare i file di /proc/[pid]/ns per dimostrare, inode alla mano, che due processi vivono in namespace diversi.
+- Creare namespace PID, mount, UTS, IPC, NET e USER con unshare (2.2, 2.3).
+- Ottenere PID 1, hostname privato e rete isolata (2.2, 2.4).
+- Confrontare gli inode esposti da /proc/[pid]/ns (2.5).
 
 ## Prerequisiti
 
-- Aver completato il cap. 1 (il concetto di "stesso processo, due viste").
-- Un host Linux con privilegi sudo; servono unshare (pacchetto util-linux) e wget o curl.
-- Circa 10 MB di spazio disco per il mini-rootfs.
-- Nota: a differenza del cap. 1, questo esercizio funziona anche su WSL2 senza accorgimenti — qui non serve alcun demone, si parla direttamente col kernel.
+- Linux con unshare, sh e permesso di creare user namespace non privilegiati.
+- Capitolo 1 completato. Non servono sudo, Docker o un cluster Kubernetes.
 
-> 💡 **Niente sudo?** Puoi fare tutto anche da utente normale: togli sudo dal
-> passo 2 e aggiungi le opzioni --user --map-root-user subito dopo unshare.
-> È lo USER namespace del §2.2.6 in azione: ti dà un "root finto" valido solo
-> dentro il container, ed è lo stesso meccanismo dei container rootless di
-> Podman.
+## Lo scenario
 
-## Consegna
+In start/ trovi handmade.sh: scarica un mini-rootfs Alpine e apre soltanto un USER namespace. Completa tre lacune perché unshare e chroot lo trasformino in un piccolo container rootless.
 
-1. Prepara la cartella di lavoro e scarica il mini-rootfs Alpine (una qualsiasi versione recente va bene; qui ne fissiamo una per riproducibilità):
+    cd kubernetes/ed1/cap02/start
 
-       mkdir -p ~/lab-cap02/rootfs && cd ~/lab-cap02
-       wget https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-minirootfs-3.24.1-x86_64.tar.gz
-       tar -xzf alpine-minirootfs-*.tar.gz -C rootfs
+### Fase 1 — Le pareti (2.2, 2.3 — TODO 1)
 
-2. Crea il container a mano: nuovi namespace PID, mount, UTS, IPC e di rete, e radice del filesystem dentro rootfs:
+Aggiungi i namespace PID, mount, UTS, IPC e NET e rimonta /proc nella nuova vista.
 
-       sudo unshare --pid --fork --mount --uts --ipc --net chroot rootfs /bin/sh
+### Fase 2 — Le prove interne (2.2, 2.4, 2.5 — TODO 2)
 
-   Ti ritrovi in una shell "dentro" il container. Lasciala aperta: i prossimi passi si fanno da qui e da un secondo terminale sull'host.
+Imposta l'hostname e registra PID, interfacce e inode dei namespace dall'interno.
 
-3. Dentro il container, sistema il PATH (la chroot eredita quello dell'host, che potrebbe non includere le cartelle giuste di Alpine), monta /proc e guarda l'albero dei processi:
+### Fase 3 — Il confronto (2.5 — TODO 3)
 
-       export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-       mount -t proc proc /proc
-       ps aux
+Registra gli stessi inode e l'hostname dall'host, quindi esegui:
 
-   Annota cosa vedi: quanti processi ci sono, e che PID ha la tua shell?
-
-4. Sempre dentro, cambia l'hostname e verifica l'isolamento UTS e di rete:
-
-       hostname container-a-mano && hostname
-       ip addr
-
-   Dal secondo terminale sull'host verifica che l'hostname dell'host NON sia cambiato, e confronta ip addr: dentro c'è solo una loopback spenta, fuori la tua rete vera.
-
-5. Ora dimostra, inode alla mano, che i due mondi vivono in namespace diversi (è il §2.5 del manuale reso tangibile). Dentro il container, dove la tua shell è il PID 1:
-
-       for ns in pid uts net user; do echo "$ns: $(readlink /proc/$$/ns/$ns)"; done
-
-   E dal secondo terminale sull'host, lo stesso identico comando:
-
-       for ns in pid uts net user; do echo "$ns: $(readlink /proc/$$/ns/$ns)"; done
-
-   Stesso comando, due risposte diverse: confronta i numeri di inode tra le due serie. Quali sono diversi? Ce n'è qualcuno uguale?
-
-6. Rispondi per iscritto nel file answers.md che consegnerai: in cosa il tuo comando unshare è concettualmente equivalente al docker run del cap. 1? Cosa NON hai ottenuto rispetto a un vero container (immagini e layer, limiti di risorse, sicurezza)? Perché serve l'opzione --fork insieme a --pid?
-
-7. Smonta il laboratorio: esci dalla shell del container (exit) e rimuovi la cartella:
-
-       rm -rf ~/lab-cap02
+    cd ../solution
+    ./run.sh
 
 ## Criteri di "fatto"
 
-- [ ] Dentro il container ps aux mostra la tua shell come PID 1 e un elenco processi quasi vuoto.
-- [ ] L'hostname dentro è "container-a-mano" e quello dell'host è rimasto intatto.
-- [ ] Hai il confronto degli inode di /proc/[pid]/ns: pid, uts e net diversi tra container e host. E hai notato il caso di user: uguale nella variante sudo (non l'abbiamo isolato), diverso nella variante rootless (è il namespace che rende possibili tutti gli altri senza root).
-- [ ] Il file answers.md risponde alle tre domande del passo 6.
-- [ ] La cartella di laboratorio è stata rimossa.
+- La shell è PID 1, l'hostname è privato e la rete mostra solo loopback.
+- Gli inode pid, uts, net e user differiscono da quelli dell'host.
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
+
+## Come viene verificato
+
+- OK 1 verifica PID 1; OK 2 l'isolamento UTS; OK 3 la rete privata.
+- OK 4 confronta gli inode dei quattro namespace.
+- OK 5 rimuove il PID namespace e dimostra che la shell non è più PID 1.
+
+## Domande di riflessione
+
+**a.** In che senso unshare svolge il lavoro concettuale di docker run?
+
+**b.** Che cosa offre chroot, e che cosa manca ancora rispetto a un runtime completo?
+
+**c.** Perché --fork è necessario insieme a --pid?
+
+## Pulizia
+
+I processi terminano con lo script; run.sh elimina la cartella temporanea.
+
+## Dove porta
+
+Il capitolo 3 aggiunge ai confini di visibilità i limiti di consumo dei cgroup.

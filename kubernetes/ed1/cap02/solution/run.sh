@@ -1,64 +1,34 @@
 #!/usr/bin/env bash
+# cap02 - builds a rootless container from Linux namespaces alone and verifies
+# PID 1, private hostname, isolated network and namespace inodes. The contrast
+# run drops the namespace flags. No runtime, downloaded rootfs or sudo is used.
 set -euo pipefail
 
-# Chapter 2 solution — a container by hand, without Docker.
-# Run as a normal user for the rootless variant (user namespace), or with
-# sudo for the classic variant described in the brief.
-
-ALPINE_URL=https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-minirootfs-3.24.1-x86_64.tar.gz
-
-WORKDIR=$(mktemp -d "${TMPDIR:-/tmp}/lab-cap02.XXXXXX")
-cleanup() { rm -rf "$WORKDIR"; }
+HERE=$(cd "$(dirname "$0")" && pwd)
+WORK=$(mktemp -d)
+cleanup() { rm -rf "$WORK"; }
 trap cleanup EXIT
+value() { grep "^$2=" "$1" | cut -d= -f2-; }
 
-ROOTFS=$WORKDIR/rootfs
-mkdir -p "$ROOTFS"
+"$HERE/handmade.sh" "$WORK"
+inside_pid=$(value "$WORK/inside.txt" inside_pid)
+inside_name=$(value "$WORK/inside.txt" inside_hostname)
+host_name=$(value "$WORK/host.txt" host_hostname)
+interfaces=$(value "$WORK/inside.txt" inside_interfaces)
 
-echo "== Downloading the Alpine mini rootfs =="
-if command -v curl >/dev/null 2>&1; then
-  curl -fsSo "$WORKDIR/rootfs.tar.gz" "$ALPINE_URL"
-else
-  wget -qO "$WORKDIR/rootfs.tar.gz" "$ALPINE_URL"
-fi
-tar -xzf "$WORKDIR/rootfs.tar.gz" -C "$ROOTFS"
-
-NSFLAGS=(--pid --fork --mount --uts --ipc --net)
-if [ "$(id -u)" -ne 0 ]; then
-  # Not root: the user namespace makes all the others possible (rootless).
-  NSFLAGS=(--user --map-root-user "${NSFLAGS[@]}")
-  echo "(running rootless: added --user --map-root-user)"
-fi
-
-echo
-echo "== View from inside the hand-made container =="
-# shellcheck disable=SC2016  # the $ expressions must expand in the inner shell
-unshare "${NSFLAGS[@]}" chroot "$ROOTFS" /bin/sh -c '
-  export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-  mount -t proc proc /proc
-  hostname hand-made-container
-  echo "--- id ---"
-  id
-  echo "--- hostname ---"
-  hostname
-  echo "--- ps aux ---"
-  ps aux
-  echo "--- ip addr ---"
-  ip addr
-  echo "--- namespaces of the container shell (my PID here is $$) ---"
-  for ns in pid uts net user; do
-    echo "$ns: $(readlink /proc/$$/ns/$ns)"
-  done
-'
-
-echo
-echo "== View from the host =="
-echo "--- hostname ---"
-hostname
-echo "--- namespaces of the host shell ---"
+[ "$inside_pid" = 1 ] || { echo "UNEXPECTED: isolated shell has PID $inside_pid" >&2; exit 1; }
+echo "OK 1 - the hand-made container starts with its shell as PID 1"
+if [ "$inside_name" != hand-made-container ] || [ "$host_name" = hand-made-container ]; then echo "UNEXPECTED: hostname isolation failed" >&2; exit 1; fi
+echo "OK 2 - the UTS namespace keeps the host hostname unchanged"
+[ "$interfaces" = lo, ] || { echo "UNEXPECTED: isolated network contains $interfaces" >&2; exit 1; }
+echo "OK 3 - the network namespace contains only its private loopback interface"
 for ns in pid uts net user; do
-  echo "$ns: $(readlink "/proc/$$/ns/$ns")"
+  [ "$(value "$WORK/host.txt" "host_${ns}ns")" != "$(value "$WORK/inside.txt" "inside_${ns}ns")" ] || { echo "UNEXPECTED: $ns namespace inode did not change" >&2; exit 1; }
 done
+echo "OK 4 - pid, uts, net and user namespace inodes differ from the host"
+
+plain_pid=$(unshare --user --map-root-user --fork sh -c 'echo $$')
+[ "$plain_pid" -gt 1 ] || { echo "UNEXPECTED: shell without PID isolation is PID 1" >&2; exit 1; }
+echo "OK 5 - the gate bites: dropping PID isolation removes the PID 1 view"
 echo
-echo "Compare the inode numbers in brackets: pid, uts and net always differ."
-echo "user differs only in the rootless variant, where it is the namespace"
-echo "that grants the privileges to create all the others."
+echo "ALL CHECKS PASSED"

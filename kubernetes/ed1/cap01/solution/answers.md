@@ -1,33 +1,21 @@
-# Chapter 1 — Answers (model solution)
+# Chapter 1 - A container is just a process - answers
 
-## PID as seen from the host
+## The completed TODOs
 
-        PID    PPID CMD
-    1346733 1346711 sleep infinity
+TODO 1 (1.2) obtains the host PID:
 
-## PID as seen from inside the container
+    HOST_PID=$(docker inspect --format '{{.State.Pid}}' "$CONTAINER")
 
-    PID   USER     TIME  COMMAND
-        1 root      0:00 sleep infinity
-        7 root      0:00 ps aux
+TODO 2 (1.2) writes the host PID, hostname and process count to host.txt.
 
-## Hostname: host vs container
+TODO 3 (1.3) runs the equivalent observations with docker exec and writes them to inside.txt.
 
-    host:      myworkstation
-    container: d2f8d3f7324f
+The complete implementation is solution/observe.sh.
 
-(the exact values — host PID, host hostname, container ID — change on every
-run: what matters is the relationship between the two views, not the numbers
-themselves)
+## Reflection answers
 
-## Why does the same process have two different PIDs?
+a. A PID is a name inside a PID namespace. The host and container use different names for the same kernel process.
 
-They are not two processes: it is the exact same Linux process, seen through
-two different windows onto the same process table of the host kernel. A
-container does not virtualize a separate computer with its own kernel: it
-takes a real process of the host kernel and, through the PID namespace, shows
-it a private view in which that process believes it is the only one (PID 1).
-From outside the namespace (the host) the same process has the real PID
-assigned by the kernel. This is the difference between "isolating what a
-process can see" and "duplicating the hardware": a VM would have a truly
-separate kernel and process table, a container does not.
+b. The UTS and PID namespaces restrict the hostname and process-table views. They do not boot or duplicate a kernel.
+
+c. Host PID mode removes the private process-numbering view. The process keeps its host-style PID, proving that PID 1 came from isolation rather than from a separate machine.

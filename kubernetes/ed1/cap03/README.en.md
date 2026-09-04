@@ -1,116 +1,75 @@
-# Chapter 3 — Limiting CPU and RAM by Hand
-
-> Exercise for **Chapter 3 — Cgroups: The Resource Accountant** of the
-> *Kubernetes Manual* (Calm ICT series — [calmict.com](https://calmict.com)).
+# Chapter 3 — Limiting CPU and RAM by hand
 
 **Level:** Foundational
 
+Namespaces decide what a process sees; now you directly observe the counters that decide how much it may consume.
+
 ## Objectives
 
-By the end of this lab you will be able to:
-
-- create a cgroup v2 by hand and read/write its control files, with no runtime involved;
-- cage a running process and watch the two opposite fates: CPU gets slowed down (throttling), memory kills (OOM kill);
-- connect cpu.max and memory.max to what Kubernetes calls requests/limits, and understand where the OOMKilled status comes from.
+- Create a cgroup v2 and read its available controllers (3.1, 3.2).
+- Observe the different outcomes of CPU and memory limits: throttling and an OOM kill (3.3).
+- Verify the process limit and connect the controllers to Kubernetes limits (3.3, 3.4).
 
 ## Prerequisites
 
-- Chapter 2 completed (namespaces: what a process sees; here: how much it consumes).
-- A Linux host with cgroup v2 (any modern distro) and sudo privileges.
+- Linux with cgroup v2 and a systemd user session that delegates the memory and pids controllers.
+- systemd-run and Python 3. No root privileges and no Kubernetes cluster.
+- Trying cpu.max personally requires a disposable Linux environment with the cpu controller available; run.sh reports the step without attempting it when cpu is not delegated.
+- Chapter 2 completed.
 
-> ⚠️ **WSL2 note:** if step 1 does not report cgroup2fs, your WSL still mounts
-> the hybrid v1 hierarchy: add the lines [wsl2] and
-> kernelCommandLine = cgroup_no_v1=all to your %UserProfile%\\.wslconfig file,
-> then run wsl --shutdown and try again.
+## The scenario
 
-> 💡 **No sudo?** systemd delegates only the memory and pids controllers to
-> your user (check with: cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.controllers).
-> So you can do the memory part without root, like this:
->
->     systemd-run --user --scope -p MemoryMax=64M -p MemorySwapMax=0 -- sh -c 'sleep 30; head -c 200M /dev/zero | tail'
->
-> During the 30-second pause, from a second terminal find the scope's cgroup
-> (systemd-cgls --user) and read its memory.max and memory.current by hand;
-> then watch the kill. The CPU part does require root: the cpu controller is
-> not delegated. And do not try to move your shell's PID into the delegated
-> cgroup by hand: the cgroup v2 "common ancestor" rule will stop you — that
-> is exactly why systemd-run is the way in here.
+The start/ directory contains cage.sh, a valid but incomplete script. Its three gaps create and inspect a delegated cgroup, impose a memory ceiling, and limit processes.
 
-## Instructions
+    cd kubernetes/ed1/cap03/start
 
-1. Verify you are on cgroup v2 and look at which controllers exist:
+### Phase 1 — The cage and its controllers (3.1, 3.2 — TODO 1)
 
-       stat -fc %T /sys/fs/cgroup
-       cat /sys/fs/cgroup/cgroup.controllers
+The lab-cap03 directory is a real cgroup. Read cgroup.controllers and verify that memory and pids are available in the user subtree.
 
-   Expected: cgroup2fs, and a list that includes cpu and memory.
+### Phase 2 — CPU time (3.3)
 
-2. Create your cage and check which controllers it inherited:
+The lesson's limit remains cpu.max set to 20000 100000, or 20 percent of one core. The cpu controller is not delegated to this machine's user session: run.sh keeps this step as the sole SKIP and reports the measurement that shows why it would not be a valid test.
 
-       sudo mkdir /sys/fs/cgroup/lab-cap03
-       cat /sys/fs/cgroup/lab-cap03/cgroup.controllers
+### Phase 3 — The memory ceiling (3.3 — TODO 2)
 
-3. **CPU slows down.** Start a process that devours a full core and measure it
-   while free:
+Use a user scope with MemoryMax=20M and MemorySwapMax=0 to run a process that attempts to allocate 200 MiB. It must die with exit 137. Repeat without the limit: the ALLOCATED output is the counter-test that makes the gate bite.
 
-       sh -c 'while :; do :; done' &
-       ps -o pid,%cpu,cmd -p $!
+### Phase 4 — The fork bouncer (3.3 — TODO 3)
 
-   Wait a few seconds and run the ps again: it should head towards 100%.
-   Now impose 20% of one core and move the process into the cage (use the PID
-   printed by $!):
+Use TasksMax=3 and start more processes than the scope can accept. Bash must report Resource temporarily unavailable.
 
-       echo "20000 100000" | sudo tee /sys/fs/cgroup/lab-cap03/cpu.max
-       echo <PID> | sudo tee /sys/fs/cgroup/lab-cap03/cgroup.procs
+Then run the complete check:
 
-   Observe the consumption again after ten seconds or so — use
-   top -b -n1 -p <PID> here, which is instantaneous, because ps shows the
-   average since start — and read the punishment counter:
+    cd ../solution
+    bash run.sh
 
-       grep -E 'nr_throttled|throttled_usec' /sys/fs/cgroup/lab-cap03/cpu.stat
+## "Done" criteria
 
-   The process is not dead: it is just slower. Write down the values.
+- The delegated cgroup is created and exposes memory and pids.
+- The limited process dies with exit 137, while the same unrestricted allocation succeeds.
+- TasksMax genuinely rejects a fork beyond the limit.
+- run.sh prints OK 1, SKIP 2, OK 3, OK 4, and ALL CHECKS PASSED.
 
-4. **Memory kills.** Impose a 64M ceiling (and no swap escape), then launch a
-   glutton that would like 200M, already inside the cage:
+## How it is verified
 
-       echo 64M | sudo tee /sys/fs/cgroup/lab-cap03/memory.max
-       echo 0 | sudo tee /sys/fs/cgroup/lab-cap03/memory.swap.max
-       sudo sh -c 'echo $$ > /sys/fs/cgroup/lab-cap03/cgroup.procs; head -c 200M /dev/zero | tail'
+- OK 1 creates the cgroup and reads the controllers that are actually delegated.
+- SKIP 2 documents why CPU throttling cannot be verified in the user slice and includes the supporting measurement.
+- OK 3 contrasts death under MemoryMax with successful allocation without the limit.
+- OK 4 checks the fork error produced by TasksMax=3.
 
-   Expected: "Killed" within a second. Collect the evidence of the murder:
+## Reflection questions
 
-       cat /sys/fs/cgroup/lab-cap03/memory.events
-       cat /sys/fs/cgroup/lab-cap03/memory.peak
-       sudo dmesg | tail -5
+**a.** Why does CPU slow down while memory can kill?
 
-5. **(Bonus) The fork bouncer.** With pids.max at 5, a fork bomb becomes
-   harmless:
+**b.** How do cpu.max and memory.max become a Pod's limits?
 
-       echo 5 | sudo tee /sys/fs/cgroup/lab-cap03/pids.max
-       sudo sh -c 'echo $$ > /sys/fs/cgroup/lab-cap03/cgroup.procs; for i in 1 2 3 4 5 6 7 8; do sleep 30 & done'
+**c.** What do nr_throttled, oom_kill, and pids.max reveal during troubleshooting?
 
-   Count how many fork errors you get and check pids.events.
+## Cleanup
 
-6. Answer in writing, in the answers.md file you will submit: why does the CPU
-   limit slow down without killing, while the memory limit kills (compressible
-   vs incompressible resource)? What do cpu.max and memory.max correspond to
-   in the Kubernetes world, and where does a Pod's OOMKilled status come from?
-   What do nr_throttled and oom_kill tell whoever is troubleshooting?
+run.sh uses automatically collected scopes and removes the lab-cap03 cgroup created in the user subtree. It leaves no laboratory process or cgroup behind.
 
-7. Tear down the lab: kill the loop from step 3 (kill <PID>), let the sleeps
-   from step 5 finish, then:
+## Where it leads
 
-       sudo rmdir /sys/fs/cgroup/lab-cap03
-
-   (rmdir only works on an empty cage: if it complains, someone is still
-   inside — find out who with cat /sys/fs/cgroup/lab-cap03/cgroup.procs.)
-
-## Definition of "done"
-
-- [ ] You saw the same loop first close to 100% of a core and then pinned at
-      20%, with nr_throttled growing in cpu.stat.
-- [ ] The glutton process was killed (Killed / exit 137) and memory.events
-      records oom_kill 1, with memory.peak stopped just above 64M.
-- [ ] Your answers.md file answers the three questions of step 6.
-- [ ] The cage was removed with rmdir and no lab processes are left around.
+Chapter 4 combines namespaces and cgroups in the runtime Kubernetes uses to execute containers.

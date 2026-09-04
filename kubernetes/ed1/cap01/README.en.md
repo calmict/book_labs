@@ -1,64 +1,67 @@
-# Chapter 1 — A Container Is Just a Process (See It for Yourself)
-
-> Exercise for **Chapter 1 — The Problem Containers Solve** of the
-> *Kubernetes Manual* (Calm ICT series — [calmict.com](https://calmict.com)).
+# Chapter 1 — A container is just a process
 
 **Level:** Foundational
 
+The journey starts below Kubernetes: you observe a real process through the two views that make a container look like a separate machine.
+
 ## Objectives
 
-By the end of this lab you will be able to:
-- distinguish what a container actually isolates compared to a virtual machine;
-- observe a "containerized" process simultaneously from the host and from inside the container, to see firsthand that it is the same Linux process viewed from two different angles;
-- connect this hands-on observation to the chapter's theoretical concept: process isolation vs hardware virtualization.
+- Observe the same process from the host and the container (1.2).
+- Compare its PID, hostname and process list (1.2, 1.3).
+- Distinguish process isolation from hardware virtualisation (1.3).
 
 ## Prerequisites
 
-- A Linux host (native or VM) with terminal access.
-- Docker or Podman installed and working (try "docker run hello-world" or equivalent).
+- Linux with a working Docker installation and daemon access.
+- With Docker Desktop, run the lab in the daemon's Linux host: its PID does not belong to the WSL distribution.
+- No Kubernetes cluster.
 
-> ⚠️ **Note for WSL2 / Docker Desktop:** with Docker Desktop the daemon runs in a
-> separate VM, so in step 3 the PID returned by docker inspect does **not
-> exist** in your WSL distro and the ps command of step 3 will fail. On WSL2 use
-> **Podman** (which runs inside your distro), or run the step 3 commands inside
-> the docker-desktop distro.
-- No Kubernetes cluster required: this chapter works below Kubernetes, not inside it.
-- Basic command-line familiarity (ps, grep).
+## The scenario
 
-## Instructions
+The start/ directory contains observe.sh, a valid but incomplete script. Fill three gaps to record both views of the same process.
 
-1. On the host, start a long-running container:
+    cd kubernetes/ed1/cap01/start
 
-       docker run -d --name lab-cap01 alpine:3 sleep infinity
+### Phase 1 — The host PID (1.2 — TODO 1)
 
-   (or the equivalent command to start a "sleep infinity" process inside a container).
+Use docker inspect to obtain the PID assigned by the kernel to the sleep process.
 
-2. From the host, find the PID of the sleep process as the kernel sees it:
+### Phase 2 — The outside view (1.2 — TODO 2)
 
-       docker inspect --format '{{.State.Pid}}' lab-cap01
+Write the PID, hostname and process count seen from the host to host.txt.
 
-3. Inspect that PID directly from the host, without going through docker exec:
+### Phase 3 — The inside view (1.3 — TODO 3)
 
-       ps -p <PID> -o pid,ppid,cmd
-       cat /proc/<PID>/status | head -5
+Use docker exec to record the same data in inside.txt, then run the check:
 
-4. Now enter the container and look at the very same process from its own point of view:
+    cd ../solution
+    ./run.sh
 
-       docker exec lab-cap01 ps aux
+## "Done" criteria
 
-   Note the PID the process sees for itself from inside.
+- The process has an ordinary host PID and PID 1 in the container.
+- The hostname and process list show isolated views.
+- run.sh prints OK 1..4 and ALL CHECKS PASSED.
 
-5. Compare the two PID numbers (host vs container) and write down your answer in an answers.md file to submit: why are they different even though it's the exact same process? What does this tell you about "isolation" as opposed to "virtualization"?
+## How it is verified
 
-6. Repeat the comparison for the hostname (run hostname on the host, then "docker exec lab-cap01 hostname") and the full process list (ps aux on the host and inside the container).
+- OK 1 compares both PIDs of the same process.
+- OK 2 checks the private hostname.
+- OK 3 checks the restricted process list.
+- OK 4 proves the contrast: with host PID mode the process is not PID 1.
 
-7. Stop and remove the lab container:
+## Reflection questions
 
-       docker rm -f lab-cap01
+**a.** How can two PIDs identify the same process?
 
-## Definition of "done"
+**b.** What do the hostname and process list isolate without creating a new kernel?
 
-- [ ] You have the process's PID as it appears on the host and as it appears inside the container, and they are different numbers.
-- [ ] Your answers.md file contains an explanation (even a brief one, 4-6 lines) of why the same process has two different PIDs, connecting it to the idea of "a Linux process seen through a different window" rather than "a separate machine".
-- [ ] You verified that the hostname seen from inside the container differs from the host's.
-- [ ] The lab container has been removed at the end of the exercise.
+**c.** What does the contrast with host PID mode prove?
+
+## Cleanup
+
+run.sh removes both containers and the temporary directory even after an error.
+
+## Where it leads
+
+Chapter 2 rebuilds these views directly with Linux namespaces, without a runtime.
