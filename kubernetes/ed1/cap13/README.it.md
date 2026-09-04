@@ -19,7 +19,7 @@ Al termine di questo laboratorio saprai:
 - Il cluster book-labs acceso; accesso al nodo con docker exec (kind, o minikube su driver Docker).
 - Il manifest di partenza start/relay.yaml ha i TODO da completare (da questo capitolo si sale di livello: più YAML scritto da te).
 
-## Consegna
+## Lo scenario
 
 1. Accendi la scatola nera. In un terminale, registra tutto ciò che accade:
 
@@ -80,3 +80,21 @@ Al termine di questo laboratorio saprai:
 - [ ] Hai trovato il PID sul nodo e il suo cgroup kubepods con la QoS class nel percorso.
 - [ ] Hai osservato entrambe le guarigioni: RESTARTS a 1 dopo il kill -9, nome nuovo dopo il delete.
 - [ ] answers.md risponde alle tre domande e il Deployment è stato rimosso.
+
+## Come viene verificato
+
+solution/run.sh controlla le quattro firme negli eventi, la catena di proprietà, il processo Linux e i due distinti meccanismi di guarigione. La cancellazione del Pod è il controllo negativo: il nome deve cambiare, mentre il kill del processo deve lasciare invariato il Pod e aumentare i riavvii.
+
+## Domande di riflessione
+
+1. Qual è l'ordine logico delle quattro firme, anche quando i timestamp coincidono?
+2. Perché kill del processo e cancellazione del Pod attivano due guarigioni diverse?
+3. A cosa servono gli ownerReferences e cosa accade cancellando il ReplicaSet?
+
+## Pulizia
+
+Lo script elimina il namespace book-lab-cap13 anche in caso di errore.
+
+## Dove porta
+
+La discesa dal Deployment al processo prepara il Capitolo 14, dove il Pod e i suoi namespace condivisi diventano l'oggetto principale.

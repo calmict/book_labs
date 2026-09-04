@@ -1,80 +1,46 @@
 #!/usr/bin/env bash
+# Chapter 4 verification - checks the OCI chain, OverlayFS copy-on-write,
+# capability boundary, and shared kernel. The contrast mounts the same lower
+# layer read-only and proves that the write then fails. Rootless and throwaway.
+# shellcheck disable=SC2154  # variables are assigned by the sourced evidence files
 set -euo pipefail
 
-# Chapter 4 solution — dissect an OCI image by hand.
-# Needs Docker for pull/save. The overlay mount runs directly when root,
-# or inside a user namespace (unshare -Urm, kernel >= 5.11) otherwise.
-
-IMAGE=alpine:3
-
-WORKDIR=$(mktemp -d "${TMPDIR:-/tmp}/lab-cap04.XXXXXX")
-cleanup() {
-  if mountpoint -q "$WORKDIR/merged" 2>/dev/null; then
-    umount "$WORKDIR/merged" || true
-  fi
-  chmod -R u+rwX "$WORKDIR" 2>/dev/null || true
-  rm -rf "$WORKDIR"
-}
+HERE=$(cd "$(dirname "$0")" && pwd)
+WORK=$(mktemp -d)
+cleanup() { rm -rf "$WORK"; }
 trap cleanup EXIT
-cd "$WORKDIR"
 
-echo "== 1. The image laid bare =="
-docker pull -q "$IMAGE" >/dev/null
-docker save "$IMAGE" -o image.tar
-mkdir image && tar -xf image.tar -C image
-find image -type f | sort
+"$HERE/image-lab.sh" "$WORK/result"
+# shellcheck disable=SC1091
+. "$WORK/result/image.env"
+# shellcheck disable=SC1091
+. "$WORK/result/overlay.env"
+# shellcheck disable=SC1091
+. "$WORK/result/isolation.env"
 
-echo
-echo "== 2. The chain: manifest -> config -> layer =="
-cat image/manifest.json
-echo
-LAYER=$(grep -o '"Layers":\["[^"]*"' image/manifest.json | cut -d'"' -f4)
-echo "layer blob: $LAYER"
+test -s "$WORK/result/image/$config_path"
+test -s "$WORK/result/image/$layer_path"
+jq -e '.config and .rootfs.diff_ids' "$WORK/result/image/$config_path" >/dev/null
+echo "OK 1 - the manifest leads to a config and a filesystem layer"
 
-echo
-echo "== 3. The layer is just a filesystem tarball =="
-mkdir layer && tar -xf "image/$LAYER" -C layer
-ls layer
+test -d "$WORK/result/layer/etc"
+test "$lower_before" = "$lower_after"
+test "$upper_motd_present" = yes
+test "$merged_hostname_absent" = yes
+echo "OK 2 - copy-up and deletion affect the writable layer, not the image layer"
 
-echo
-echo "== 4. Overlay by hand: copy-on-write in action =="
-mkdir upper work merged
-DEMO='
-mount -t overlay overlay -o lowerdir=layer,upperdir=upper,workdir=work merged
-echo "modified from the container" > merged/etc/motd
-rm merged/etc/hostname
-echo "--- upper/etc (the container layer): a copy and a whiteout ---"
-ls -l upper/etc/
-echo "--- the lower layer is untouched ---"
-ls layer/etc/hostname
-head -1 layer/etc/motd 2>/dev/null || echo "(layer/etc/motd empty, as shipped)"
-umount merged
-rm -rf upper work
-'
-if [ "$(id -u)" -eq 0 ]; then
-  sh -c "$DEMO"
-else
-  echo "(not root: mounting inside a user namespace, see the brief's box)"
-  unshare -Urm sh -c "$DEMO"
+test "$container_cap" != "$host_cap"
+test "$clock_refused" -gt 0
+echo "OK 3 - container root has fewer capabilities and cannot set the host clock"
+
+test "$host_kernel" = "$container_kernel"
+echo "OK 4 - host and container report the same shared kernel"
+
+if CAP04_READ_ONLY=1 "$HERE/image-lab.sh" "$WORK/contrast" >/dev/null 2>&1; then
+  echo "UNEXPECTED: the write succeeded without a writable OverlayFS layer" >&2
+  exit 1
 fi
+echo "OK 5 - the gate bites: without upperdir the copy-on-write change is refused"
 
 echo
-echo "== 5. Root in the container is not root on the host =="
-echo "--- CapEff inside the container ---"
-docker run --rm "$IMAGE" grep CapEff /proc/self/status
-echo "--- CapEff of host PID 1 ---"
-grep CapEff /proc/1/status
-echo "--- trying to set the clock inside (must be refused) ---"
-set +e
-OUT=$(docker run --rm "$IMAGE" date -s "2000-01-01" 2>&1)
-set -e
-echo "$OUT"
-if echo "$OUT" | grep -q "not permitted"; then
-  echo "refused as expected: CAP_SYS_TIME is missing"
-  echo "(note: busybox date still exits 0 — the refusal is in the message)"
-fi
-
-echo
-echo "== 6. One kernel, shared =="
-echo "host:      $(uname -r)"
-echo "container: $(docker run --rm "$IMAGE" uname -r)"
+echo "ALL CHECKS PASSED"

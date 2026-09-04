@@ -1,75 +1,52 @@
 #!/usr/bin/env bash
+# Chapter 6 verification - creates a rootless user/network namespace, mounts a
+# private /run, and proves veth, bridge, ping, ARP, and FDB behaviour. The
+# contrast leaves red's veth down and requires the ping to fail. Throwaway.
 set -euo pipefail
 
-# Chapter 6 solution — two network namespaces wired by hand.
-# As root it builds (and tears down) the lab on the real host; as a regular
-# user it re-executes itself inside a user namespace: a toy network that
-# self-destructs on exit.
-
-if [ "${1:-}" = "__inner" ]; then
-  # we are the re-executed copy, fake-root inside the user namespace
-  mount -t tmpfs tmpfs /run
-elif [ "$(id -u)" -ne 0 ]; then
-  echo "(not root: re-running inside a user namespace — a toy network,"
-  echo " fully separate from the real one)"
-  exec unshare -Urnm "$0" __inner
-fi
-
+HERE=$(cd "$(dirname "$0")" && pwd)
+WORK=$(mktemp -d)
 cleanup() {
-  ip netns del blue 2>/dev/null || true
-  ip netns del red 2>/dev/null || true
-  ip link del br-lab 2>/dev/null || true
+  docker rm -f lab-cap06 >/dev/null 2>&1 || true
+  rm -rf "$WORK"
 }
 trap cleanup EXIT
-cleanup
 
-echo "== 1-2. Two namespaces, born empty =="
-ip netns add blue
-ip netns add red
-ip netns list
-echo "--- inside blue, a newborn network ---"
-ip netns exec blue ip addr
+run_inner() {
+  # shellcheck disable=SC2016  # positional parameters expand in the inner shell
+  unshare -Urnm sh -c 'mount -t tmpfs tmpfs /run; exec "$1" "$2"' sh \
+    "$HERE/network-lab.sh" "$1"
+}
 
-echo
-echo "== 3. The switch and the two cables =="
-ip link add br-lab type bridge
-ip link set br-lab up
-ip link add veth-blue type veth peer name veth-blue-br
-ip link set veth-blue netns blue
-ip link set veth-blue-br master br-lab up
-ip link add veth-red type veth peer name veth-red-br
-ip link set veth-red netns red
-ip link set veth-red-br master br-lab up
-ip link show master br-lab
+run_inner "$WORK/result"
 
-echo
-echo "== 4. Addresses on, lights on =="
-ip netns exec blue ip addr add 10.42.0.2/24 dev veth-blue
-ip netns exec blue ip link set veth-blue up
-ip netns exec blue ip link set lo up
-ip netns exec red ip addr add 10.42.0.3/24 dev veth-red
-ip netns exec red ip link set veth-red up
-ip netns exec red ip link set lo up
+grep -q '0% packet loss' "$WORK/result/ping.txt"
+echo "OK 1 - blue reaches red through the virtual switch"
 
-echo
-echo "== 5. The moment of truth =="
-ip netns exec blue ping -c 3 10.42.0.3
-echo "--- blue's neighbour table (ARP evidence) ---"
-ip netns exec blue ip neigh
-echo "--- the bridge forwarding database ---"
-bridge fdb show br br-lab
+red_mac=$(awk '/lladdr/ {print $5}' "$WORK/result/neigh.txt")
+test -n "$red_mac"
+grep -q "$red_mac" "$WORK/result/fdb.txt"
+echo "OK 2 - blue's ARP table records red's MAC and the bridge FDB learns it"
 
-echo
-echo "== 6. The déjà vu =="
-if ip link show docker0 >/dev/null 2>&1; then
-  ip addr show docker0
-  echo "(same layout as br-lab: a bridge waiting for veth cables)"
-else
-  echo "(docker0 is not visible from the toy network — expected in the"
-  echo " rootless variant; compare on the real host with: ip addr show docker0)"
+grep -q 'veth-blue-br' "$WORK/result/ports.txt"
+grep -q 'veth-red-br' "$WORK/result/ports.txt"
+docker run -d --name lab-cap06 alpine:3 sleep infinity >/dev/null
+ip -o link show master docker0 > "$WORK/docker0-ports.txt"
+grep -q 'veth' "$WORK/docker0-ports.txt"
+docker rm -f lab-cap06 >/dev/null
+echo "OK 3 - br-lab and docker0 expose the same bridge-plus-veth layout"
+
+if CAP06_RED_DOWN=1 run_inner "$WORK/contrast" >/dev/null 2>&1; then
+  echo "UNEXPECTED: ping succeeded while red's veth was down" >&2
+  exit 1
 fi
+echo "OK 4 - the gate bites: with red's veth down, the same ping fails"
+
+if ip netns list | grep -Eq '(^|[[:space:]])(blue|red)([[:space:]]|$)' || ip link show br-lab >/dev/null 2>&1; then
+  echo "UNEXPECTED: a lab network escaped into the host namespace" >&2
+  exit 1
+fi
+echo "OK 5 - the toy network vanished without leaving host interfaces or namespaces"
 
 echo
-echo "The wiring a runtime does for every container, done once by hand:"
-echo "namespace + veth pair + bridge. Chapter 2 gave the rooms, this chapter"
-echo "ran the cables between them."
+echo "ALL CHECKS PASSED"

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-cap07
+  namespace: lab-cap07
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lab-cap07
+  template:
+    metadata:
+      labels:
+        app: lab-cap07
+    spec:
+      containers:
+        - name: sleeper
+          image: alpine:3
+          command: ["sleep", "infinity"]

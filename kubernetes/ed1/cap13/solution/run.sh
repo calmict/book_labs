@@ -1,83 +1,72 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Chapter 13 solution — the investigation: who touched my pod?
-# Needs a cluster whose node is a Docker container (kind, or minikube on
-# the docker driver): step 5 descends down to the Linux process.
+# Proves the kubectl-to-process relay, ownership, and both self-healing loops.
+# Requires a reachable cluster and a Docker-hosted node; creates only a
+# throwaway namespace and never changes the node or cluster configuration.
 
 DIR=$(cd "$(dirname "$0")" && pwd)
+NS=book-lab-cap13
 
-kubectl get nodes >/dev/null || {
-  echo "ERROR: no reachable cluster — see chapter 7" >&2
-  exit 1
-}
-FIRSTNODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
-docker exec "$FIRSTNODE" true 2>/dev/null || {
-  echo "ERROR: cannot enter node $FIRSTNODE with docker exec (this run.sh" >&2
-  echo " needs kind, or minikube with the docker driver)" >&2
+kubectl get nodes >/dev/null
+NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+docker exec "$NODE" true 2>/dev/null || {
+  echo "ERROR: the node must be reachable with docker exec" >&2
   exit 1
 }
 
 cleanup() {
-  kubectl delete deployment relay --ignore-not-found >/dev/null 2>&1 || true
+  kubectl delete namespace "$NS" --ignore-not-found --wait=true >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 cleanup
+kubectl create namespace "$NS" >/dev/null
 
-echo "== 2. The fact: one apply =="
-kubectl apply -f "$DIR/relay.yaml"
-kubectl rollout status deployment/relay --timeout=180s >/dev/null
-
-echo
-echo "== 3. The four signatures, in chronological order =="
-kubectl get events --sort-by=.metadata.creationTimestamp \
-  -o custom-columns='TIME:.metadata.creationTimestamp,SIGNATURE:.source.component,REASON:.reason,OBJECT:.involvedObject.name' \
-  | grep -E 'SIGNATURE|relay'
-
-echo
-echo "== 4. The chain of ownership =="
-kubectl get deployment,replicaset,pod -l app=relay
-POD=$(kubectl get pod -l app=relay -o jsonpath='{.items[0].metadata.name}')
-RS=$(kubectl get pod "$POD" -o jsonpath='{.metadata.ownerReferences[0].name}')
-DEP=$(kubectl get rs "$RS" -o jsonpath='{.metadata.ownerReferences[0].name}')
-echo "chain: pod/$POD -> replicaset/$RS -> deployment/$DEP"
-
-echo
-echo "== 5. Below the API, down to the process =="
-NODE=$(kubectl get pod "$POD" -o jsonpath='{.spec.nodeName}')
-CID=$(docker exec "$NODE" crictl ps --name relay -q)
-PID=$(docker exec "$NODE" crictl inspect -o go-template --template '{{.info.pid}}' "$CID")
-echo "container: ${CID:0:13}...  pid on the node: $PID"
-echo "--- its cgroup (recognise kubepods, and the QoS class in the path?) ---"
-docker exec "$NODE" cat "/proc/$PID/cgroup"
-echo "--- its pid namespace (chapter 2 sends its regards) ---"
-docker exec "$NODE" readlink "/proc/$PID/ns/pid"
-
-echo
-echo "== 6. Two deaths, two doctors =="
-docker exec "$NODE" kill -9 "$PID"
-echo -n "process killed behind the API's back; waiting for the kubelet "
-waited=0
-while true; do
-  RC=$(kubectl get pod "$POD" -o jsonpath='{.status.containerStatuses[0].restartCount}' 2>/dev/null)
-  if [ -n "$RC" ] && [ "$RC" -ge 1 ]; then break; fi
-  echo -n "."
-  sleep 3
-  waited=$((waited + 3))
-  if [ "$waited" -ge 120 ]; then
-    echo " timeout" >&2
+kubectl -n "$NS" apply -f "$DIR/relay.yaml" >/dev/null
+kubectl -n "$NS" rollout status deployment/relay --timeout=180s >/dev/null
+EVENTS=$(kubectl -n "$NS" get events -o custom-columns='SIGNER:.source.component,REASON:.reason,OBJECT:.involvedObject.name')
+for signature in deployment-controller replicaset-controller default-scheduler kubelet; do
+  grep -q "$signature" <<< "$EVENTS" || {
+    echo "ERROR: missing event signature $signature" >&2
     exit 1
-  fi
+  }
 done
-echo
-kubectl get pods -l app=relay
-echo "(same pod, RESTARTS up: the kubelet's cure, PLEG-powered)"
-kubectl delete pod "$POD" >/dev/null
-kubectl rollout status deployment/relay --timeout=180s >/dev/null
-NEWPOD=$(kubectl get pod -l app=relay -o jsonpath='{.items[0].metadata.name}')
-kubectl get pods -l app=relay
-if [ "$NEWPOD" = "$POD" ]; then
-  echo "WARNING: same pod name after delete?!" >&2
-else
-  echo "(new name: the ReplicaSet controller's cure — two deaths, two doctors)"
+echo "OK 1 - events contain all four relay signatures"
+
+POD=$(kubectl -n "$NS" get pod -l app=relay -o jsonpath='{.items[0].metadata.name}')
+RS=$(kubectl -n "$NS" get pod "$POD" -o jsonpath='{.metadata.ownerReferences[0].name}')
+DEP=$(kubectl -n "$NS" get rs "$RS" -o jsonpath='{.metadata.ownerReferences[0].name}')
+[ "$DEP" = relay ] || { echo "ERROR: broken ownership chain" >&2; exit 1; }
+echo "OK 2 - ownerReferences link Pod to ReplicaSet to Deployment"
+
+CID=$(docker exec "$NODE" crictl ps --name relay -q | head -1)
+PID=$(docker exec "$NODE" crictl inspect -o go-template --template '{{.info.pid}}' "$CID")
+CGROUP=$(docker exec "$NODE" cat "/proc/$PID/cgroup")
+PIDNS=$(docker exec "$NODE" readlink "/proc/$PID/ns/pid")
+if ! grep -q kubepods <<< "$CGROUP" || ! grep -q '^pid:\[' <<< "$PIDNS"; then
+  echo "ERROR: process evidence does not show kubepods and a PID namespace" >&2
+  exit 1
 fi
+echo "OK 3 - the container is a Linux process in kubepods and a PID namespace"
+
+docker exec "$NODE" kill -9 "$PID"
+for _ in $(seq 1 60); do
+  RESTARTS=$(kubectl -n "$NS" get pod "$POD" -o jsonpath='{.status.containerStatuses[0].restartCount}' 2>/dev/null || true)
+  [ "${RESTARTS:-0}" -ge 1 ] && break
+  sleep 2
+done
+[ "${RESTARTS:-0}" -ge 1 ] || { echo "ERROR: kubelet did not restart the container" >&2; exit 1; }
+echo "OK 4 - killing the process keeps the Pod and increments restartCount"
+
+kubectl -n "$NS" delete pod "$POD" --wait=false >/dev/null
+for _ in $(seq 1 90); do
+  NEWPOD=$(kubectl -n "$NS" get pod -l app=relay -o jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}' 2>/dev/null || true)
+  [ -n "$NEWPOD" ] && [ "$NEWPOD" != "$POD" ] && break
+  sleep 2
+done
+if [ -z "${NEWPOD:-}" ] || [ "$NEWPOD" = "$POD" ]; then
+  echo "ERROR: ReplicaSet did not replace the deleted Pod" >&2
+  exit 1
+fi
+echo "OK 5 - deleting the Pod produces a new name through reconciliation"
+echo "ALL CHECKS PASSED"

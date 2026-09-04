@@ -6,7 +6,8 @@ spec:
   volumes:
     - name: shared
       emptyDir: {}
-  # TODO: the gatekeeper — an initContainer named gatekeeper (alpine:3)
+  # TODO 2 (14.3): add the gatekeeper initContainer so the app cannot
+  # start before preparation completes. Name it gatekeeper, use alpine:3,
   # that runs: sh -c 'sleep 8; echo ready > /shared/gate'
   # and mounts the shared volume on /shared
   containers:

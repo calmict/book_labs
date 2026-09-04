@@ -3,8 +3,8 @@ kind: Pod
 metadata:
   name: bypass
 spec:
-  # TODO: assign the node yourself, so the scheduler is never consulted.
-  # Set nodeName to one of your workers (kubectl get nodes).
+  # TODO 1 (11.1): set nodeName to book-labs-sched-worker. Assigning the
+  # node here bypasses the scheduler while leaving execution to the kubelet.
   # nodeName: <which-node?>
   containers:
     - name: sleeper

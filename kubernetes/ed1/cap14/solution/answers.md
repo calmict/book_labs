@@ -1,5 +1,11 @@
 # Chapter 14 — Answers (model solution)
 
+## The completed TODOs
+
+1. Add the writer container and mount the shared www volume.
+2. Add the gatekeeper init container and mount the shared volume.
+3. Give middle unequal requests and limits, and royal equal requests and limits.
+
 ## The condo
 
     Fri Jul  3 21:47:15 UTC 2026

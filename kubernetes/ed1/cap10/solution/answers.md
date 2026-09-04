@@ -1,5 +1,16 @@
 # Chapter 10 — Answers (model solution)
 
+## The completed TODOs
+
+TODO 1 (10.1) counts non-terminating app=minictl Pods in cap10-lab. That
+query is the observe phase and provides the actual state.
+
+TODO 2 (10.1) compares the count with two and creates one labelled Pod
+when reality is below the desired state.
+
+TODO 3 (10.1) performs the opposite comparison and deletes one live Pod
+when reality exceeds the desired state.
+
 ## The professionals' heartbeat
 
     holderIdentity: book-labs-control-plane_8aec01a6-...

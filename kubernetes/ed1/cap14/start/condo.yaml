@@ -13,7 +13,8 @@ spec:
       volumeMounts:
         - name: www
           mountPath: /www
-    # TODO: the second tenant — a container named writer (busybox:stable)
+    # TODO 1 (14.1): add the writer tenant so two containers can prove
+    # that one Pod shares localhost and the www volume. Use busybox:stable,
     # running
     #   sh -c 'while :; do date > /www/index.html; sleep 2; done'
     # and mounting the same www volume on /www

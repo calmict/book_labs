@@ -3,8 +3,8 @@ kind: Pod
 metadata:
   name: picky
 spec:
-  # TODO: make this pod picky — add a nodeSelector requiring the label
-  # disk: ssd. No node has it yet: watch the filter reject them all.
+  # TODO 2 (11.2-11.3): add a nodeSelector requiring disk: ssd. No node has
+  # it yet, so the Pending Pod exposes the filtering decision in its events.
   containers:
     - name: sleeper
       image: alpine:3

@@ -1,5 +1,16 @@
 # Chapter 11 — Answers (model solution)
 
+## The completed TODOs
+
+TODO 1 (11.1) sets nodeName to book-labs-sched-worker. The kubelet runs
+the assigned Pod without a scheduler decision or Scheduled event.
+
+TODO 2 (11.2-11.3) requires disk=ssd with nodeSelector. Until a worker is
+labelled, filtering rejects every node and the Pod remains Pending.
+
+TODO 3 (11.3) adds required pod anti-affinity on kubernetes.io/hostname.
+It separates replicas and makes the third node necessary.
+
 ## The signature and its absence
 
     witness:  Normal  Scheduled  default-scheduler  Successfully assigned

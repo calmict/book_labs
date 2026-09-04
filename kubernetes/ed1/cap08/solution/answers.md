@@ -1,4 +1,17 @@
-# Chapter 8 — Answers (model solution)
+# Chapter 8 - Kill the leader - answers
+
+## The completed TODOs
+
+TODO 1 (8.1) creates raft-lab and asks etcdctl for its registry key. The key
+proves that the Kubernetes object is stored in the underlying key-value store.
+
+TODO 2 (8.2) maps the leader endpoint to its kind node, pauses that container,
+and queries a survivor. Pausing forces a real election without changing the
+member IP.
+
+TODO 3 (8.3) pauses a second member and requires a timed API read to fail, then
+unpauses both. The contrast distinguishes majority availability from mere
+process survival.
 
 ## The three members and their leader
 

@@ -4,8 +4,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: hello-static
-  # TODO 3 (12.1): set namespace to cap12-lab. Keeping the mirror Pod in the
-  # lab namespace isolates observation and cleanup from other workloads.
+  namespace: cap12-lab
 spec:
   containers:
     - name: hello

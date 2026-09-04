@@ -1,78 +1,55 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Chapter 15 solution — the release, the disaster and the comeback.
-# Pure API exercise: any reachable cluster will do.
+# Proves ReplicaSet ownership, zero-downtime rollout, a biting broken
+# release, and rollback. Uses only a throwaway namespace on any cluster.
 
 DIR=$(cd "$(dirname "$0")" && pwd)
+NS=book-lab-cap15
 
-kubectl get nodes >/dev/null || {
-  echo "ERROR: no reachable cluster — see chapter 7" >&2
-  exit 1
-}
-
+kubectl get nodes >/dev/null
 cleanup() {
-  kubectl delete deployment shop --ignore-not-found >/dev/null 2>&1 || true
+  kubectl delete namespace "$NS" --ignore-not-found --wait=true >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 cleanup
+kubectl create namespace "$NS" >/dev/null
 
-echo "== 1. Opening the shop: alpine 3.19, three replicas =="
-kubectl apply -f "$DIR/shop.yaml"
-kubectl annotate deployment/shop kubernetes.io/change-cause="opening: alpine 3.19" >/dev/null
-kubectl rollout status deployment/shop --timeout=240s >/dev/null
-kubectl get pods -l app=shop
+kubectl -n "$NS" apply -f "$DIR/shop.yaml" >/dev/null
+kubectl -n "$NS" annotate deployment/shop kubernetes.io/change-cause="opening: alpine 3.19" >/dev/null
+kubectl -n "$NS" rollout status deployment/shop --timeout=240s >/dev/null
+[ "$(kubectl -n "$NS" get deployment shop -o jsonpath='{.status.availableReplicas}')" = 3 ] || exit 1
+echo "OK 1 - the opening ReplicaSet keeps three Pods available"
 
-echo
-echo "== 2. Who really rules: one ReplicaSet, hash-named =="
-kubectl get replicaset -l app=shop
+RS=$(kubectl -n "$NS" get pod -l app=shop -o jsonpath='{.items[0].metadata.ownerReferences[0].name}')
+[ "$(kubectl -n "$NS" get rs "$RS" -o jsonpath='{.metadata.ownerReferences[0].kind}')" = Deployment ] || exit 1
+echo "OK 2 - ownership divides Pod, ReplicaSet, and Deployment duties"
 
-echo
-echo "== 3. The release: rolling to alpine 3.20 =="
-kubectl set image deployment/shop sleeper=alpine:3.20
-kubectl annotate deployment/shop kubernetes.io/change-cause="release: alpine 3.20" >/dev/null
-kubectl rollout status deployment/shop --timeout=240s
-echo "--- two ReplicaSets now: the new one full, the old one kept at 0 ---"
-kubectl get replicaset -l app=shop
-kubectl rollout history deployment/shop
+kubectl -n "$NS" set image deployment/shop sleeper=alpine:3.20 >/dev/null
+kubectl -n "$NS" annotate deployment/shop kubernetes.io/change-cause="release: alpine 3.20" >/dev/null
+kubectl -n "$NS" rollout status deployment/shop --timeout=240s >/dev/null
+FULL=$(kubectl -n "$NS" get rs -l app=shop -o jsonpath='{range .items[*]}{.status.readyReplicas}{"\n"}{end}' | grep -c '^3$')
+ZERO=$(kubectl -n "$NS" get rs -l app=shop -o jsonpath='{range .items[*]}{.spec.replicas}{"\n"}{end}' | grep -c '^0$')
+[ "$FULL" -eq 1 ] && [ "$ZERO" -ge 1 ] || exit 1
+echo "OK 3 - rolling update leaves one live and one historical ReplicaSet"
 
-echo
-echo "== 4. The disaster: a version that does not exist =="
-kubectl set image deployment/shop sleeper=alpine:3.99
-kubectl annotate deployment/shop kubernetes.io/change-cause="release: alpine 3.99 (oops)" >/dev/null
-set +e
-kubectl rollout status deployment/shop --timeout=30s
-set -e
-echo -n "waiting for the scout to hit the wall "
-waited=0
-until kubectl get pods -l app=shop --no-headers | grep -qE 'ImagePullBackOff|ErrImagePull'; do
-  echo -n "."
-  sleep 3
-  waited=$((waited + 3))
-  if [ "$waited" -ge 120 ]; then
-    echo " timeout" >&2
-    exit 1
-  fi
+kubectl -n "$NS" set image deployment/shop sleeper=alpine:3.99 >/dev/null
+kubectl -n "$NS" annotate deployment/shop kubernetes.io/change-cause="release: alpine 3.99 (oops)" >/dev/null
+for _ in $(seq 1 60); do
+  BROKEN=$(kubectl -n "$NS" get pods -l app=shop --no-headers 2>/dev/null | grep -cE 'ImagePullBackOff|ErrImagePull' || true)
+  [ "$BROKEN" -ge 1 ] && break
+  sleep 2
 done
-echo
-kubectl get pods -l app=shop
-AVAILABLE=$(kubectl get deployment shop -o jsonpath='{.status.availableReplicas}')
-if [ "$AVAILABLE" = "3" ]; then
-  echo "(the rollout is stuck, yet 3 replicas of 3.20 are still serving:"
-  echo " maxUnavailable 0 never let the old guard leave)"
-else
-  echo "WARNING: availableReplicas=$AVAILABLE, expected 3" >&2
+AVAILABLE=$(kubectl -n "$NS" get deployment shop -o jsonpath='{.status.availableReplicas}')
+if [ "${BROKEN:-0}" -lt 1 ] || [ "$AVAILABLE" != 3 ]; then
+  echo "ERROR: broken release did not bite while preserving three replicas" >&2
+  exit 1
 fi
+echo "OK 4 - nonexistent image blocks the rollout but maxUnavailable keeps capacity"
 
-echo
-echo "== 5. The comeback: one command =="
-kubectl rollout undo deployment/shop
-kubectl rollout status deployment/shop --timeout=240s >/dev/null
-IMG=$(kubectl get deployment shop -o jsonpath='{.spec.template.spec.containers[0].image}')
-echo "image now: $IMG"
-if [ "$IMG" != "alpine:3.20" ]; then
-  echo "WARNING: expected alpine:3.20 after the undo" >&2
-fi
-kubectl rollout history deployment/shop
-echo "(no magic: the 3.20 ReplicaSet was still there at zero, the undo just"
-echo " scaled it back up — chapter 7's loop, wearing a release manager's hat)"
+kubectl -n "$NS" rollout undo deployment/shop >/dev/null
+kubectl -n "$NS" rollout status deployment/shop --timeout=240s >/dev/null
+IMAGE=$(kubectl -n "$NS" get deployment shop -o jsonpath='{.spec.template.spec.containers[0].image}')
+[ "$IMAGE" = alpine:3.20 ] || { echo "ERROR: rollback returned $IMAGE" >&2; exit 1; }
+echo "OK 5 - rollout undo restores the previous ReplicaSet template"
+echo "ALL CHECKS PASSED"

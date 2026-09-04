@@ -19,7 +19,7 @@ By the end of this lab you will be able to:
 - The book-labs cluster running; node access via docker exec (kind, or minikube on the Docker driver).
 - The starting manifest start/relay.yaml has TODOs to complete (from this chapter on the level rises: more YAML written by you).
 
-## Instructions
+## The scenario
 
 1. Turn on the black box. In one terminal, record everything that happens:
 
@@ -80,3 +80,21 @@ By the end of this lab you will be able to:
 - [ ] You found the PID on the node and its kubepods cgroup with the QoS class in the path.
 - [ ] You observed both cures: RESTARTS at 1 after the kill -9, a new name after the delete.
 - [ ] answers.md answers the three questions and the Deployment has been removed.
+
+## How it is verified
+
+solution/run.sh checks the four event signatures, the ownership chain, the Linux process, and the two distinct healing mechanisms. Pod deletion is the negative control: the name must change, whereas killing the process must preserve the Pod and increment its restart count.
+
+## Reflection questions
+
+1. What is the logical order of the four signatures when timestamps tie?
+2. Why do killing the process and deleting the Pod trigger different cures?
+3. What are ownerReferences for, and what happens when the ReplicaSet is deleted?
+
+## Cleanup
+
+The script deletes the book-lab-cap13 namespace even when a check fails.
+
+## Where this leads
+
+The descent from Deployment to process prepares Chapter 14, where the Pod and its shared namespaces become the main subject.

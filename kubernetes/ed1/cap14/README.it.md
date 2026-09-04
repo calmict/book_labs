@@ -19,7 +19,7 @@ Al termine di questo laboratorio saprai:
 - Il cluster book-labs acceso; accesso al nodo con docker exec.
 - Tre manifest in start/ con i TODO: condo.yaml, init.yaml, qos-trio.yaml. (Nel condominio compare l'immagine busybox:stable: la sua httpd ci fa da web server in due kilobyte — la busybox di alpine ne è sprovvista.)
 
-## Consegna
+## Lo scenario
 
 1. Il condominio. Completa start/condo.yaml: un Pod con due container e un volume emptyDir montato da entrambi su /www — "web" serve la cartella con httpd (httpd -f -p 8080 -h /www), "writer" ci scrive dentro la data ogni due secondi (i TODO guidano il secondo container). Applica e interroga un coinquilino sull'altro:
 
@@ -75,3 +75,21 @@ Al termine di questo laboratorio saprai:
 - [ ] In condo-glass hai visto /pause come PID 1 da dentro il Pod.
 - [ ] Hai osservato la fase Init:0/1 e i tre verdetti QoS (BestEffort, Burstable, Guaranteed).
 - [ ] answers.md risponde alle tre domande e i sei Pod sono stati rimossi.
+
+## Come viene verificato
+
+solution/run.sh prova localhost e volume condivisi, confronta gli inode dei namespace, vede pause come PID 1, verifica l'ordine dell'init container e legge le tre classi QoS. Il manifest incompleto senza writer è il controllo negativo: non può superare la prova tra coinquilini.
+
+## Domande di riflessione
+
+1. Quali prove mostrano che l'unità di esecuzione è il Pod?
+2. Quando serve un init container e quando un sidecar?
+3. Come si collegano requests, limits, QoS e protezione dall'eviction?
+
+## Pulizia
+
+Lo script elimina il namespace book-lab-cap14 anche in caso di errore.
+
+## Dove porta
+
+Dal ciclo di vita e dalle risorse del Pod si passa al Capitolo 15: ReplicaSet, Deployment, rollout e rollback.

@@ -16,9 +16,9 @@ spec:
       labels:
         app: spread
     spec:
-      # TODO: add the affinity block with a required podAntiAffinity so
-      # that two pods with the app: spread label never share a node
-      # (topologyKey: kubernetes.io/hostname).
+      # TODO 3 (11.3): add required podAntiAffinity for app: spread with
+      # topologyKey kubernetes.io/hostname. The strict rule makes each
+      # replica require a different node and exposes an impossible third.
       containers:
         - name: sleeper
           image: alpine:3

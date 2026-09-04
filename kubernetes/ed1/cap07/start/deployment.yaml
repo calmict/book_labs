@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-cap07
+  namespace: lab-cap07
+spec:
+  # TODO 1 (7.2): request two replicas so the controller has a desired state
+  # to restore after one Pod is deleted.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lab-cap07
+  template:
+    metadata:
+      labels:
+        app: lab-cap07
+    spec:
+      containers:
+        - name: sleeper
+          # TODO 2 (7.1): use alpine:3 to place a real container on a worker.
+          image: PLACEHOLDER
+          # TODO 3 (7.3): keep the process alive so status can converge to spec.
+          command: ["false"]

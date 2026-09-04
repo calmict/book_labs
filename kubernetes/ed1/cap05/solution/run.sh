@@ -1,74 +1,41 @@
 #!/usr/bin/env bash
+# Chapter 5 verification - proves the live process chain, direct containerd
+# view, OCI bundle contents, and one-shot runc execution. The helper is neither
+# privileged nor persistent; task data is mounted read-only. Rootless overall.
 set -euo pipefail
 
-# Chapter 5 solution — climb the runtime chain, then run a container with
-# runc alone. Root gets the full sequence (ctr + OCI bundle inspection);
-# a regular user gets the chain and the rootless runc finale.
-
-CONTAINER=lab-cap05
-BUNDLE=$(mktemp -d "${TMPDIR:-/tmp}/lab-cap05.XXXXXX")
-
-cleanup() {
-  docker rm -f "$CONTAINER" "$CONTAINER-exp" >/dev/null 2>&1 || true
-  rm -rf "$BUNDLE"
-}
+HERE=$(cd "$(dirname "$0")" && pwd)
+WORK=$(mktemp -d)
+cleanup() { rm -rf "$WORK"; }
 trap cleanup EXIT
-cleanup
 
-echo "== 1. The lab container =="
-docker run -d --name "$CONTAINER" alpine:3 sleep infinity >/dev/null
-PID=$(docker inspect --format '{{.State.Pid}}' "$CONTAINER")
-echo "container process PID (host view): $PID"
+"$HERE/runtime-lab.sh" "$WORK/result"
 
-echo
-echo "== 2. The parent chain up to PID 1 =="
-P=$PID
-while [ "$P" -ne 1 ]; do
-  ps -o pid=,comm= -p "$P"
-  P=$(awk '{print $4}' "/proc/$P/stat")
-done
-echo "(the next parent is PID 1: neither dockerd nor containerd in the chain)"
+first_comm=$(head -1 "$WORK/result/parent-chain.txt" | cut -d: -f2-)
+second_comm=$(sed -n '2p' "$WORK/result/parent-chain.txt" | cut -d: -f2-)
+test "$first_comm" = sleep
+case "$second_comm" in containerd-shim*) ;; *) exit 1 ;; esac
+echo "OK 1 - the workload's direct parent is containerd-shim and the chain then reaches init"
 
-echo
-echo "== 3. The two big names run, but as bystanders =="
-pgrep -l 'dockerd|containerd' || true
+id=$(cat "$WORK/result/container-id.txt")
+test -n "$id"
+grep -q "$id" "$WORK/result/containerd-task.txt"
+echo "OK 2 - ctr finds the same running task in containerd's moby namespace"
 
-if [ "$(id -u)" -eq 0 ]; then
-  echo
-  echo "== 4. Talking to containerd directly (docker is just a client) =="
-  ctr --namespace moby task ls
+jq -e '.linux.namespaces and .linux.resources and .process.capabilities and .root.path' \
+  "$WORK/result/config.json" >/dev/null
+echo "OK 3 - the live OCI bundle contains namespaces, cgroups, capabilities, and rootfs"
 
-  echo
-  echo "== 5. The OCI bundle containerd prepared for runc =="
-  ID=$(docker inspect --format '{{.Id}}' "$CONTAINER")
-  B="/run/containerd/io.containerd.runtime.v2.task/moby/$ID"
-  ls "$B"
-  echo "--- chapters 2-4, found again inside config.json ---"
-  for section in namespaces resources capabilities; do
-    if grep -q "\"$section\"" "$B/config.json"; then
-      echo "found section: $section"
-    fi
-  done
-else
-  echo
-  echo "(not root: skipping the ctr and OCI-bundle steps — rerun with sudo to see them)"
+grep -q '^runc_pid=1$' "$WORK/result/runc.txt"
+echo "OK 4 - runc alone starts the bundle process as PID 1 and then exits"
+
+if CAP05_CONTAINER=lab-cap05-contrast CAP05_DEFAULT_PROCESS=1 \
+  "$HERE/runtime-lab.sh" "$WORK/contrast" >/dev/null 2>&1 && \
+  grep -q '^runc_pid=1$' "$WORK/contrast/runc.txt"; then
+  echo "UNEXPECTED: the default OCI process produced the required PID evidence" >&2
+  exit 1
 fi
+echo "OK 5 - the gate bites: without the completed process spec, the PID evidence disappears"
 
 echo
-echo "== 6. The grand finale: runc alone, no daemons =="
-mkdir -p "$BUNDLE/rootfs"
-docker create --name "$CONTAINER-exp" alpine:3 >/dev/null
-docker export "$CONTAINER-exp" | tar -x -C "$BUNDLE/rootfs"
-docker rm "$CONTAINER-exp" >/dev/null
-cd "$BUNDLE" || exit 1
-if [ "$(id -u)" -eq 0 ]; then
-  runc spec
-else
-  runc spec --rootless
-fi
-# batch command instead of the brief's interactive shell
-# shellcheck disable=SC2016  # $(hostname) must expand inside the container
-sed -i 's/"sh"/"sh", "-c", "echo hello from runc: hostname=$(hostname); ps aux"/' config.json
-sed -i 's/"terminal": true/"terminal": false/' config.json
-runc --root "$BUNDLE/state" run demo
-echo "(runc exited together with the container: one-shot executor, not a daemon)"
+echo "ALL CHECKS PASSED"

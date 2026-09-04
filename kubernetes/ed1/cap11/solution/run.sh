@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
+# Chapter 11 verification - creates an isolated three-node kind cluster and
+# checks scheduling, direct node assignment, filtering, anti-affinity, and a
+# matching toleration. The dedicated cluster is removed when this run created it.
 set -euo pipefail
 
-# Chapter 11 solution — steer the scheduler, then bypass it entirely.
-# Requires kind and Docker; creates the book-labs-sched cluster (a control
-# plane and two workers), or reuses it if already present.
-
 CLUSTER=book-labs-sched
+NS=cap11-lab
 DIR=$(cd "$(dirname "$0")" && pwd)
-
-KC() { kubectl --context "kind-$CLUSTER" "$@"; }
-
 CREATED=0
 PREV_CTX=$(kubectl config current-context 2>/dev/null || true)
+
+kc() {
+  kubectl --context "kind-$CLUSTER" "$@"
+}
 
 cleanup() {
   if [ "$CREATED" -eq 1 ]; then
@@ -20,74 +21,94 @@ cleanup() {
       kubectl config use-context "$PREV_CTX" >/dev/null 2>&1 || true
     fi
   else
-    KC delete pod witness bypass picky --ignore-not-found >/dev/null 2>&1 || true
-    KC delete deployment spread --ignore-not-found >/dev/null 2>&1 || true
-    KC label node "$CLUSTER-worker2" disk- >/dev/null 2>&1 || true
+    kc delete namespace "$NS" --ignore-not-found --wait=false >/dev/null 2>&1 || true
+    kc label node "$CLUSTER-worker" disk- >/dev/null 2>&1 || true
+    kc label node "$CLUSTER-worker2" disk- >/dev/null 2>&1 || true
   fi
 }
 trap cleanup EXIT
 
+command -v kind >/dev/null || {
+  echo "ERROR: kind is required for the three-node scheduling topology" >&2
+  exit 1
+}
+docker info >/dev/null 2>&1 || {
+  echo "ERROR: Docker is required to create the dedicated kind cluster" >&2
+  exit 1
+}
+
 if kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
-  echo "== 1. Reusing the existing $CLUSTER cluster =="
+  echo "PRECHECK reusing dedicated cluster $CLUSTER"
 else
-  echo "== 1. Creating the 3-node cluster (control plane + two workers) =="
+  echo "PRECHECK creating dedicated three-node cluster $CLUSTER"
   kind create cluster --config "$DIR/../start/kind-workers.yaml" --wait 180s
   CREATED=1
 fi
-KC get nodes
-# idempotent start: clear any leftovers from a previous run
-KC delete pod witness bypass picky --ignore-not-found >/dev/null 2>&1 || true
-KC delete deployment spread --ignore-not-found >/dev/null 2>&1 || true
-KC label node "$CLUSTER-worker" disk- >/dev/null 2>&1 || true
-KC label node "$CLUSTER-worker2" disk- >/dev/null 2>&1 || true
+kc wait --for=condition=Ready nodes --all --timeout=180s >/dev/null
+test "$(kc get nodes --no-headers | wc -l)" -eq 3
+echo "OK 1 - the dedicated cluster has one control plane and two workers"
 
-echo
-echo "== 2. The scheduler at work: the signature =="
-KC run witness --image=alpine:3 -- sleep infinity
-KC wait --for=condition=Ready pod/witness --timeout=180s >/dev/null
-KC get pod witness -o wide
-KC describe pod witness | grep ' Scheduled '
+kc delete namespace "$NS" --ignore-not-found --wait=false >/dev/null 2>&1 || true
+kc wait --for=delete namespace/"$NS" --timeout=120s >/dev/null 2>&1 || true
+kc create namespace "$NS" >/dev/null
+kc label node "$CLUSTER-worker" disk- >/dev/null 2>&1 || true
+kc label node "$CLUSTER-worker2" disk- >/dev/null 2>&1 || true
 
-echo
-echo "== 3. Bypassing the scheduler entirely =="
-KC apply -f "$DIR/pod-bypass.yaml"
-KC wait --for=condition=Ready pod/bypass --timeout=180s >/dev/null
-KC get pod bypass -o wide
-if KC describe pod bypass | grep -q ' Scheduled '; then
-  echo "WARNING: a Scheduled event exists — the scheduler was consulted?!" >&2
-else
-  echo "(no Scheduled event at all: the scheduler never met this pod;"
-  echo " the kubelet of the assigned node simply executed it)"
+kc run witness -n "$NS" --image=alpine:3 -- sleep infinity >/dev/null
+kc wait -n "$NS" --for=condition=Ready pod/witness --timeout=180s >/dev/null
+test -n "$(kc get pod witness -n "$NS" -o jsonpath='{.spec.nodeName}')"
+kc get events -n "$NS" --field-selector involvedObject.name=witness -o jsonpath='{range .items[*]}{.reason}{"\n"}{end}' | grep -qx Scheduled
+echo "OK 2 - the scheduler chooses a node and records a Scheduled event"
+
+kc apply -n "$NS" -f "$DIR/pod-bypass.yaml" >/dev/null
+kc wait -n "$NS" --for=condition=Ready pod/bypass --timeout=180s >/dev/null
+test "$(kc get pod bypass -n "$NS" -o jsonpath='{.spec.nodeName}')" = "$CLUSTER-worker"
+if kc get events -n "$NS" --field-selector involvedObject.name=bypass -o jsonpath='{range .items[*]}{.reason}{"\n"}{end}' | grep -qx Scheduled; then
+  echo "UNEXPECTED: bypass received a Scheduled event" >&2
+  exit 1
 fi
+echo "OK 3 - nodeName bypasses the scheduler while the worker kubelet runs the Pod"
+
+kc apply -n "$NS" -f "$DIR/pod-picky.yaml" >/dev/null
+sleep 6
+test "$(kc get pod picky -n "$NS" -o jsonpath='{.status.phase}')" = Pending
+kc get events -n "$NS" --field-selector involvedObject.name=picky -o jsonpath='{range .items[*]}{.reason}{" "}{.message}{"\n"}{end}' | grep -q 'FailedScheduling.*affinity/selector'
+echo "OK 4 - the gate bites: without disk=ssd, filtering leaves picky Pending"
+
+kc label node "$CLUSTER-worker2" disk=ssd >/dev/null
+kc wait -n "$NS" --for=condition=Ready pod/picky --timeout=180s >/dev/null
+test "$(kc get pod picky -n "$NS" -o jsonpath='{.spec.nodeName}')" = "$CLUSTER-worker2"
+echo "OK 5 - adding the required label admits picky onto the matching worker"
+
+kc apply -n "$NS" -f "$DIR/deploy-spread.yaml" >/dev/null
+kc rollout status deployment/spread -n "$NS" --timeout=180s >/dev/null
+NODES=$(kc get pods -n "$NS" -l app=spread -o jsonpath='{range .items[*]}{.spec.nodeName}{"\n"}{end}' | sort -u | wc -l)
+test "$NODES" -eq 2
+echo "OK 6 - required anti-affinity spreads two replicas across two workers"
+
+kc scale deployment spread -n "$NS" --replicas=3 >/dev/null
+sleep 6
+PENDING=$(kc get pods -n "$NS" -l app=spread -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}' | grep -c '^Pending$' || true)
+test "$PENDING" -eq 1
+echo "OK 7 - the gate bites: anti-affinity plus the taint leaves replica three Pending"
+
+kc apply -n "$NS" -f "$DIR/deploy-spread-tolerated.yaml" >/dev/null
+kc rollout status deployment/spread -n "$NS" --timeout=180s >/dev/null
+CP_PODS=$(kc get pods -n "$NS" -l app=spread --field-selector "spec.nodeName=$CLUSTER-control-plane" --no-headers | wc -l)
+test "$CP_PODS" -eq 1
+echo "OK 8 - the matching toleration reopens the control-plane node"
+
+cleanup
+if [ "$CREATED" -eq 1 ]; then
+  CREATED=0
+  if kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
+    echo "UNEXPECTED: dedicated cluster survived cleanup" >&2
+    exit 1
+  fi
+else
+  kc wait --for=delete namespace/"$NS" --timeout=120s >/dev/null
+fi
+echo "OK 9 - namespace, labels, and any newly created dedicated cluster were removed"
 
 echo
-echo "== 4. Filtering: the picky pod =="
-KC apply -f "$DIR/pod-picky.yaml"
-sleep 5
-KC get pod picky
-KC describe pod picky | grep FailedScheduling | tail -1
-echo "--- labelling one worker as the only worthy node ---"
-KC label node "$CLUSTER-worker2" disk=ssd
-KC wait --for=condition=Ready pod/picky --timeout=180s >/dev/null
-KC get pod picky -o wide
-
-echo
-echo "== 5. Anti-affinity spreads, and the impossible third replica =="
-KC apply -f "$DIR/deploy-spread.yaml"
-KC rollout status deployment/spread --timeout=180s >/dev/null
-KC get pods -l app=spread -o wide
-KC scale deployment spread --replicas=3
-sleep 5
-KC get pods -l app=spread -o wide
-PENDING=$(KC get pods -l app=spread --no-headers | grep -c Pending || true)
-echo "pending replicas: $PENDING (two workers taken by the sisters — and"
-echo "the control plane? see below)"
-
-echo
-echo "== 6. The taint, and the toleration that opens the door =="
-KC describe node "$CLUSTER-control-plane" | grep -A1 Taints
-KC apply -f "$DIR/deploy-spread-tolerated.yaml"
-KC rollout status deployment/spread --timeout=180s >/dev/null
-KC get pods -l app=spread -o wide
-echo "(the third replica landed on the control plane: labels and affinity"
-echo " attract, taints repel, and a toleration is the written permission)"
+echo "ALL CHECKS PASSED"

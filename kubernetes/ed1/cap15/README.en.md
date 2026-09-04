@@ -18,7 +18,7 @@ By the end of this lab you will be able to:
 - Chapters 13-14 completed; the book-labs cluster running.
 - The starting manifest start/shop.yaml with TODOs (replicas, strategy, image).
 
-## Instructions
+## The scenario
 
 1. Open the shop. Complete start/shop.yaml: Deployment "shop", 3 replicas of alpine:3.19 (container sleeper, sleep infinity), and the zero-downtime strategy: RollingUpdate with maxSurge 1 and maxUnavailable 0. Apply and annotate the first revision:
 
@@ -77,3 +77,21 @@ By the end of this lab you will be able to:
 - [ ] In the disaster: rollout stuck in ImagePullBackOff while the 3 pods of the previous version kept Running.
 - [ ] After the undo the image is back to alpine:3.20 and the revision was reborn with a new number.
 - [ ] answers.md answers the three questions and the Deployment has been removed.
+
+## How it is verified
+
+solution/run.sh checks the initial three replicas, ownerReferences, the two ReplicaSets after the update, the broken release, and rollback. The nonexistent image is the biting gate: the new Pod must fail without reducing the three available replicas.
+
+## Reflection questions
+
+1. How do ReplicaSet and Deployment divide their duties?
+2. Why does maxUnavailable 0 preserve service during the broken release?
+3. What does rollout undo actually change?
+
+## Cleanup
+
+The script deletes the book-lab-cap15 namespace even when a check fails.
+
+## Where this leads
+
+Rollout and rollback complete the move from individual Pods to declarative workloads managed by controllers.

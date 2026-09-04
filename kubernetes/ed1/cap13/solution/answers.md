@@ -1,5 +1,11 @@
 # Chapter 13 — Answers (model solution)
 
+## The completed TODOs
+
+1. Set replicas to 1.
+2. Match the selector to app: relay.
+3. Label the Pod app: relay and add the relay container with alpine:3 and sleep infinity.
+
 ## The timeline of the relay
 
     TIME        SIGNATURE               REASON              OBJECT

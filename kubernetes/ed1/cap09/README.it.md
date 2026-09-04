@@ -1,91 +1,69 @@
-# Cap. 9 — Bussa alle quattro porte (l'API server a mani nude)
-
-> Esercizio del **Capitolo 9 — API Server: l'unico punto di verità** del
-> *Manuale di Kubernetes* (collana Calm ICT — [calmict.com](https://calmict.com)).
+# Capitolo 9 — Bussa alle quattro porte: l'API server a mani nude
 
 **Livello:** Fondamentale
 
+Etcd custodisce la verità, ma solo l'API server può toccarla. Qui usi curl per vedere le porte che
+una richiesta attraversa e lo stream che notifica ogni cambiamento.
+
 ## Obiettivi
 
-Al termine di questo laboratorio saprai:
-
-- parlare con l'API server senza kubectl, con un semplice curl, e riconoscere gruppi, versioni e risorse dell'API REST;
-- attraversare consapevolmente le porte di una richiesta: respinto all'autenticazione (401), respinto all'autorizzazione (403), respinto dall'admission (quota) e infine accolto;
-- usare un watch per vedere in streaming gli eventi con cui il cluster resta sincronizzato.
+- Esplorare gruppi, versioni e risorse REST senza l'interpretazione di kubectl (9.1).
+- Distinguere autenticazione, autorizzazione e admission dalle loro risposte (9.2-9.3).
+- Osservare eventi ADDED e DELETED su una connessione watch (9.4).
 
 ## Prerequisiti
 
-- Aver completato i cap. 7-8; il cluster book-labs del cap. 7 acceso (kubectl get nodes deve rispondere).
-- curl e base64 (presenti su qualsiasi Linux).
+- Un cluster raggiungibile con kubectl e i capitoli 7-8 completati.
+- curl e base64. Il controllo sceglie una porta locale libera a partire da 8001.
 
-## Consegna
+## Lo scenario
 
-1. Il centralino risponde anche senza kubectl. In un terminale apri il tunnel:
+Completa start/api-lab.sh. Apri kubectl proxy, ma usa curl per parlare con /api, /apis e con il
+server HTTPS reale.
 
-       kubectl proxy
+### Fase 1 — L'API REST (9.1 — TODO 1)
 
-   e in un secondo terminale esplora l'API REST come un sito web (9.1):
+Leggi /api e /apis attraverso il proxy e riconosci il gruppo core v1 e il gruppo apps.
 
-       curl -s http://127.0.0.1:8001/api
-       curl -s http://127.0.0.1:8001/apis | head -30
-       curl -s http://127.0.0.1:8001/apis/apps/v1 | head -30
+### Fase 2 — Le porte (9.2-9.3 — TODO 2)
 
-   Riconosci il gruppo "core" (/api/v1) e i gruppi con nome (apps, batch...): sono le stesse coordinate di kubectl api-resources del cap. 7.
+Confronta quattro richieste: con token non valido, con certificati del kubeconfig, impersonando il ServiceAccount
+default e creando un secondo Pod oltre quota. Conserva codice HTTP e messaggio di ciascuna risposta.
 
-2. Prima porta: bussare senza documenti. Prendi l'indirizzo vero del server e presentati senza credenziali:
+### Fase 3 — Lo stream (9.4 — TODO 3)
 
-       kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'
-       curl -sk https://<quell-indirizzo>/api/v1/namespaces
+Apri un watch dei namespace, crea e cancella watch-lab e individua gli eventi ADDED e DELETED sulla
+stessa connessione. Esegui il controllo automatico:
 
-   Risposta 401/403 per l'utente anonimo: la porta dell'autenticazione è chiusa. (Il -k serve solo a ignorare la CA per ora.)
-
-3. Con i documenti in mano. Estrai i tuoi certificati dal kubeconfig e ripresentati:
-
-       kubectl config view --raw --minify -o jsonpath='{.users[0].user.client-certificate-data}' | base64 -d > client.crt
-       kubectl config view --raw --minify -o jsonpath='{.users[0].user.client-key-data}' | base64 -d > client.key
-       kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d > ca.crt
-       curl -s --cert client.crt --key client.key --cacert ca.crt https://<indirizzo>/api/v1/namespaces | head -15
-
-   Eccoti dentro: kubectl non ha mai fatto altro che questo. (Con minikube i certificati sono già file su disco: trovi i percorsi al posto dei dati nel kubeconfig.)
-
-4. Seconda porta: autenticato non vuol dire autorizzato. Chiedi al cluster cosa puoi fare, poi impersona un'identità più umile:
-
-       kubectl auth can-i create pods
-       kubectl get pods --as=system:serviceaccount:default:default
-
-   Forbidden: la richiesta è entrata (autenticata!) ma la seconda porta l'ha respinta. Nota la differenza col 401 del passo 2.
-
-5. Terza porta: l'admission. Anche chi è autenticato e autorizzato può essere respinto nel merito. Costruisci il buttafuori:
-
-       kubectl create namespace quota-lab
-       kubectl create quota one-pod-only --hard=pods=1 -n quota-lab
-       kubectl run sleeper1 -n quota-lab --image=alpine:3 -- sleep infinity
-       kubectl run sleeper2 -n quota-lab --image=alpine:3 -- sleep infinity
-
-   Il secondo Pod è respinto con "exceeded quota": è il plugin di admission ResourceQuota, che parla DOPO le prime due porte. Rileggi l'errore: è un 403, ma di natura diversa da quello del passo 4.
-
-6. Il segreto della sincronizzazione: il watch (9.4). Con il proxy del passo 1 ancora attivo:
-
-       curl -sN "http://127.0.0.1:8001/api/v1/namespaces?watch=1"
-
-   e dall'altro terminale crea e cancella un namespace:
-
-       kubectl create namespace watch-lab
-       kubectl delete namespace watch-lab
-
-   Guarda lo stream: eventi ADDED, MODIFIED, DELETED in tempo reale. È questa connessione, non un polling, che tiene sincronizzati controller, scheduler e kubelet. Chiudi il curl con Ctrl-C.
-
-7. Rispondi in answers.md e smonta:
-
-       kubectl delete namespace quota-lab
-       rm -f client.crt client.key ca.crt
-
-   (e ferma il kubectl proxy con Ctrl-C). Le tre domande: (a) ricostruisci il viaggio di una richiesta attraverso le porte del §9.2 usando le prove raccolte: a quale porta corrispondono il 401/403 del passo 2, il Forbidden del passo 4, l'exceeded quota del passo 5? (b) 401 contro 403: chi li emette e cosa dicono di diverso? (c) perché il watch del passo 6 è più efficiente di un polling, e cosa c'entra col reconciliation loop del cap. 7?
+    bash kubernetes/ed1/cap09/solution/run.sh
 
 ## Criteri di "fatto"
 
-- [ ] Hai esplorato /api e /apis via curl e riconosciuto gruppi e versioni.
-- [ ] Hai collezionato la sequenza completa: respinto da anonimo → 200 coi certificati → Forbidden impersonando → exceeded quota.
-- [ ] Hai visto nello stream del watch gli eventi ADDED e DELETED di watch-lab.
-- [ ] answers.md risponde alle tre domande.
-- [ ] Namespace quota-lab rimosso, certificati estratti cancellati, proxy chiuso.
+- Hai esplorato /api e /apis con curl.
+- Hai distinto 401 di autenticazione, accesso certificato, Forbidden RBAC e quota superata.
+- run.sh stampa OK 1..7 e ALL CHECKS PASSED.
+
+## Come viene verificato
+
+- OK 1 controlla i gruppi REST; OK 2 il rifiuto 401 di un token non valido; OK 3 l'accesso certificato.
+- OK 4 è il cancello di autorizzazione; OK 5 è il cancello di admission per quota.
+- OK 6 richiede gli eventi ADDED e DELETED nello stesso watch.
+- OK 7 controlla namespace, processi locali e credenziali temporanee.
+
+## Domande di riflessione
+
+**a.** A quale porta corrisponde ciascuna delle quattro risposte raccolte?
+
+**b.** Cosa dicono di diverso HTTP 401 e 403, e perché una richiesta priva di credenziali può apparire come system:anonymous?
+
+**c.** Perché LIST più WATCH è più efficiente del polling e come alimenta la riconciliazione?
+
+## Pulizia
+
+Il controllo chiude proxy e watch, cancella i certificati temporanei e rimuove quota-lab e watch-lab.
+Per la prova manuale elimina gli stessi namespace e termina i due processi con Ctrl-C.
+
+## Dove porta
+
+Hai visto come il cambiamento entra nel cluster e come viene notificato. Il capitolo 10 apre i
+controller che ricevono quei segnali e riconciliano la realtà.

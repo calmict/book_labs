@@ -1,5 +1,16 @@
 # Chapter 12 — Answers (model solution)
 
+## The completed TODOs
+
+TODO 1 (12.2) adds an exec liveness probe for /tmp/healthy. Its failure
+turns a still-running but unhealthy process into a kubelet restart.
+
+TODO 2 (12.2) adds an exec readiness probe for /tmp/ready. Its failure
+removes the Pod from Service endpoints without restarting the container.
+
+TODO 3 (12.1) places the static Pod in cap12-lab. The kubelet publishes
+its mirror there while the node manifest remains the source of truth.
+
 ## The doctor's record
 
     liar   1/1   Running   2 (23s ago)   102s     <- RESTARTS climbing

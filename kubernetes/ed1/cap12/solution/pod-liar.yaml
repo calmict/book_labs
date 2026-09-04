@@ -2,15 +2,25 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: liar
+  namespace: cap12-lab
 spec:
+  # Keep the lab cycle short; production workloads normally need more time.
+  terminationGracePeriodSeconds: 1
   containers:
     - name: liar
       image: alpine:3
       # healthy for twenty seconds, then it lies: the process keeps
-      # running while the health file is gone
-      command: ["sh", "-c", "touch /tmp/healthy; sleep 20; rm /tmp/healthy; sleep infinity"]
+      # running while the health file is gone. After the probe restarts it,
+      # a Pod-persistent marker makes later starts fail and expose back-off.
+      command: ["sh", "-c", "test ! -e /state/failed || exit 1; touch /tmp/healthy; sleep 20; rm /tmp/healthy; touch /state/failed; sleep infinity"]
+      volumeMounts:
+        - name: state
+          mountPath: /state
       livenessProbe:
         exec:
           command: ["cat", "/tmp/healthy"]
         initialDelaySeconds: 5
         periodSeconds: 5
+  volumes:
+    - name: state
+      emptyDir: {}

@@ -1,33 +1,38 @@
 #!/usr/bin/env bash
+# Chapter 10 verification - observes a real leader-election Lease, runs a
+# polling controller, checks repair and pruning, and contrasts two copies.
+# Requires kubectl and a reachable cluster. Namespaced and throwaway.
 set -euo pipefail
 
-# Chapter 10 solution — a hand-written controller: its self-healing, its
-# trimming, and (as a show, not an assertion) the duel between two copies.
-# Needs a reachable cluster (chapter 7's).
-
+NS=cap10-lab
 DIR=$(cd "$(dirname "$0")" && pwd)
 CTRL="$DIR/minictl.sh"
-TMP=$(mktemp -d "${TMPDIR:-/tmp}/lab-cap10.XXXXXX")
+WORK=$(mktemp -d)
 PIDS=""
 
 cleanup() {
   if [ -n "$PIDS" ]; then
-    # shellcheck disable=SC2086  # PIDS is a space-separated pid list
-    kill $PIDS 2>/dev/null || true
+    for pid in $PIDS; do
+      kill -- "-$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+    done
   fi
-  kubectl delete pods -l app=minictl --ignore-not-found --wait=false >/dev/null 2>&1 || true
-  rm -rf "$TMP"
+  kubectl delete namespace "$NS" --ignore-not-found --wait=false >/dev/null 2>&1 || true
+  rm -rf "$WORK"
 }
 trap cleanup EXIT
 
 kubectl get nodes >/dev/null || {
-  echo "ERROR: no reachable cluster — see chapter 7" >&2
+  echo "ERROR: no reachable cluster - see chapter 7" >&2
   exit 1
 }
-kubectl delete pods -l app=minictl --ignore-not-found >/dev/null
+kubectl delete namespace "$NS" --ignore-not-found --wait=false >/dev/null 2>&1 || true
+kubectl wait --for=delete namespace/"$NS" --timeout=120s >/dev/null 2>&1 || true
+kubectl create namespace "$NS" >/dev/null
+echo "PRECHECK cluster is reachable; using namespace $NS"
 
 total() {
-  kubectl get pods -l app=minictl --no-headers 2>/dev/null | grep -cv Terminating || true
+  kubectl get pods -n "$NS" -l app=minictl --no-headers 2>/dev/null | grep -cv Terminating || true
 }
 
 wait_total() {
@@ -36,78 +41,67 @@ wait_total() {
     sleep 2
     waited=$((waited + 2))
     if [ "$waited" -ge 120 ]; then
-      echo "ERROR: timed out waiting for $want pods" >&2
+      echo "ERROR: timed out waiting for $want Pods" >&2
       exit 1
     fi
   done
 }
 
-echo "== 1. The professionals' heartbeat =="
-# on a freshly started cluster the lease may take a few seconds to appear;
-# and some single-node distros (minikube) disable leader election entirely
-waited=0
-HAS_LEASE=1
-until kubectl get lease kube-controller-manager -n kube-system >/dev/null 2>&1; do
-  sleep 2
-  waited=$((waited + 2))
-  if [ "$waited" -ge 40 ]; then
-    HAS_LEASE=0
-    break
-  fi
-done
-kubectl get leases -n kube-system
-if [ "$HAS_LEASE" -eq 1 ]; then
-  R1=$(kubectl get lease kube-controller-manager -n kube-system -o jsonpath='{.spec.renewTime}')
+LEASE=kube-controller-manager
+if kubectl get lease "$LEASE" -n kube-system >/dev/null 2>&1; then
+  R1=$(kubectl get lease "$LEASE" -n kube-system -o jsonpath='{.spec.renewTime}')
   sleep 4
-  R2=$(kubectl get lease kube-controller-manager -n kube-system -o jsonpath='{.spec.renewTime}')
-  echo "renewTime: $R1 -> $R2  (the leader proves it is alive)"
+  R2=$(kubectl get lease "$LEASE" -n kube-system -o jsonpath='{.spec.renewTime}')
+  test -n "$R1"
+  test "$R1" != "$R2"
+  echo "OK 1 - the controller-manager Lease renewTime advances"
 else
-  echo "(no controller-manager lease here: single-node distros like minikube"
-  echo " run with --leader-elect=false — use kind to see the heartbeat)"
+  echo "SKIP 1 - this cluster exposes no controller-manager Lease; kind enables it, while some single-node distributions disable leader election"
 fi
 
-echo
-echo "== 2-3. One controller at work: self-healing =="
-bash "$CTRL" > "$TMP/ctrl1.log" 2>&1 &
+NAMESPACE="$NS" setsid bash "$CTRL" >"$WORK/controller.log" 2>&1 &
 PIDS=$!
 wait_total 2
-kubectl get pods -l app=minictl
-VICTIM=$(kubectl get pods -l app=minictl -o jsonpath='{.items[0].metadata.name}')
-echo "--- sabotage: deleting $VICTIM ---"
-kubectl delete pod "$VICTIM" >/dev/null
-wait_total 2
-echo "--- healed, with no human intervention ---"
-kubectl get pods -l app=minictl
+echo "OK 2 - the completed controller converges from zero to two Pods"
 
-echo
-echo "== Trimming the excess =="
-kubectl run minictl-extra --labels=app=minictl --image=alpine:3 -- sleep infinity >/dev/null
-echo "(a third pod injected by hand)"
+VICTIM=$(kubectl get pods -n "$NS" -l app=minictl --no-headers | grep -v Terminating | awk 'NR==1 {print $1}')
+kubectl delete pod "$VICTIM" -n "$NS" >/dev/null
 wait_total 2
-echo "--- trimmed back to 2 ---"
-kubectl get pods -l app=minictl
+test "$(kubectl get pods -n "$NS" -l app=minictl --no-headers | wc -l)" -eq 2
+echo "OK 3 - deleting one Pod triggers an automatic repair"
 
-echo
-echo "== 5. The duel: two copies of the same controller (a show) =="
-# restart from scratch with TWO copies born in the same instant, so their
-# observe ticks stay aligned and the race becomes visible
-# shellcheck disable=SC2086  # PIDS is a space-separated pid list
-kill $PIDS 2>/dev/null || true
+kubectl run minictl-extra -n "$NS" --labels=app=minictl --image=alpine:3 -- sleep infinity >/dev/null
+wait_total 2
+if kubectl get pod minictl-extra -n "$NS" >/dev/null 2>&1; then
+  sleep 3
+fi
+test "$(total)" -eq 2
+echo "OK 4 - injecting an excess Pod triggers automatic pruning"
+
+kill -- "-$PIDS" 2>/dev/null || true
+wait "$PIDS" 2>/dev/null || true
 PIDS=""
-kubectl delete pods -l app=minictl --ignore-not-found >/dev/null 2>&1
-: > "$TMP/ctrl1.log"
-bash "$CTRL" > "$TMP/ctrl1.log" 2>&1 &
+VICTIM=$(kubectl get pods -n "$NS" -l app=minictl --no-headers | grep -v Terminating | awk 'NR==1 {print $1}')
+kubectl delete pod "$VICTIM" -n "$NS" >/dev/null
+sleep 4
+test "$(total)" -eq 1
+echo "OK 5 - the gate bites: without the controller, the deleted Pod stays missing"
+
+kubectl delete pods -n "$NS" -l app=minictl --wait=true >/dev/null
+NAMESPACE="$NS" setsid bash "$CTRL" >"$WORK/controller-a.log" 2>&1 &
 PIDS=$!
-bash "$CTRL" > "$TMP/ctrl2.log" 2>&1 &
+NAMESPACE="$NS" setsid bash "$CTRL" >"$WORK/controller-b.log" 2>&1 &
 PIDS="$PIDS $!"
 wait_total 2
-VICTIM=$(kubectl get pods -l app=minictl -o jsonpath='{.items[0].metadata.name}')
-kubectl delete pod "$VICTIM" --wait=false >/dev/null
-for t in 1 2 3 4 5 6 7 8 9 10 11 12; do
-  echo "t=${t}s pods=$(total)"
-  sleep 1
-done
-echo "--- what the two thermostats decided ---"
-grep -h 'creating\|deleting' "$TMP/ctrl1.log" "$TMP/ctrl2.log" | tail -6
-echo "(with two controllers the count can overshoot the desired 2 and"
-echo " oscillate: that is exactly why the real ones elect a leader first)"
+sleep 3
+grep -q 'observed' "$WORK/controller-a.log"
+grep -q 'observed' "$WORK/controller-b.log"
+echo "OK 6 - two unelected copies both observe and act on the same desired state"
+
+cleanup
+PIDS=""
+kubectl wait --for=delete namespace/"$NS" --timeout=120s >/dev/null
+echo "OK 7 - controller processes, Pods, namespace, and temporary files were removed"
+
+echo
+echo "ALL CHECKS PASSED"

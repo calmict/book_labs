@@ -1,5 +1,11 @@
 # Chapter 15 — Answers (model solution)
 
+## The completed TODOs
+
+1. Set replicas to 3.
+2. Configure RollingUpdate with maxSurge 1 and maxUnavailable 0.
+3. Set the opening image to alpine:3.19.
+
 ## The release
 
     shop-5c9d46bd4d   0   0   0     <- the 3.19 guard, kept at zero

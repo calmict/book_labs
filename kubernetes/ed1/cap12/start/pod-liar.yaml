@@ -3,11 +3,21 @@ kind: Pod
 metadata:
   name: liar
 spec:
+  # Keep the lab cycle short; production workloads normally need more time.
+  terminationGracePeriodSeconds: 1
   containers:
     - name: liar
       image: alpine:3
       # healthy for twenty seconds, then it lies: the process keeps
-      # running while the health file is gone
-      command: ["sh", "-c", "touch /tmp/healthy; sleep 20; rm /tmp/healthy; sleep infinity"]
-      # TODO: add the doctor — a livenessProbe that execs
-      # cat /tmp/healthy every 5 seconds (initialDelaySeconds 5)
+      # running while the health file is gone. After the probe restarts it,
+      # a Pod-persistent marker makes later starts fail and expose back-off.
+      command: ["sh", "-c", "test ! -e /state/failed || exit 1; touch /tmp/healthy; sleep 20; rm /tmp/healthy; touch /state/failed; sleep infinity"]
+      volumeMounts:
+        - name: state
+          mountPath: /state
+      # TODO 1 (12.2): add an exec livenessProbe that runs cat /tmp/healthy
+      # every 5 seconds after an initial 5 seconds. Its failure must restart
+      # the living process, showing that liveness is a recovery decision.
+  volumes:
+    - name: state
+      emptyDir: {}

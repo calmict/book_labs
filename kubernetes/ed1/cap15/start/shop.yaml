@@ -5,8 +5,9 @@ metadata:
   labels:
     app: shop
 spec:
-  # TODO: three replicas
-  # TODO: the zero-downtime promise — a RollingUpdate strategy with
+  # TODO 1 (15.2): set three replicas so the ReplicaSet guards the count.
+  # TODO 2 (15.3): add the zero-downtime RollingUpdate strategy so a
+  # broken release cannot reduce available capacity; use
   # maxSurge 1 and maxUnavailable 0
   selector:
     matchLabels:
@@ -18,5 +19,6 @@ spec:
     spec:
       containers:
         - name: sleeper
-          # TODO: the opening version, alpine:3.19
+          # TODO 3 (15.3): set alpine:3.19 as the opening revision so the
+          # later update and rollback have a known baseline.
           command: ["sleep", "infinity"]

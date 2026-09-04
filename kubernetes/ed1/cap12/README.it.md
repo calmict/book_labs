@@ -1,90 +1,68 @@
-# Cap. 12 — Il medico di bordo: probe, riavvii e il pod che resuscita da solo
-
-> Esercizio del **Capitolo 12 — I componenti del nodo Worker** del
-> *Manuale di Kubernetes* (collana Calm ICT — [calmict.com](https://calmict.com)).
+# Capitolo 12 — Il medico di bordo: probe, riavvii e resurrezione
 
 **Livello:** Fondamentale
 
+Dopo la scelta dello scheduler, osservi il kubelet che mantiene il Pod sano e pronto sul nodo.
+
 ## Obiettivi
 
-Al termine di questo laboratorio saprai:
-
-- vedere il kubelet fare il medico: una liveness probe che fallisce e il container riavviato, con il conto dei riavvii e il back-off che cresce;
-- distinguere i due destini: liveness (riavvio) contro readiness (fuori dal giro del traffico, senza riavvio) — osservando gli endpoint di un Service svuotarsi e ripopolarsi;
-- dimostrare che il kubelet non ha bisogno di nessuno: uno static pod creato mettendo un file sul nodo, che risorge perfino se lo cancelli dall'API.
+- Vedere una liveness fallita riavviare il container e produrre back-off (12.2).
+- Vedere la readiness togliere e restituire traffico senza riavvio (12.2).
+- Creare uno static Pod e provarne la resurrezione tramite kubelet (12.1).
 
 ## Prerequisiti
 
-- Cap. 7-11 completati; il cluster book-labs acceso.
-- I manifest di partenza in start/ hanno i TODO sulle probe.
-- Serve poter entrare nel nodo (con kind e minikube su driver Docker: docker exec <nome-nodo>).
+- Capitoli 7-11 completati e il cluster kind raggiungibile con kubectl.
+- Docker deve poter eseguire comandi nel nodo kind. Il controllo non arresta né riavvia il nodo.
 
-## Consegna
+## Lo scenario
 
-1. L'app che mente. Completa start/pod-liar.yaml: il container crea /tmp/healthy, dorme venti secondi e poi lo cancella (continuando a girare); il TODO è la livenessProbe exec (cat /tmp/healthy, periodSeconds 5, initialDelaySeconds 5). Applica e osserva il medico al lavoro:
+Lavora in cap12-lab. Completa le due probe e isola lo static Pod nello stesso namespace.
 
-       kubectl apply -f pod-liar.yaml
-       kubectl get pod liar -w
+### Fase 1 — Il processo che mente (12.2 — TODO 1)
 
-   Aspetta un paio di minuti: RESTARTS sale, e sale ancora. Ferma il watch e leggi la cartella clinica:
+Aggiungi la liveness exec. Il processo resta vivo dopo aver rimosso il file; il kubelet lo
+riavvia e il marker persistente rende falliti i tentativi successivi, mostrandone il back-off.
 
-       kubectl describe pod liar
+### Fase 2 — Il paziente in panchina (12.2 — TODO 2)
 
-   Negli eventi: Unhealthy (la probe fallita), Killing (la cura), Started (la ricaduta), e col tempo Back-off (il medico che perde la pazienza: i riavvii si distanziano).
+Aggiungi la readiness exec. Togliendo il file, il Pod esce dagli endpoint senza riavviarsi; quando
+il file ritorna, rientra nel traffico.
 
-2. Il paziente lunatico. Completa start/pod-moody.yaml: container che crea /tmp/ready all'avvio, readinessProbe che lo controlla (test -f, periodSeconds 3, failureThreshold 2), più il Service già pronto nel file. Applica e guarda chi riceve il traffico:
+### Fase 3 — Il kubelet autonomo (12.1 — TODO 3)
 
-       kubectl apply -f pod-moody.yaml
-       kubectl get endpoints moody
+Assegna cap12-lab allo static Pod e colloca il manifest nella directory osservata dal kubelet.
+Cancellare il mirror dall'API non basta: solo la rimozione del file lo ferma. Esegui:
 
-   C'è l'IP del pod. (kubectl ti avvisa che Endpoints è deprecato a favore di EndpointSlice: per osservare il fenomeno va benissimo lo storico Endpoints, più leggibile; l'evoluzione la incontrerai col capitolo sui Service.) Ora fallo ammalare senza ucciderlo:
-
-       kubectl exec moody -- rm /tmp/ready
-       kubectl get pod moody
-       kubectl get endpoints moody
-
-   READY 0/1, endpoint vuoto — ma RESTARTS fermo: nessun riavvio. La readiness non cura, mette in panchina. Guariscilo:
-
-       kubectl exec moody -- touch /tmp/ready
-       kubectl get endpoints moody
-
-   Di nuovo in campo. Due probe, due destini: annota la differenza.
-
-3. Il kubelet non ha bisogno di nessuno. Trova il nodo ed entra nella sua cartella dei manifest statici:
-
-       kubectl get nodes
-       docker exec <nome-nodo> ls /etc/kubernetes/manifests
-
-   Riconosci gli inquilini? apiserver, etcd, scheduler, controller-manager: il control plane stesso è fatto di static pod (ecco come nasce un cluster prima che esista l'API). Ora aggiungi il tuo:
-
-       docker cp start/static-hello.yaml <nome-nodo>:/etc/kubernetes/manifests/
-       kubectl get pods
-
-   È comparso hello-static-<nome-nodo>: nessun kubectl apply, nessuno scheduler, nessun controller — il kubelet ha visto il file e ha agito.
-
-4. La resurrezione senza controller. Prova a cancellarlo dall'API:
-
-       kubectl delete pod hello-static-<nome-nodo>
-       kubectl get pods
-
-   È già tornato. Nel cap. 7 a resuscitare i pod era il ReplicaSet controller; qui non c'è nessun Deployment: quello che vedi nell'API è solo lo specchio (mirror pod) di ciò che il kubelet esegue per conto suo. Finché il file sta nella cartella, il pod esiste. Rimuovi il file e verifica che sparisca:
-
-       docker exec <nome-nodo> rm /etc/kubernetes/manifests/static-hello.yaml
-       kubectl get pods
-
-5. Le domande per answers.md: (a) liveness contro readiness: descrivi i due destini osservati (riavvio vs panchina) e spiega perché una liveness scritta male è pericolosa (riavvii a catena di un'app solo lenta); (b) chi ha resuscitato hello-static, e in cosa differisce dalla resurrezione del cap. 7? Perché il control plane stesso è fatto di static pod? (c) l'eviction: cosa fa il kubelet quando il nodo è a corto di memoria, e perché è il fratello dell'OOM kill del cap. 3? (rifletti: risorsa incomprimibile, ma stavolta la difesa è del nodo intero)
-
-6. Smonta il laboratorio:
-
-       kubectl delete pod liar moody
-       kubectl delete service moody
-
-   (lo static pod è già sparito col suo file al passo 4)
+    bash kubernetes/ed1/cap12/solution/run.sh
 
 ## Criteri di "fatto"
 
-- [ ] RESTARTS di liar è salito almeno due volte e negli eventi hai Unhealthy, Killing e il Back-off.
-- [ ] Gli endpoint di moody si sono svuotati e ripopolati senza alcun riavvio del pod.
-- [ ] hello-static è comparso senza apply, è risorto dopo il delete, ed è sparito rimuovendo il file dal nodo.
-- [ ] answers.md risponde alle tre domande.
-- [ ] Pod e Service di laboratorio rimossi.
+- Hai distinto riavvio liveness e rimozione dal traffico readiness.
+- Hai visto lo static Pod risorgere con un nuovo UID.
+- run.sh stampa OK 1..9 e ALL CHECKS PASSED.
+
+## Come viene verificato
+
+- OK 1 è il cancello senza liveness; OK 2 verifica riavvii, eventi e intervalli crescenti.
+- OK 3-5 verificano endpoint sano, rimozione senza riavvio e guarigione.
+- OK 6 crea lo static Pod; OK 7 è il cancello della resurrezione.
+- OK 8 verifica che il file sia la fonte di verità; OK 9 la pulizia.
+
+## Domande di riflessione
+
+**a.** Perché una liveness errata è più pericolosa di una readiness errata?
+
+**b.** Chi resuscita lo static Pod e come differisce dal ReplicaSet del capitolo 7?
+
+**c.** Perché l'eviction del kubelet è parente dell'OOM kill del capitolo 3?
+
+## Pulizia
+
+Il controllo rimuove il manifest dal nodo e cancella cap12-lab. Nel percorso manuale rimuovi prima
+il file dal nodo, attendi la scomparsa del mirror e poi cancella il namespace.
+
+## Dove porta
+
+Ora il viaggio da una richiesta API a un container sano è completo. Il capitolo 13 lo ricompone
+attraverso Pod e loro ciclo di vita.

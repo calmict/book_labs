@@ -1,103 +1,77 @@
-# Chapter 6 — Wire Two Network Namespaces by Hand (veth, a Bridge and a Ping)
-
-> Exercise for **Chapter 6 — Linux Networking from the Ground Up** of the
-> *Kubernetes Manual* (Calm ICT series — [calmict.com](https://calmict.com)).
+# Chapter 6 — Wire two network namespaces by hand
 
 **Level:** Foundational
 
+The namespaces from chapter 2 were sealed rooms. Now you lay the cables: two veth pairs and a bridge
+turn two isolated network views into a small network without ever changing the host network.
+
 ## Objectives
 
-By the end of this lab you will be able to:
-
-- create network namespaces, virtual cables (veth) and a virtual switch (bridge), and wire them up the way a container runtime would;
-- follow a ping across your switch and read the evidence it leaves behind (ARP table, bridge forwarding);
-- recognise in docker0 the very same layout you just built by hand.
+- Create namespaces, veth pairs, and a bridge as a runtime would (6.1).
+- Follow a ping and read ARP resolution in the neighbour table (6.1).
+- Read the forwarding learned by the bridge in its FDB (6.1).
 
 ## Prerequisites
 
-- Chapters 1-5 completed (chapter 2 above all: here the network namespace stops being a dead end and becomes a network).
-- A Linux host with iproute2 (the ip command) and sudo privileges.
-- Docker is only needed for the final comparison in step 6.
+- A Linux host with Docker, unshare, mount, ip, bridge, and ping.
+- Unprivileged user namespaces enabled; sudo is not required.
+- The test mounts a private /run directory and does not change the host network.
 
-> 💡 **No sudo?** The whole lab also works as a regular user, inside a user
-> namespace:
->
->     unshare -Urnm
->     mount -t tmpfs tmpfs /run
->
-> and from there on, every command of the brief without sudo. Safety bonus:
-> you work in a toy network completely separate from the real one — nothing
-> can break. When you exit the shell everything vanishes by itself (you can
-> skip step 7 too).
+## The scenario
 
-## Instructions
+In start/network-lab.sh blue and red are born, but the switch, wiring, and evidence are missing. Run the
+script inside the toy network prepared by the verifier.
 
-1. Create the two "computers" (network namespaces) and see where they live:
+    cd kubernetes/ed1/cap06/start
 
-       sudo ip netns add blue
-       sudo ip netns add red
-       ip netns list
-       ls /run/netns
+### Phase 1 — The switch and cables (6.1 — TODO 1)
 
-   The files in /run/netns are handles onto the same namespace objects you met in chapter 2 under /proc/[pid]/ns.
+Create br-lab and two veth pairs. Move veth-blue and veth-red into their namespaces; attach peers
+veth-blue-br and veth-red-br to the bridge and bring them up.
 
-2. Look inside a freshly born namespace:
+### Phase 2 — Addresses and links (6.1 — TODO 2)
 
-       sudo ip netns exec blue ip addr
+Assign 10.42.0.2/24 to blue and 10.42.0.3/24 to red. Bring up both interfaces and loopbacks: an address
+on a down link cannot carry traffic.
 
-   Just one loopback, down: the same desolation you saw from the chapter 2 container — now you know where it comes from.
+### Phase 3 — Traces of the journey (6.1 — TODO 3)
 
-3. Build the switch (bridge) and the two cables (veth pairs): every cable has two ends, one goes into its namespace and the other into the switch:
+Send three echo requests from blue to red. Save the result, blue's ip neigh output, and br-lab's bridge
+fdb output. Then start a temporary Docker container and recognise the same bridge-plus-veth layout on
+docker0. Run the check:
 
-       sudo ip link add br-lab type bridge
-       sudo ip link set br-lab up
-       sudo ip link add veth-blue type veth peer name veth-blue-br
-       sudo ip link set veth-blue netns blue
-       sudo ip link set veth-blue-br master br-lab up
-       sudo ip link add veth-red type veth peer name veth-red-br
-       sudo ip link set veth-red netns red
-       sudo ip link set veth-red-br master br-lab up
-
-4. Give each inner end an address and switch everything on:
-
-       sudo ip netns exec blue ip addr add 10.42.0.2/24 dev veth-blue
-       sudo ip netns exec blue ip link set veth-blue up
-       sudo ip netns exec blue ip link set lo up
-       sudo ip netns exec red ip addr add 10.42.0.3/24 dev veth-red
-       sudo ip netns exec red ip link set veth-red up
-       sudo ip netns exec red ip link set lo up
-
-5. The moment of truth:
-
-       sudo ip netns exec blue ping -c 3 10.42.0.3
-
-   If the first packet gets lost it is not an error: it is ARP learning the addresses. Then collect the evidence of the journey — the neighbour's MAC learned by blue, and the ports on which the bridge learned to forward:
-
-       sudo ip netns exec blue ip neigh
-       sudo bridge fdb show br br-lab
-
-6. The final déjà vu: look at Docker's network with the same glasses.
-
-       ip addr show docker0
-       docker run -d --name lab-cap06 alpine:3 sleep infinity
-       ip link show master docker0
-
-   A veth attached to docker0 has appeared: bridge plus veth cables, exactly the layout you just built, only with less readable names. Remove the container: docker rm -f lab-cap06.
-
-   The three questions for answers.md: (a) why does a veth have TWO ends, and why does one live in the namespace and the other on the bridge? (b) describe the ping's journey (veth-blue → br-lab → veth-red and back) and explain what ip neigh and the bridge fdb tell you; (c) the blue namespace can ping red but not the internet: what is it missing? (think about default route and NAT — that is §6.2 of the manual).
-
-7. Tear down the lab:
-
-       sudo ip netns del blue
-       sudo ip netns del red
-       sudo ip link del br-lab
-
-   (the veth ends disappear on their own: half of them lived in the deleted namespaces, and the other half dies when its pair partner dies)
+    cd ../solution
+    ./run.sh
 
 ## Definition of "done"
 
-- [ ] The ping from blue to red gets replies across the bridge.
-- [ ] ip neigh inside blue shows red's MAC, and the br-lab fdb shows on which ports it learned the addresses.
-- [ ] You recognised the bridge+veth layout in docker0 (or you did everything in the rootless variant).
-- [ ] answers.md answers the three questions.
-- [ ] Namespaces and bridge removed, no orphan veth interfaces left (ip link | grep veth does not show yours).
+- The ping crosses the bridge without final packet loss.
+- The neighbour table and FDB contain red's MAC.
+- Both outside peers are br-lab ports.
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
+
+## How it is verified
+
+- OK 1 checks the ping from blue to red.
+- OK 2 correlates the MAC learned through ARP with the bridge FDB.
+- OK 3 checks br-lab's peers and recognises the same bridge-plus-veth layout on docker0.
+- OK 4 is the gate: with veth-red left down, the ping must fail.
+- OK 5 confirms that no toy-network object escaped into the host.
+
+## Reflection questions
+
+**a.** Why does a veth have two ends, one in the namespace and one on the bridge?
+
+**b.** What path does the ping take, and what do the neighbour table and FDB remember?
+
+**c.** Why can blue reach red but not the internet? What roles do a default route and NAT play (6.2)?
+
+## Cleanup
+
+Every run lives in a throwaway user and network namespace. The inner trap deletes namespaces and the
+bridge; when unshare exits, the entire toy network disappears in any case.
+
+## Where it leads
+
+You wired by hand what a runtime repeats for every container. The next part takes these mechanisms into
+the cluster, where Kubernetes delegates the wiring to network plugins.

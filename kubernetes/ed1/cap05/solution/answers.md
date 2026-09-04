@@ -1,61 +1,29 @@
-# Chapter 5 — Answers (model solution)
+# Chapter 5 - Climb the runtime chain - answers
 
-## The parent chain
+## The completed TODOs
 
-    1419511 sleep             <- the container process
-    1419489 containerd-shim   <- its ONLY ancestor below PID 1
-    (next parent: PID 1)
+TODO 1 (5.2) starts from the host PID reported by docker inspect and repeatedly
+reads the fourth field of proc/PID/stat. The resulting chain is workload,
+containerd-shim, then PID 1.
 
-## containerd, queried directly
+TODO 2 (5.1, 5.3) runs ctr in the moby namespace and copies the live config.json.
+When the host socket rejects the regular user, a non-privileged helper reads the
+same socket and a read-only task-directory mount.
 
-    # sudo ctr --namespace moby task ls
-    TASK                                                              PID      STATUS
-    83f3a...(the docker container ID)...                              1419511  RUNNING
+TODO 3 (5.3) exports a rootfs, generates a rootless OCI spec, selects a
+non-interactive command that prints its PID, and starts it directly with runc.
 
-(same PID seen in step 2: one process, three points of view — docker, the
-kernel, containerd)
+## Reflection answers
 
-## The OCI bundle
+a. The direct parent is containerd-shim. It preserves standard streams and exit
+status and keeps the workload independent from daemon restarts. Dockerd and
+containerd requested the process but are not its ancestors.
 
-    config.json sections found:
-    - "namespaces": pid, network, ipc, uts, mount   -> chapter 2
-    - "resources":  the cgroup knobs                -> chapter 3
-    - "capabilities" and "root"/rootfs              -> chapter 4
+b. The path is Docker CLI, dockerd, containerd, shim, runc, process. Finding the
+same PID with ctr in the moby namespace shows that containerd owns the task and
+Docker is one high-level client. The moby name is a logical containerd namespace,
+not a Linux kernel namespace.
 
-## The three questions
-
-**a. Who is the direct parent of the container process, why do neither
-dockerd nor containerd appear in the chain, and what is the shim for?**
-
-The direct parent is the containerd-shim, whose own parent is PID 1 — the
-chain ends there. Dockerd and containerd are running, but as bystanders: they
-asked for the container, they do not hold it. The shim exists precisely to
-break the ancestry: it keeps the container's stdio and exit status on behalf
-of containerd, so the daemons can restart or upgrade without their death
-taking every container down with them. If the chain were
-dockerd → containerd → process, restarting the daemon would kill every
-workload on the machine.
-
-**b. Reconstruct who calls whom when you type docker run, and explain what
-the "moby" drawer seen through ctr demonstrates.**
-
-docker (CLI) sends an API request to dockerd; dockerd delegates container
-lifecycle to containerd; containerd prepares the OCI bundle, starts a shim
-for the container, and the shim invokes runc, which creates the process and
-exits. Seeing your container inside containerd's "moby" namespace with ctr —
-without docker in the loop — demonstrates that docker is one client among
-many: the actual owner of running containers is containerd. Kubernetes takes
-this same seat with the CRI, which is why Docker could be "removed" without
-containers noticing.
-
-**c. Where in config.json did you find the ingredients of chapters 2-4?
-And what happens to runc after it has started the container?**
-
-The namespaces array lists exactly the kernel namespaces built by hand in
-chapter 2; the linux.resources section carries the cgroup limits of chapter
-3; the capabilities lists and the root section (the rootfs path) are chapter
-4. The bundle is those three chapters written down as a contract. As for
-runc: it creates the container and terminates — in the grand finale it
-returned to the prompt as soon as the command inside finished. It is a
-one-shot executor, not a daemon; whoever needs to babysit the container
-(the shim) stays, the runtime that built it leaves.
+c. The OCI config stores namespaces in linux.namespaces, cgroup settings in
+linux.resources, capabilities in process.capabilities, and the filesystem in
+root.path. Runc creates the process and exits; the shim remains to supervise it.

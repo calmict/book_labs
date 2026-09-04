@@ -9,8 +9,9 @@ spec:
     - name: moody
       image: alpine:3
       command: ["sh", "-c", "touch /tmp/ready; sleep infinity"]
-      # TODO: add the mood detector — a readinessProbe that execs
-      # test -f /tmp/ready every 3 seconds (failureThreshold 2)
+      # TODO 2 (12.2): add an exec readinessProbe that runs test -f
+      # /tmp/ready every 3 seconds with failureThreshold 2. It must remove
+      # the Pod from Service traffic without restarting the container.
 ---
 apiVersion: v1
 kind: Service

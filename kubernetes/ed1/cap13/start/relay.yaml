@@ -7,11 +7,10 @@ metadata:
   labels:
     app: relay
 spec:
-  # TODO: one replica
-  # TODO: a selector matching the label app: relay
+  # TODO 1 (13.2): set one replica so the controller starts the relay.
+  # TODO 2 (13.2): add a selector matching app: relay so ownership is valid.
   template:
     metadata:
-      # TODO: the label the selector expects
+      # TODO 3 (13.2): add app: relay and the relay container so the
+      # selector matches the Pod and the kubelet has work to start.
     spec:
-      # TODO: one container named relay, image alpine:3,
-      # command sleep infinity

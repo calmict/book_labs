@@ -20,7 +20,8 @@ spec:
     - name: sleeper
       image: alpine:3
       command: ["sleep", "infinity"]
-      # TODO: requests LOWER than limits
+      # TODO 3 (14.5): add requests lower than limits here, then equal
+      # requests and limits below, so the API derives two different classes.
       # (e.g. requests cpu 50m / memory 32Mi, limits cpu 100m / memory 64Mi)
 ---
 apiVersion: v1
@@ -32,5 +33,5 @@ spec:
     - name: sleeper
       image: alpine:3
       command: ["sleep", "infinity"]
-      # TODO: requests EQUAL to limits
+      # Complete TODO 3 with requests EQUAL to limits.
       # (e.g. both cpu 100m / memory 64Mi)

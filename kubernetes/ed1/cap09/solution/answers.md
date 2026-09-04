@@ -1,4 +1,16 @@
-# Chapter 9 — Answers (model solution)
+# Chapter 9 - Knock at the four gates - answers
+
+## The completed TODOs
+
+TODO 1 (9.1) uses curl through kubectl proxy to read /api and /apis. Their
+responses expose the core v1 API and named groups without client-side display.
+
+TODO 2 (9.2-9.3) compares an invalid-token request, a certificate-authenticated
+request, an impersonated service account, and an over-quota Pod. The distinct
+responses locate authentication, authorization, and admission in the pipeline.
+
+TODO 3 (9.4) keeps one HTTP watch open while watch-lab is created and deleted.
+The ADDED and DELETED events prove that changes are pushed without polling.
 
 ## The REST API without kubectl
 

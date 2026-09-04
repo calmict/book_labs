@@ -1,85 +1,79 @@
-# Chapter 5 — Climb the Runtime Chain (and Run a Container with runc Alone)
-
-> Exercise for **Chapter 5 — The Runtime War: Docker, containerd, CRI-O** of the
-> *Kubernetes Manual* (Calm ICT series — [calmict.com](https://calmict.com)).
+# Chapter 5 — Climb the runtime chain
 
 **Level:** Foundational
 
+You built a container's pieces by hand; now follow who assembles them. Start from the live process,
+climb to the shim, query containerd, and finally hand a bundle directly to runc.
+
 ## Objectives
 
-By the end of this lab you will be able to:
-
-- climb the real process chain of a running container and discover who is actually there (and who is NOT) between it and init;
-- query containerd directly, bypassing Docker, to see firsthand that the docker command is just a client;
-- read an OCI bundle (the config.json that containerd prepares for runc) and recognise in it the namespaces, cgroups and capabilities of chapters 2-4;
-- start a container with runc alone: no daemons, no API, just the spec and a rootfs.
+- Trace the real chain between workload, shim, and init (5.2).
+- Query containerd without going through the Docker CLI (5.1, 5.3).
+- Read namespaces, cgroups, capabilities, and rootfs in the OCI bundle (5.3).
+- Start a process with runc alone (5.2, 5.3).
 
 ## Prerequisites
 
-- Chapters 1-4 completed (all the pieces that you will now see assembled into a chain).
-- Docker working; runc and ctr are already on the system (they ship with Docker's containerd package: check with command -v runc ctr).
-- Sudo privileges for steps 4 and 5.
+- A Linux host with Docker, runc, ctr, jq, ps, awk, and tar.
+- Access to the Docker daemon; neither sudo nor privileged containers are required.
+- The docker:29-dind image for the automatic helper: when the containerd socket cannot be read
+  directly, it is mounted in the helper together with a read-only task directory.
 
-> 💡 **Using Podman?** You will see a different story, and that is the point of
-> §5.5: no daemon, the container's parent is conmon. Steps 2-5 will not match,
-> but redoing them on Podman and comparing the two chains is an excellent
-> extra exercise. Step 6 (pure runc) works identically.
+## The scenario
 
-## Instructions
+In start/runtime-lab.sh the sequence is already laid out but three pieces of evidence are missing.
+Complete them without changing the sleep infinity workload or replacing the real chain with a simulation.
 
-1. Start the lab container:
+    cd kubernetes/ed1/cap05/start
 
-       docker run -d --name lab-cap05 alpine:3 sleep infinity
+### Phase 1 — From the process to init (5.2 — TODO 1)
 
-2. Climb the parent chain, from the container process up to PID 1, reading /proc by hand (the fourth field of /proc/[pid]/stat is the parent):
+Obtain the PID with docker inspect and follow the fourth field of proc/PID/stat. Write each PID and
+name pair to parent-chain.txt: the step through containerd-shim is the required evidence.
 
-       PID=$(docker inspect --format '{{.State.Pid}}' lab-cap05)
-       P=$PID; while [ "$P" -ne 1 ]; do ps -o pid=,comm= -p "$P"; P=$(awk '{print $4}' /proc/$P/stat); done
+### Phase 2 — Bypass Docker (5.1, 5.3 — TODO 2)
 
-   Write the chain down. Surprise: between your sleep and init there is ONE single link, the containerd-shim. Confirm with pstree -s -p $PID.
+Use ctr in the logical moby namespace and save the task list. Copy the live config.json as well. If
+host permissions deny direct access, use the non-privileged helper described under Prerequisites; the
+task directory must remain read-only.
 
-3. What about the two big names? Check that dockerd and containerd are indeed running:
+### Phase 3 — Only runc (5.3 — TODO 3)
 
-       ps -e -o pid,comm | grep -E 'dockerd|containerd'
+Export the rootfs, generate a rootless spec, and replace the interactive shell with a batch command
+that records PID and hostname. Start the bundle with runc, then run:
 
-   They run, but they are NOT ancestors of your container. First question to note down: why is the shim's parent PID 1 and not containerd? What would happen to the containers, on a daemon restart, if the chain were dockerd → containerd → process?
-
-4. Docker is just a client: talk to containerd directly and find your container again:
-
-       sudo ctr --namespace moby task ls
-
-   There it is: containerd manages it, docker merely asked for it. The "moby" namespace is the name Docker uses to introduce itself to containerd (and it has nothing to do with the kernel namespaces of chapter 2: here it is just a logical drawer inside containerd).
-
-5. The OCI Runtime Spec in the flesh. The "bundle" containerd prepared for runc is on disk:
-
-       ID=$(docker inspect --format '{{.Id}}' lab-cap05)
-       sudo ls /run/containerd/io.containerd.runtime.v2.task/moby/$ID/
-       sudo cat /run/containerd/io.containerd.runtime.v2.task/moby/$ID/config.json
-
-   In the JSON (it is long: scroll through it calmly, or open it with less) find the three previous chapters again: the namespaces section (chapter 2), the cgroup resources (chapter 3), capabilities and the rootfs (chapter 4). This file IS the standard contract: anyone who honours it can act as a runtime.
-
-6. The grand finale: a container with runc alone, no daemon at all. Prepare your own bundle (docker export flattens the container's filesystem into a single tar: note the difference from chapter 4's docker save, which preserves the layers):
-
-       mkdir -p ~/lab-cap05/bundle/rootfs && cd ~/lab-cap05/bundle
-       docker create --name lab-cap05-exp alpine:3
-       docker export lab-cap05-exp | tar -x -C rootfs
-       docker rm lab-cap05-exp
-       runc spec --rootless
-       runc run demo
-
-   You are inside a shell of the container (new prompt, hostname "runc"): look around with ps aux — PID 1 again! — then leave with exit. The container dies with the shell: runc is a one-shot executor, not a daemon.
-
-7. Answer in the answers.md file you will submit (questions below), then tear down the lab:
-
-       docker rm -f lab-cap05
-       cd ~ && rm -rf ~/lab-cap05
-
-   The three questions for answers.md: (a) who is the direct parent of the container process, why do neither dockerd nor containerd appear in the chain, and what is the shim for? (b) reconstruct who calls whom when you type docker run (CLI → dockerd → containerd → shim → runc → process) and explain what the "moby" drawer seen through ctr demonstrates; (c) where in config.json did you find the ingredients of chapters 2-4 again? And what happens to runc after it has started the container?
+    cd ../solution
+    ./run.sh
 
 ## Definition of "done"
 
-- [ ] You have the parent chain written down: process → containerd-shim → PID 1, with dockerd and containerd alive but outside the chain.
-- [ ] You saw your container listed by ctr in the moby namespace, without going through docker.
-- [ ] In config.json you located the namespaces, resources (cgroup) and capabilities sections.
-- [ ] The container started with runc run came up, you entered it (PID 1) and closed it with exit.
-- [ ] answers.md answers the three questions and the lab is torn down.
+- The chain shows the workload, containerd-shim, and then init.
+- ctr lists the same ID and config.json contains the ingredients from chapters 2-4.
+- The process started by runc alone appears as PID 1.
+- run.sh prints OK 1..5 and ALL CHECKS PASSED.
+
+## How it is verified
+
+- OK 1 checks the real parent chain.
+- OK 2 compares the Docker ID with the task seen by ctr.
+- OK 3 reads namespaces, resources, capabilities, and root from the live bundle.
+- OK 4 runs the rootless bundle with runc and verifies PID 1.
+- OK 5 is the gate: with the spec's default process, the required evidence is absent.
+
+## Reflection questions
+
+**a.** Why is the shim the direct parent, while dockerd and containerd are not workload ancestors?
+
+**b.** Reconstruct the CLI, dockerd, containerd, shim, runc, and process chain. What does moby prove?
+
+**c.** Where do chapters 2-4 appear in config.json, and what does runc do after creation?
+
+## Cleanup
+
+The trap removes both containers and the temporary directory. The helper ends after each read; the
+socket is not changed and the task directory is mounted read-only.
+
+## Where it leads
+
+Runc can create an isolated process, but it does not build its network. Chapter 6 takes veth pairs and
+a bridge and wires by hand the path a runtime prepares for every container.

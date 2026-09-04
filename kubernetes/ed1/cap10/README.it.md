@@ -1,62 +1,64 @@
-# Cap. 10 — Scrivi il tuo controller in venti righe (e scopri perché ne serve uno solo)
-
-> Esercizio del **Capitolo 10 — Controller Manager e il reconciliation loop** del
-> *Manuale di Kubernetes* (collana Calm ICT — [calmict.com](https://calmict.com)).
+# Capitolo 10 — Scrivi il tuo controller in venti righe
 
 **Livello:** Fondamentale
 
+Dopo LIST e WATCH, costruisci il loop che riceve lo stato, misura lo scarto e agisce.
+
 ## Obiettivi
 
-Al termine di questo laboratorio saprai:
-
-- riconoscere il battito del cuore dei controller veri: le Lease della leader election in kube-system;
-- scrivere in prima persona un controller funzionante (observe–diff–act in venti righe di shell) e vederlo riparare i tuoi sabotaggi;
-- scoprirne i due difetti strutturali — il polling e il duello tra copie — e capire perché client-go risponde con informer e leader election.
+- Riconoscere nelle Lease il battito della leader election (10.4).
+- Scrivere un controller observe-diff-act e vederlo riparare e potare Pod (10.1).
+- Collegare polling, informer, cache e duello tra copie (10.3-10.4).
 
 ## Prerequisiti
 
-- Cap. 7 e 9 completati; il cluster book-labs acceso (kubectl get nodes deve rispondere).
-- Il file start/minictl.sh fornito, da completare: è il primo esercizio della collana con un vero file di partenza da riempire.
+- Capitoli 7 e 9 completati e un cluster raggiungibile con kubectl.
+- Bash. kind mostra la Lease; altre distribuzioni possono produrre uno SKIP motivato.
 
-## Consegna
+## Lo scenario
 
-1. Prima i professionisti. Guarda chi detiene i lock del control plane e il loro battito:
+Completa start/minictl.sh nel namespace cap10-lab. Lo stato desiderato è due Pod app=minictl.
 
-       kubectl get leases -n kube-system
-       kubectl get lease kube-controller-manager -n kube-system -o yaml
+### Fase 1 — Osserva (10.1 — TODO 1)
 
-   Annota holderIdentity e renewTime; riesegui dopo dieci secondi: il renewTime è avanzato. Il leader dimostra di essere vivo rinnovando la sua lease.
-   (Nota: su minikube questa lease non esiste — il suo control plane mononodo gira con --leader-elect=false. Per questo passo serve kind; il resto dell'esercizio funziona ovunque.)
+Conta i Pod non in terminazione: questa è la realtà osservata dal controller.
 
-2. Ora tocca a te. Copia start/minictl.sh in una cartella di lavoro e aprilo: è un controller monco, con la struttura observe–diff–act e tre TODO. Completalo: OSSERVA (conta i pod con etichetta app=minictl, ignorando quelli in Terminating), CONFRONTA con il desiderato (2), AGISCI (creane uno se mancano; se abbondano cancellane uno — scegliendo una vittima non già morente). Venti righe, non serve altro.
+### Fase 2 — Ripara il difetto (10.1 — TODO 2)
 
-3. Rendilo eseguibile e avvialo in un terminale:
+Quando il conteggio è inferiore a due, crea un Pod etichettato nel namespace del laboratorio.
 
-       chmod +x minictl.sh
-       ./minictl.sh
+### Fase 3 — Pota l'eccesso (10.1 — TODO 3)
 
-   Al primo giro crea i due pod. Ora sabota dal secondo terminale, come al cap. 7:
+Quando il conteggio supera due, scegli un Pod non morente e cancellalo. Poi esegui:
 
-       kubectl delete pod <uno-dei-due>
-
-   Il tuo controller nota la differenza e ripara. Prova anche l'eccesso: crea un terzo pod a mano con l'etichetta app=minictl e guardalo venire potato. Sei tu, adesso, il controller-manager.
-
-4. Primo difetto: il polling. Il tuo script interroga l'API ogni due secondi, anche quando non cambia nulla — moltiplicalo per mille controller e l'apiserver affoga. Il vero controller-manager usa la connessione watch del cap. 9 (passo 6) più una cache locale: sono gli informer di client-go. Annota la differenza per le domande finali.
-
-5. Secondo difetto: il duello. Ferma il controller, cancella i pod rimasti e avvia DUE copie di minictl.sh in due terminali, il più possibile nello stesso istante (così i loro tick restano allineati). Quando i due pod sono su, cancellane uno e osserva il pasticcio: entrambe le copie vedono il buco, entrambe agiscono, i pod diventano 3, poi entrambe tagliano — magari lo stesso pod. Due termostati sullo stesso termosifone. (Se al primo colpo non collidono, è la fortuna dei tempi: ferma tutto e riparti insieme.) Ferma le copie e rifletti.
-
-6. La soluzione dei professionisti l'hai già vista al passo 1: prima di agire, ogni copia prova ad acquisire la lease; una sola ci riesce e le altre restano in panchina. Un solo termostato attivo per volta, il subentro solo se il titolare smette di rinnovare.
-
-   Le tre domande per answers.md: (a) indica le righe observe, diff e act del tuo script e mappale su ciò che ha fatto il ReplicaSet controller nel cap. 7; (b) perché il polling non scala, e cosa cambiano informer e cache di client-go? (c) descrivi il duello del passo 5 e come la leader election lo previene: chi rinnova la lease, e cosa succede se smette di farlo?
-
-7. Smonta il laboratorio: ferma gli script (Ctrl-C) e:
-
-       kubectl delete pods -l app=minictl
+    bash kubernetes/ed1/cap10/solution/run.sh
 
 ## Criteri di "fatto"
 
-- [ ] Hai visto il renewTime della lease del controller-manager avanzare.
-- [ ] Il tuo minictl.sh ricrea il pod cancellato senza intervento umano e pota gli eccessi.
-- [ ] Hai provocato e descritto il duello tra due copie.
-- [ ] answers.md risponde alle tre domande.
-- [ ] Nessun pod app=minictl residuo e script fermati.
+- Hai letto il rinnovo della Lease, oppure lo SKIP motivato della distribuzione.
+- Il controller ripara una cancellazione e pota un eccesso.
+- run.sh stampa OK 1..7, o SKIP 1 motivato, e ALL CHECKS PASSED.
+
+## Come viene verificato
+
+- OK 1 legge due renewTime; OK 2 controlla la convergenza iniziale.
+- OK 3 e OK 4 verificano riparazione e potatura.
+- OK 5 è il cancello: a controller fermo il Pod non ricompare.
+- OK 6 mostra due copie senza elezione sullo stesso stato; OK 7 verifica la pulizia.
+
+## Domande di riflessione
+
+**a.** Dove sono observe, diff e act, e come corrispondono al ReplicaSet controller del capitolo 7?
+
+**b.** Perché il polling non scala, e cosa cambiano informer e cache?
+
+**c.** Perché due copie possono duellare, e come una Lease decide leader e subentro?
+
+## Pulizia
+
+Il controllo termina i controller e cancella cap10-lab. Nel percorso manuale termina gli script
+con Ctrl-C e cancella lo stesso namespace.
+
+## Dove porta
+
+Hai costruito il loop. Il capitolo 11 mostra il controller che assegna ogni Pod a un nodo.

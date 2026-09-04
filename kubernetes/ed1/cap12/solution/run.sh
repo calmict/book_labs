@@ -1,130 +1,129 @@
 #!/usr/bin/env bash
+# Chapter 12 verification - checks liveness restarts, readiness traffic
+# removal, and a static Pod recreated by the kubelet. Uses one lab namespace
+# and one temporary manifest in the existing kind node, both cleaned on exit.
 set -euo pipefail
 
-# Chapter 12 solution — probes, restarts, and the pod that resurrects alone.
-# Needs a reachable cluster whose node is a Docker container (kind, or
-# minikube with the docker driver).
-
+NS=cap12-lab
 DIR=$(cd "$(dirname "$0")" && pwd)
+STATIC_PATH=/etc/kubernetes/manifests/cap12-static-hello.yaml
 
 kubectl get nodes >/dev/null || {
-  echo "ERROR: no reachable cluster — see chapter 7" >&2
+  echo "ERROR: no reachable cluster - see chapter 7" >&2
   exit 1
 }
 NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
 docker exec "$NODE" true 2>/dev/null || {
-  echo "ERROR: cannot enter node $NODE with docker exec (this run.sh needs" >&2
-  echo " kind, or minikube with the docker driver)" >&2
+  echo "ERROR: this check needs a kind node reachable with docker exec" >&2
   exit 1
 }
 
 cleanup() {
-  kubectl delete pod liar moody --ignore-not-found >/dev/null 2>&1 || true
-  kubectl delete service moody --ignore-not-found >/dev/null 2>&1 || true
-  docker exec "$NODE" rm -f /etc/kubernetes/manifests/static-hello.yaml 2>/dev/null || true
+  docker exec "$NODE" rm -f "$STATIC_PATH" 2>/dev/null || true
+  kubectl delete namespace "$NS" --ignore-not-found --wait=false >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 cleanup
+kubectl wait --for=delete namespace/"$NS" --timeout=120s >/dev/null 2>&1 || true
+kubectl create namespace "$NS" >/dev/null
+echo "PRECHECK using Docker-backed node $NODE and namespace $NS"
 
-echo "== 1. The lying app: liveness at work =="
-kubectl apply -f "$DIR/pod-liar.yaml"
-echo -n "waiting for the doctor to intervene (restarts >= 2) "
+kubectl apply -n "$NS" -f "$DIR/../start/pod-liar.yaml" >/dev/null
+kubectl wait -n "$NS" --for=condition=Ready pod/liar --timeout=120s >/dev/null
+sleep 25
+test "$(kubectl get pod liar -n "$NS" -o jsonpath='{.status.containerStatuses[0].restartCount}')" -eq 0
+echo "OK 1 - the gate bites: without livenessProbe, the unhealthy process is not restarted"
+kubectl delete pod liar -n "$NS" --wait=true >/dev/null
+
+kubectl apply -f "$DIR/pod-liar.yaml" >/dev/null
 waited=0
 while true; do
-  RC=$(kubectl get pod liar -o jsonpath='{.status.containerStatuses[0].restartCount}' 2>/dev/null)
-  if [ -n "$RC" ] && [ "$RC" -ge 2 ]; then break; fi
-  echo -n "."
-  sleep 5
-  waited=$((waited + 5))
+  RESTARTS=$(kubectl get pod liar -n "$NS" -o jsonpath='{.status.containerStatuses[0].restartCount}' 2>/dev/null || true)
+  WAITING=$(kubectl get pod liar -n "$NS" -o jsonpath='{.status.containerStatuses[0].state.waiting.reason}' 2>/dev/null || true)
+  if [ -n "$RESTARTS" ] && [ "$RESTARTS" -ge 2 ] && [ "$WAITING" = CrashLoopBackOff ]; then break; fi
+  sleep 2
+  waited=$((waited + 2))
   if [ "$waited" -ge 240 ]; then
-    echo " timeout" >&2
+    echo "ERROR: timed out waiting for liveness restarts and CrashLoopBackOff" >&2
     exit 1
   fi
 done
-echo " restarts=$RC"
-kubectl describe pod liar | grep -E 'Unhealthy|Killing|Back-off' | tail -4
+kubectl get events -n "$NS" --field-selector involvedObject.name=liar -o jsonpath='{range .items[*]}{.reason}{"\n"}{end}' | grep -qx Unhealthy
+kubectl get events -n "$NS" --field-selector involvedObject.name=liar -o jsonpath='{range .items[*]}{.reason}{"\n"}{end}' | grep -qx Killing
+echo "OK 2 - failed liveness causes repeated restarts and reaches CrashLoopBackOff"
 
-echo
-echo "== 2. The moody patient: readiness gates the traffic =="
-kubectl apply -f "$DIR/pod-moody.yaml"
-kubectl wait --for=condition=Ready pod/moody --timeout=120s >/dev/null
-echo "--- endpoints while healthy ---"
-kubectl get endpoints moody
-kubectl exec moody -- rm /tmp/ready
-echo -n "waiting for the bench "
+kubectl apply -f "$DIR/pod-moody.yaml" >/dev/null
+kubectl wait -n "$NS" --for=condition=Ready pod/moody --timeout=120s >/dev/null
+BASE_RESTARTS=$(kubectl get pod moody -n "$NS" -o jsonpath='{.status.containerStatuses[0].restartCount}')
+test -n "$(kubectl get endpoints moody -n "$NS" -o jsonpath='{.subsets[0].addresses[0].ip}')"
+echo "OK 3 - a ready Pod is present in the Service endpoints"
+
+kubectl exec moody -n "$NS" -- rm /tmp/ready
 waited=0
-until [ -z "$(kubectl get endpoints moody -o jsonpath='{.subsets[0].addresses}' 2>/dev/null)" ]; do
-  echo -n "."
+while [ -n "$(kubectl get endpoints moody -n "$NS" -o jsonpath='{.subsets[0].addresses}' 2>/dev/null)" ]; do
   sleep 3
   waited=$((waited + 3))
   if [ "$waited" -ge 90 ]; then
-    echo " timeout" >&2
+    echo "ERROR: timed out waiting for readiness to remove the endpoint" >&2
     exit 1
   fi
 done
-echo
-echo "--- endpoints while sick (empty), and NO restart ---"
-kubectl get endpoints moody
-kubectl get pod moody
-kubectl exec moody -- touch /tmp/ready
-waited=0
-until [ -n "$(kubectl get endpoints moody -o jsonpath='{.subsets[0].addresses}' 2>/dev/null)" ]; do
-  sleep 3
-  waited=$((waited + 3))
-  if [ "$waited" -ge 90 ]; then
-    echo "timeout waiting for recovery" >&2
-    exit 1
-  fi
-done
-echo "--- back in the game ---"
-kubectl get endpoints moody
+test "$(kubectl get pod moody -n "$NS" -o jsonpath='{.status.containerStatuses[0].restartCount}')" -eq "$BASE_RESTARTS"
+echo "OK 4 - failed readiness removes traffic without restarting the container"
 
-echo
-echo "== 3. The kubelet needs nobody: static pods =="
-echo "--- the static manifests already on the node (recognise the tenants?) ---"
-docker exec "$NODE" ls /etc/kubernetes/manifests
-docker cp "$DIR/../start/static-hello.yaml" "$NODE:/etc/kubernetes/manifests/" >/dev/null
-echo -n "waiting for hello-static-$NODE "
+kubectl exec moody -n "$NS" -- touch /tmp/ready
+kubectl wait -n "$NS" --for=condition=Ready pod/moody --timeout=90s >/dev/null
+test -n "$(kubectl get endpoints moody -n "$NS" -o jsonpath='{.subsets[0].addresses[0].ip}')"
+echo "OK 5 - restoring readiness returns the same Pod to Service traffic"
+
+docker cp "$DIR/static-hello.yaml" "$NODE:$STATIC_PATH" >/dev/null
+STATIC_POD="hello-static-$NODE"
 waited=0
-until kubectl get pod "hello-static-$NODE" >/dev/null 2>&1; do
-  echo -n "."
+until kubectl get pod "$STATIC_POD" -n "$NS" >/dev/null 2>&1; do
   sleep 2
   waited=$((waited + 2))
   if [ "$waited" -ge 90 ]; then
-    echo " timeout" >&2
+    echo "ERROR: timed out waiting for the static Pod mirror" >&2
     exit 1
   fi
 done
-echo
-kubectl get pod "hello-static-$NODE"
+test "$(kubectl get pod "$STATIC_POD" -n "$NS" -o jsonpath='{.spec.nodeName}')" = "$NODE"
+echo "OK 6 - placing a manifest on the node creates a static Pod without apply"
 
-echo
-echo "== 4. Resurrection without a controller =="
-U1=$(kubectl get pod "hello-static-$NODE" -o jsonpath='{.metadata.uid}')
-kubectl delete pod "hello-static-$NODE" --wait=false >/dev/null
-echo -n "deleted from the API; waiting for the kubelet's mirror to return "
+UID_BEFORE=$(kubectl get pod "$STATIC_POD" -n "$NS" -o jsonpath='{.metadata.uid}')
+kubectl delete pod "$STATIC_POD" -n "$NS" --wait=false >/dev/null
 waited=0
 while true; do
-  U2=$(kubectl get pod "hello-static-$NODE" -o jsonpath='{.metadata.uid}' 2>/dev/null || true)
-  if [ -n "$U2" ] && [ "$U2" != "$U1" ]; then break; fi
-  echo -n "."
+  UID_AFTER=$(kubectl get pod "$STATIC_POD" -n "$NS" -o jsonpath='{.metadata.uid}' 2>/dev/null || true)
+  if [ -n "$UID_AFTER" ] && [ "$UID_AFTER" != "$UID_BEFORE" ]; then break; fi
   sleep 2
   waited=$((waited + 2))
   if [ "$waited" -ge 90 ]; then
-    echo " timeout" >&2
+    echo "ERROR: timed out waiting for kubelet resurrection" >&2
     exit 1
   fi
 done
-echo
-echo "(back with a new uid: the API object is just the kubelet's mirror)"
-docker exec "$NODE" rm /etc/kubernetes/manifests/static-hello.yaml
+echo "OK 7 - deleting the mirror bites: the kubelet republishes it with a new UID"
+
+docker exec "$NODE" rm -f "$STATIC_PATH"
 waited=0
-while kubectl get pod "hello-static-$NODE" >/dev/null 2>&1; do
+while kubectl get pod "$STATIC_POD" -n "$NS" >/dev/null 2>&1; do
   sleep 2
   waited=$((waited + 2))
   if [ "$waited" -ge 90 ]; then
-    echo "timeout waiting for the static pod to vanish" >&2
+    echo "ERROR: timed out waiting for static Pod removal" >&2
     exit 1
   fi
 done
-echo "(file removed, pod gone: the file IS the pod)"
+echo "OK 8 - removing the node manifest removes the static Pod"
+
+cleanup
+kubectl wait --for=delete namespace/"$NS" --timeout=120s >/dev/null
+if docker exec "$NODE" test -e "$STATIC_PATH"; then
+  echo "UNEXPECTED: static manifest survived cleanup" >&2
+  exit 1
+fi
+echo "OK 9 - Pods, Service, namespace, and node manifest were removed"
+
+echo
+echo "ALL CHECKS PASSED"

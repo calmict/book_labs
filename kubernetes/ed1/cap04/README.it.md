@@ -1,91 +1,77 @@
-# Cap. 4 — Smonta un'immagine a mano (anatomia di un container)
-
-> Esercizio del **Capitolo 4 — Anatomia di un container** del
-> *Manuale di Kubernetes* (collana Calm ICT — [calmict.com](https://calmict.com)).
+# Capitolo 4 — Smonta un'immagine a mano
 
 **Livello:** Fondamentale
 
+Dopo namespaces e cgroup manca l'ultimo pezzo dell'anatomia: il filesystem. In questo laboratorio
+apri un'immagine, segui i riferimenti tra i suoi oggetti e osservi ciò che separa il root del container
+dal root dell'host.
+
 ## Obiettivi
 
-Al termine di questo laboratorio saprai:
-
-- aprire un'immagine OCI e riconoscerne i tre ingredienti: manifest, config e layer (che sono semplici tarball di filesystem);
-- montare un OverlayFS a mano e osservare il copy-on-write: dove finiscono le modifiche, come muore un file (whiteout), perché il layer di un container è usa-e-getta;
-- dimostrare che root nel container non è root sull'host (capabilities) e che il kernel è uno solo, condiviso.
+- Riconoscere manifest, config e layer di un'immagine OCI (4.2).
+- Osservare copy-up, whiteout e immutabilità del layer inferiore con OverlayFS (4.1).
+- Confrontare capabilities e kernel dentro e fuori dal container (4.3, 4.4).
 
 ## Prerequisiti
 
-- Aver completato i cap. 1-3 (processo, namespaces, cgroups: qui si aggiunge l'ultimo pezzo, il filesystem).
-- Docker o Podman funzionanti, privilegi sudo per il mount del passo 4.
-- Circa 30 MB di spazio disco.
+- Un host Linux con Docker, jq, tar, sha256sum, mount e unshare.
+- Possibilità di creare user namespace non privilegiati; non servono sudo né mount sull'host.
+- Circa 30 MB di spazio temporaneo.
 
-## Consegna
+## Lo scenario
 
-1. Procurati un'immagine e mettila a nudo con docker save (che esporta il formato che viaggia tra i registry):
+In start/image-lab.sh trovi uno script valido ma incompleto. Completa tre lacune: seguire il manifest,
+costruire la vista OverlayFS e raccogliere le prove sul confine tra container e host.
 
-       mkdir -p ~/lab-cap04 && cd ~/lab-cap04
-       docker pull alpine:3
-       docker save alpine:3 -o alpine.tar
-       mkdir image && tar -xf alpine.tar -C image
-       find image -type f
+    cd kubernetes/ed1/cap04/start
 
-   Niente magia dentro: qualche JSON e uno o più blob. Annota i nomi.
+### Fase 1 — Segui gli indirizzi (4.2 — TODO 1)
 
-2. Leggi il manifest e segui la catena: quale blob è la config e quale il layer?
+Leggi image/manifest.json con jq e salva in image.env i percorsi Config e del primo elemento Layers.
+Non scegliere i blob dal nome: è il manifest a stabilire la catena.
 
-       cat image/manifest.json
+### Fase 2 — Scrivi senza cambiare l'immagine (4.1 — TODO 2)
 
-   Apri anche la config (il JSON grosso): riconosci Env, Cmd e la sezione rootfs con i diff_ids. Annota il percorso del layer.
+Estrai il layer, poi dentro unshare -Urm monta un OverlayFS con lowerdir, upperdir e workdir. Modifica
+etc/motd e cancella etc/hostname nella vista merged; registra checksum e presenza dei file prima e dopo.
 
-3. Il layer è solo un tarball di filesystem: estrailo e guardaci dentro.
+### Fase 3 — Root con poteri limitati (4.3, 4.4 — TODO 3)
 
-       mkdir layer && tar -xf image/<PERCORSO-DEL-LAYER> -C layer
-       ls layer
+Confronta CapEff di PID 1 con quello del processo nel container, tenta date -s nel container e confronta
+uname -r. Registra i risultati in isolation.env, poi esegui:
 
-   (con le versioni vecchie di docker save il layer si chiama layer.tar dentro una sottocartella: il concetto non cambia)
-   Ti ritrovi bin, etc, usr... un intero filesystem radice. Questo — più i JSON del passo 2 — È l'immagine.
-
-4. Ora monta un OverlayFS usando il layer appena estratto come piano di sotto, e osserva il copy-on-write:
-
-       mkdir upper work merged
-       sudo mount -t overlay overlay -o lowerdir=layer,upperdir=upper,workdir=work merged
-       ls merged
-       echo "modificato dal container" | sudo tee merged/etc/motd
-       sudo rm merged/etc/hostname
-       ls -l upper/etc/
-       cat layer/etc/motd; ls layer/etc/hostname
-
-   Osserva: la modifica sta SOLO in upper (il "container layer"), il file cancellato è diventato in upper un character device speciale (il whiteout), e il layer di sotto è rimasto intatto. È così che cento container condividono la stessa immagine senza pestarsi i piedi.
-
-> 💡 **Niente sudo?** Su kernel recenti puoi montare l'overlay dentro uno user
-> namespace: unshare -Urm ti dà una shell da "root finto" (cap. 2!) in cui il
-> comando mount del passo 4 funziona senza sudo. Il mount sparisce da solo
-> quando esci dalla shell.
-
-5. Root nel container non è root sull'host. Confronta le capabilities effettive e prova un'azione da vero root:
-
-       docker run --rm alpine:3 grep CapEff /proc/self/status
-       grep CapEff /proc/1/status
-       docker run --rm alpine:3 date -s "2000-01-01"
-
-   Le due maschere sono diverse (quella del container ha molti meno bit), e il date -s fallisce: manca CAP_SYS_TIME, anche se dentro sei "root".
-
-6. L'ultima illusione da sfatare: il kernel è uno solo.
-
-       uname -r
-       docker run --rm alpine:3 uname -r
-
-   Identici. Rispondi per iscritto nel file answers.md che consegnerai: cosa contiene davvero un'immagine OCI (segui la catena manifest → config → layer)? Dove sono finite la modifica e la cancellazione del passo 4, e perché questo rende i container usa-e-getta? Perché "root" nel container non può cambiare l'ora di sistema, e cosa c'entra il fatto che uname -r sia identico dentro e fuori?
-
-7. Smonta il laboratorio:
-
-       sudo umount merged
-       cd ~ && rm -rf ~/lab-cap04
+    cd ../solution
+    ./run.sh
 
 ## Criteri di "fatto"
 
-- [ ] Hai individuato nel manifest il percorso della config e quello del layer, e dentro il layer estratto c'è un filesystem radice completo.
-- [ ] La modifica del passo 4 esiste solo in upper, la cancellazione ha prodotto un whiteout, e il layer originale è rimasto intatto.
-- [ ] Hai le due maschere CapEff (diverse) e il fallimento di date -s nel container.
-- [ ] uname -r dentro e fuori coincidono, e answers.md risponde alle tre domande.
-- [ ] Overlay smontato e cartella di laboratorio rimossa.
+- I tre TODO sono completati e i file prodotti identificano oggetti reali.
+- Il layer inferiore resta invariato dopo modifica e cancellazione nella vista merged.
+- Il tentativo di cambiare l'ora è rifiutato e il kernel coincide.
+- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
+
+## Come viene verificato
+
+- OK 1 segue manifest, config e layer e valida le sezioni config e rootfs.
+- OK 2 controlla copy-up, cancellazione e immutabilità del layer inferiore.
+- OK 3 controlla capabilities diverse e rifiuto di date -s.
+- OK 4 confronta le versioni del kernel.
+- OK 5 è il cancello: senza upperdir la modifica deve fallire.
+
+## Domande di riflessione
+
+**a.** Che cosa contiene davvero un'immagine OCI e come si segue la catena manifest, config e layer?
+
+**b.** Dove finiscono modifica e cancellazione, e perché questo rende usa-e-getta il container layer?
+
+**c.** Perché root nel container non può cambiare l'ora, e che relazione ha con il kernel condiviso?
+
+## Pulizia
+
+run.sh usa una directory temporanea e il mount vive in uno user namespace che termina da solo. Il trap
+rimuove tutti i file; non restano container né mount sull'host.
+
+## Dove porta
+
+Hai aperto il pacchetto e riconosciuto i meccanismi che lo isolano. Il capitolo 5 segue chi assembla
+questi pezzi: containerd prepara il bundle OCI e runc crea il processo.
