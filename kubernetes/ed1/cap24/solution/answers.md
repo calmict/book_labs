@@ -82,7 +82,7 @@ A chart repository is an indexed collection of packaged charts served over
 HTTP; helm repo add gives it a name, helm install then pulls a chart from
 it exactly the way we installed ours from a local directory. That is the
 whole point of Helm as a PACKAGE MANAGER: installing metrics-server,
-ingress-nginx, cert-manager or Prometheus is the same helm install /
+Traefik, cert-manager or Prometheus is the same helm install /
 upgrade / rollback dance you just did, only the mould was written and
 maintained by someone else and its knobs (values) are documented for you
 to override. In a real cluster the ratio is lopsided: you install
