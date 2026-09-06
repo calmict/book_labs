@@ -17,7 +17,7 @@ targetPort 8080. The completed manifest is solution/helpdesk.yaml.
     5 helpdesk-5955f6ddc-qwdvd
     5 helpdesk-5955f6ddc-zhbjf
 
-## The investigation
+## The investigation (iptables backend detected)
 
     ip addr | grep 10.96.24.249   -> nothing, on any node
     -A KUBE-SERVICES -d 10.96.24.249/32 ... -j KUBE-SVC-3CAWLN66V3JY23B3
@@ -58,8 +58,9 @@ then the fallthrough — each reads "one out of the remaining candidates".
 When a pod dies or its readiness fails, the kubelet's report empties its
 entry from the EndpointSlice (chapter 12's bench); the EndpointSlice
 controller writes the new list through the apiserver, every kube-proxy
-receives it on its watch (chapter 9) and regenerates the chains: one
-KUBE-SEP disappears and the probabilities are redistributed. No traffic
+receives it on its watch (chapter 9) and updates the backend's rules or
+maps. With the detected iptables backend, one KUBE-SEP disappears and the
+probabilities are redistributed. No traffic
 is ever load-balanced to a corpse — as long as the phonebook is faster
 than your clients.
 

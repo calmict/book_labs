@@ -58,8 +58,11 @@ security-sensitive as the policies themselves.
 the DNS caveat.**
 
 The apiserver only stores NetworkPolicy objects; the CNI plugin is what
-turns them into real packet filters on each node (iptables/eBPF rules,
-chapter 6's world). Not every CNI does: some ignore the objects entirely,
+turns them into real packet filters on each node (for example iptables,
+nftables, or eBPF rules, chapter 6's world). In the local book cluster,
+kindnet enforces them through a dedicated nftables table. This is the CNI's
+NetworkPolicy dataplane, separate from kube-proxy's Service backend. Not
+every CNI does: some ignore the objects entirely,
 which is why the enforcement test — apply deny-all, confirm the traffic
 actually stops — is a hygiene ritual, not paranoia. It is the exact
 chapter 19 déjà vu: an accepted object is a wish, and without an executor

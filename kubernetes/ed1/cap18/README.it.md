@@ -15,7 +15,7 @@ Al termine di questo laboratorio saprai:
 
 ## Prerequisiti
 
-- Cap. 6, 12, 16 nel bagaglio (iptables, readiness, headless).
+- Cap. 6, 12, 16 nel bagaglio (dataplane dei Service, readiness, headless).
 - Il cluster book-labs acceso; accesso al nodo con docker exec (kind, o minikube su driver Docker).
 - Il manifest start/helpdesk.yaml col TODO sul Service.
 
@@ -52,7 +52,7 @@ Al termine di questo laboratorio saprai:
 
        docker exec $NODE iptables-save | grep helpdesk
 
-   Eccole: la catena KUBE-SVC del tuo Service, le regole con --probability (la moneta!), e le KUBE-SEP con la DNAT verso gli IP veri dei Pod. Il ClusterIP non è un luogo: è una riscrittura di destinazione, decisa da un lancio di moneta di netfilter, su ogni nodo. (Se il grep non trova nulla, il tuo kube-proxy parla nftables: stesso trucco, altro dialetto — docker exec $NODE nft list ruleset.)
+   Il runner rileva prima il backend di kube-proxy. Con iptables trovi la catena KUBE-SVC del tuo Service, le regole con --probability (la moneta!) e le KUBE-SEP con la DNAT verso gli IP veri dei Pod; con un altro backend cerca le firme corrispondenti. Il ClusterIP non è un luogo: è una riscrittura di destinazione nel dataplane di ogni nodo.
 
 4. Chi aggiorna la rubrica. La lista dei numeri veri vive negli EndpointSlice:
 
@@ -63,7 +63,7 @@ Al termine di questo laboratorio saprai:
        kubectl scale deployment helpdesk --replicas=3
        kubectl get endpointslices -l kubernetes.io/service-name=helpdesk -o wide
 
-   La rubrica insegue i Pod in tempo reale: è il solito watch (cap. 9) — il controller degli EndpointSlice aggiorna la lista, kube-proxy su ogni nodo la traduce in iptables. Ricordi la panchina del cap. 12? Era questa rubrica a svuotarsi.
+   La rubrica insegue i Pod in tempo reale: è il solito watch (cap. 9) — il controller degli EndpointSlice aggiorna la lista, kube-proxy su ogni nodo la traduce nelle regole del backend rilevato. Ricordi la panchina del cap. 12? Era questa rubrica a svuotarsi.
 
 5. Il nome, l'unica cosa stabile. Chiedi a CoreDNS:
 
@@ -71,7 +71,7 @@ Al termine di questo laboratorio saprai:
 
    Risolve sul ClusterIP — non sugli IP dei Pod (confronta col diario del cap. 16: là, headless, il DNS dava gli IP dei singoli). Gerarchia della stabilità: IP dei Pod (effimeri) < ClusterIP (stabile finché il Service vive) < nome DNS (stabile per contratto).
 
-   Le domande per answers.md: (a) ricostruisci il viaggio di un pacchetto da client al centralinista: chi riscrive cosa, dove avviene la DNAT, e perché il ClusterIP non deve esistere su nessuna interfaccia; (b) la moneta di netfilter: come si legge la regola --probability con 2 e con 3 backend, e cosa succede alla rubrica (e quindi alle iptables) quando un pod muore o fallisce la readiness; (c) la gerarchia della stabilità: Service normale vs headless (cap. 16) — cosa risolve il DNS nei due casi e quando vuoi l'uno o l'altro.
+   Le domande per answers.md: (a) ricostruisci il viaggio di un pacchetto da client al centralinista: chi riscrive cosa, dove avviene la DNAT, e perché il ClusterIP non deve esistere su nessuna interfaccia; (b) nel caso iptables osservato, come si legge la regola --probability con 2 e con 3 backend, e cosa succede alla rubrica (e quindi alle regole del dataplane) quando un pod muore o fallisce la readiness; (c) la gerarchia della stabilità: Service normale vs headless (cap. 16) — cosa risolve il DNS nei due casi e quando vuoi l'uno o l'altro.
 
 6. Smonta il laboratorio:
 
@@ -82,7 +82,7 @@ Al termine di questo laboratorio saprai:
 
 - [ ] Hai provato sulla tua pelle la morte del numero diretto (IP del pod cambiato dopo la rinascita).
 - [ ] Il centralino risponde con entrambe le voci (bilanciamento visto con wget ripetuti).
-- [ ] Hai la prova che il ClusterIP non esiste su nessuna interfaccia, e le regole KUBE-SVC/KUBE-SEP con probability e DNAT.
+- [ ] Hai la prova che il ClusterIP non esiste su nessuna interfaccia e hai osservato le firme del backend rilevato.
 - [ ] Hai visto gli EndpointSlice inseguire lo scale, e il DNS risolvere il nome sul ClusterIP.
 - [ ] answers.md risponde alle tre domande e il laboratorio è smontato.
 

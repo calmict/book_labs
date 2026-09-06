@@ -15,7 +15,7 @@ By the end of this lab you will be able to:
 
 ## Prerequisites
 
-- Chapters 6, 12 and 16 in your toolbox (iptables, readiness, headless).
+- Chapters 6, 12 and 16 in your toolbox (Service dataplane, readiness, headless).
 - The book-labs cluster running; node access via docker exec (kind, or minikube on the Docker driver).
 - The start/helpdesk.yaml manifest with the TODO on the Service.
 
@@ -52,7 +52,7 @@ By the end of this lab you will be able to:
 
        docker exec $NODE iptables-save | grep helpdesk
 
-   There they are: your Service's KUBE-SVC chain, the rules with --probability (the coin!), and the KUBE-SEP ones with the DNAT to the pods' real IPs. The ClusterIP is not a place: it is a destination rewrite, decided by a netfilter coin toss, on every node. (If the grep finds nothing, your kube-proxy speaks nftables: same trick, different dialect — docker exec $NODE nft list ruleset.)
+   The runner first detects kube-proxy's backend. With iptables you find your Service's KUBE-SVC chain, the rules with --probability (the coin!), and the KUBE-SEP ones with the DNAT to the pods' real IPs; with another backend it looks for the corresponding signatures. The ClusterIP is not a place: it is a destination rewrite in every node's dataplane.
 
 4. Who updates the phonebook. The list of real numbers lives in the EndpointSlices:
 
@@ -63,7 +63,7 @@ By the end of this lab you will be able to:
        kubectl scale deployment helpdesk --replicas=3
        kubectl get endpointslices -l kubernetes.io/service-name=helpdesk -o wide
 
-   The phonebook chases the Pods in real time: it is the usual watch (chapter 9) — the EndpointSlice controller updates the list, kube-proxy on every node translates it into iptables. Remember chapter 12's bench? It was this phonebook emptying.
+   The phonebook chases the Pods in real time: it is the usual watch (chapter 9) — the EndpointSlice controller updates the list, kube-proxy on every node translates it into the detected backend's rules. Remember chapter 12's bench? It was this phonebook emptying.
 
 5. The name, the only stable thing. Ask CoreDNS:
 
@@ -71,7 +71,7 @@ By the end of this lab you will be able to:
 
    It resolves to the ClusterIP — not to the Pods' IPs (compare with chapter 16's diary: there, headless, DNS gave the individuals' IPs). Stability hierarchy: Pod IPs (ephemeral) < ClusterIP (stable while the Service lives) < DNS name (stable by contract).
 
-   The questions for answers.md: (a) reconstruct a packet's journey from client to operator: who rewrites what, where the DNAT happens, and why the ClusterIP must not exist on any interface; (b) netfilter's coin: how do you read the --probability rule with 2 and with 3 backends, and what happens to the phonebook (and hence to iptables) when a pod dies or fails its readiness? (c) the stability hierarchy: normal versus headless Service (chapter 16) — what does DNS resolve in each case, and when do you want one or the other?
+   The questions for answers.md: (a) reconstruct a packet's journey from client to operator: who rewrites what, where the DNAT happens, and why the ClusterIP must not exist on any interface; (b) in the observed iptables case, how do you read the --probability rule with 2 and with 3 backends, and what happens to the phonebook (and hence to the dataplane rules) when a pod dies or fails its readiness? (c) the stability hierarchy: normal versus headless Service (chapter 16) — what does DNS resolve in each case, and when do you want one or the other?
 
 6. Tear down the lab:
 
@@ -82,7 +82,7 @@ By the end of this lab you will be able to:
 
 - [ ] You experienced the death of the direct number (pod IP changed after the rebirth).
 - [ ] The switchboard answers with both voices (balancing seen through repeated wgets).
-- [ ] You have the proof that the ClusterIP exists on no interface, plus the KUBE-SVC/KUBE-SEP rules with probability and DNAT.
+- [ ] You have proof that the ClusterIP exists on no interface and have observed the detected backend's signatures.
 - [ ] You watched the EndpointSlices chase the scale, and DNS resolve the name to the ClusterIP.
 - [ ] answers.md answers the three questions and the lab is torn down.
 

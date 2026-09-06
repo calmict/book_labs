@@ -16,6 +16,12 @@ kubectl get nodes >/dev/null
 NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
 docker exec "$NODE" true >/dev/null 2>&1
 echo "PRECHECK node $NODE is reachable through Docker"
+proxy_config=$(kubectl -n kube-system get configmap kube-proxy -o jsonpath='{.data.config\.conf}' 2>/dev/null || true)
+backend=$(printf '%s\n' "$proxy_config" | awk '$1 == "mode:" {gsub(/["'\'' ]/, "", $2); print $2; exit}')
+if [ -z "$backend" ]; then
+  backend=external
+fi
+echo "PRECHECK kube-proxy backend: $backend"
 cleanup
 kubectl create namespace "$NS" >/dev/null
 kubectl -n "$NS" apply -f "$DIR/helpdesk.yaml" >/dev/null
@@ -48,16 +54,38 @@ if docker exec "$NODE" ip addr | grep -Fq "$cip"; then
   echo "ERROR: ClusterIP unexpectedly belongs to a node interface" >&2
   exit 1
 fi
-rules=$(docker exec "$NODE" iptables-save 2>/dev/null || true)
-if printf '%s\n' "$rules" | grep -Fq "$cip"; then
-  printf '%s\n' "$rules" | grep -F "$cip" | head -1
-elif docker exec "$NODE" nft list ruleset 2>/dev/null | grep -Fq "$cip"; then
-  docker exec "$NODE" nft list ruleset 2>/dev/null | grep -F "$cip" | head -1
-else
-  echo "ERROR: ClusterIP is absent from both iptables and nftables rules" >&2
-  exit 1
-fi
-echo "OK 3 - the ClusterIP is virtual and present in the node dataplane rules"
+case "$backend" in
+  iptables)
+    rules=$(docker exec "$NODE" iptables-save 2>/dev/null || true)
+    if ! printf '%s\n' "$rules" | grep -F "$cip" | grep -Fq 'KUBE-SVC'; then
+      echo "ERROR: ClusterIP is absent from kube-proxy's iptables rules" >&2
+      exit 1
+    fi
+    printf '%s\n' "$rules" | grep -F "$cip" | head -1
+    echo "OK 3 - the ClusterIP is virtual and present in kube-proxy's iptables rules"
+    ;;
+  nftables)
+    rules=$(docker exec "$NODE" nft list table ip kube-proxy 2>/dev/null || true)
+    if ! printf '%s\n' "$rules" | grep -Fq "$cip"; then
+      echo "ERROR: ClusterIP is absent from kube-proxy's nftables table" >&2
+      exit 1
+    fi
+    printf '%s\n' "$rules" | grep -F "$cip" | head -1
+    echo "OK 3 - the ClusterIP is virtual and present in kube-proxy's nftables table"
+    ;;
+  ipvs)
+    rules=$(docker exec "$NODE" ipvsadm -Ln 2>/dev/null || true)
+    if ! printf '%s\n' "$rules" | grep -Fq "$cip"; then
+      echo "ERROR: ClusterIP is absent from kube-proxy's IPVS table" >&2
+      exit 1
+    fi
+    printf '%s\n' "$rules" | grep -F "$cip" | head -1
+    echo "OK 3 - the ClusterIP is virtual and present in kube-proxy's IPVS table"
+    ;;
+  *)
+    echo "SKIP 3 - kube-proxy mode is not declared; the Service may use a replacement dataplane"
+    ;;
+esac
 
 before=$(kubectl -n "$NS" get endpointslice -l kubernetes.io/service-name=helpdesk -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]}{"\n"}{end}' | sort -u | wc -l)
 kubectl -n "$NS" scale deployment helpdesk --replicas=3 >/dev/null
