@@ -9,7 +9,7 @@ inside an HTTP request. Here you separate declarative rules from their executor 
 
 - Distinguish Service L4 load balancing from Ingress host and path routing (19.1).
 - Declare two Ingress rules and prove they remain inert without a controller (19.2, 19.3).
-- Install ingress-nginx and follow a request to the correct Service and Pod (19.3, 19.4).
+- Install Traefik and follow a request to the correct Service and Pod (19.3, 19.4).
 
 ## Prerequisites
 
@@ -21,7 +21,8 @@ inside an HTTP request. Here you separate declarative rules from their executor 
 
 Two applications share the same IP address and port. Complete TODOs 1..3 in start/ingress.yaml by
 declaring the two hosts, paths, and backends. The test creates the dedicated book-labs-ingress cluster,
-applies the rules without a controller, and then installs ingress-nginx.
+applies the rules without a controller, and then installs Traefik 3.7.12 from a local manifest.
+JSON access logs are enabled to make the L7 decision observable.
 
     cd kubernetes/ed1/cap19/solution
     ./run.sh
@@ -33,7 +34,7 @@ remains empty. This is the counterexample proving that the object declares inten
 
 ### Phase 2 — One door, two hosts (19.1, 19.2)
 
-Ingress-nginx reads the Host header and sends uno.labs.local to app-uno and due.labs.local to app-due.
+Traefik reads the Host header and sends uno.labs.local to app-uno and due.labs.local to app-due.
 An unknown host receives the default backend's 404 response.
 
 ### Phase 3 — The anatomy (19.4)
@@ -50,10 +51,10 @@ decision, Service, and Pod.
 ## How it is verified
 
 - OK 1 proves the gate bites: without a controller there is no routing and ADDRESS is empty.
-- OK 2 verifies that ingress-nginx becomes Ready.
+- OK 2 verifies that Traefik 3.7.12 becomes Ready.
 - OK 3 and OK 4 verify the two hosts on the same IP address and port.
 - OK 5 verifies the 404 response for an unknown host.
-- OK 6 finds the request and selected upstream in the controller log.
+- OK 6 finds the requested host and selected Kubernetes backend in the same JSON access log.
 
 ## Reflection questions
 

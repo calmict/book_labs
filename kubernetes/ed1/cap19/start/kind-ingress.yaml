@@ -1,4 +1,4 @@
-# One node, labelled and ready for the doorman (ingress-nginx), with the
+# One node, labelled and ready for the doorman (Traefik), with the
 # host's port 8081 mapped to the node's port 80.
 # If 8081 is taken on your machine, change hostPort below.
 kind: Cluster

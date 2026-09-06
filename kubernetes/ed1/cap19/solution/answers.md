@@ -37,7 +37,7 @@ observe-diff-act). Your rules sat inert exactly like a Deployment would
 sit inert if the controller-manager were stopped. This decoupling is the
 extensibility secret: anyone can define new object kinds and ship a
 controller for them, and Ingress itself is the proof — Kubernetes defines
-the object, while nginx, traefik or HAProxy compete to be its executor
+the object, while Traefik, HAProxy, and other implementations compete to be its executor
 (ingressClassName picks which one).
 
 **c. The full anatomy: the stations from curl to app-uno's pod.**
@@ -45,12 +45,10 @@ the object, while nginx, traefik or HAProxy compete to be its executor
 1. curl talks to localhost:8081 on the host — Docker's port mapping
    (extraPortMappings) decides, forwarding to port 80 of the node
    container. 2. On the node, the controller pod owns port 80 via
-   hostPort: the packet enters nginx. 3. nginx reads the HTTP request —
-   the L7 decision: Host uno.labs.local matches an Ingress rule, upstream
-   default-uno-80. 4. nginx opens a new connection towards the backend:
-   in kind's flavour it resolves the endpoints directly, in the general
-   case it goes through the Service's ClusterIP — chapter 18's netfilter
-   coin and DNAT. 5. The packet crosses the veth/bridge plumbing of
+   hostPort: the packet enters Traefik. 3. Traefik reads the HTTP request —
+   the L7 decision: Host uno.labs.local matches an Ingress rule and selects
+   lab-cap19-uno-80@kubernetes. 4. Traefik opens a new connection towards
+   one of the Service endpoints. 5. The packet crosses the veth/bridge plumbing of
    chapter 6 and reaches the pod, which answers app-uno. Two proxies of
-   different layers (Docker's L4 mapping, nginx's L7 routing) and one
+   different layers (Docker's L4 mapping, Traefik's L7 routing) and one
    chain of chapters, end to end.

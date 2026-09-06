@@ -5,7 +5,7 @@ metadata:
   name: labs
   namespace: lab-cap19
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   # TODO 1 (19.2): replace the empty list with one rule for each host,
   # so a single L7 entry point can distinguish uno from due by Host.
   rules: []

@@ -1,0 +1,93 @@
+# Traefik v3.7.12 as the Ingress controller for this throwaway cluster.
+# Access logs use JSON so the test can verify the selected Kubernetes backend.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traefik
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik
+  namespace: traefik
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lab-cap19-traefik
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "services", "endpoints", "secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingressclasses", "ingresses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses/status"]
+    verbs: ["update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lab-cap19-traefik
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: lab-cap19-traefik
+subjects:
+  - kind: ServiceAccount
+    name: traefik
+    namespace: traefik
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: traefik
+spec:
+  controller: traefik.io/ingress-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: traefik
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: traefik
+    spec:
+      serviceAccountName: traefik
+      nodeSelector:
+        ingress-ready: "true"
+      containers:
+        - name: traefik
+          image: traefik:v3.7.12
+          args:
+            - --providers.kubernetesingress=true
+            - --providers.kubernetesingress.ingressclass=traefik
+            - --entrypoints.web.address=:8000
+            - --ping=true
+            - --accesslog=true
+            - --accesslog.format=json
+          ports:
+            - name: web
+              containerPort: 8000
+              hostPort: 80
+            - name: admin
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: admin
+            initialDelaySeconds: 2
+            periodSeconds: 2

@@ -9,7 +9,7 @@ sulla richiesta HTTP. Qui separi le regole dichiarative da chi le realizza e oss
 
 - Distinguere il bilanciamento L4 dei Service dal routing per host e path dell'Ingress (19.1).
 - Dichiarare due regole Ingress e constatare che senza controller restano inerti (19.2, 19.3).
-- Installare ingress-nginx e seguire una richiesta fino al Service e al Pod corretti (19.3, 19.4).
+- Installare Traefik e seguire una richiesta fino al Service e al Pod corretti (19.3, 19.4).
 
 ## Prerequisiti
 
@@ -21,7 +21,8 @@ sulla richiesta HTTP. Qui separi le regole dichiarative da chi le realizza e oss
 
 Due applicazioni condividono lo stesso IP e la stessa porta. Completa start/ingress.yaml colmando i
 TODO 1..3: dichiara i due host, i path e i backend. Il test crea il cluster dedicato
-book-labs-ingress, applica prima le regole senza controller e poi installa ingress-nginx.
+book-labs-ingress, applica prima le regole senza controller e poi installa Traefik 3.7.12 da un
+manifest locale. Gli access log JSON sono abilitati per rendere osservabile la decisione L7.
 
     cd kubernetes/ed1/cap19/solution
     ./run.sh
@@ -33,7 +34,7 @@ ADDRESS resta vuoto. È la controprova che l'oggetto dichiara un desiderio ma no
 
 ### Fase 2 — Una porta, due host (19.1, 19.2)
 
-Ingress-nginx legge l'header Host e manda uno.labs.local a app-uno e due.labs.local a app-due. Un
+Traefik legge l'header Host e manda uno.labs.local a app-uno e due.labs.local a app-due. Un
 host sconosciuto riceve il 404 del backend predefinito.
 
 ### Fase 3 — L'anatomia (19.4)
@@ -50,10 +51,10 @@ decisione L7, Service e Pod.
 ## Come viene verificato
 
 - OK 1 dimostra che il cancello morde: senza controller non c'è routing e ADDRESS è vuoto.
-- OK 2 verifica che ingress-nginx diventi Ready.
+- OK 2 verifica che Traefik 3.7.12 diventi Ready.
 - OK 3 e OK 4 verificano i due host sullo stesso IP e porta.
 - OK 5 verifica il 404 per un host sconosciuto.
-- OK 6 trova la richiesta e l'upstream scelto nei log del controller.
+- OK 6 trova nello stesso access log JSON l'host richiesto e il backend Kubernetes scelto.
 
 ## Domande di riflessione
 

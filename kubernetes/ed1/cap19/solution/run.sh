@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # Chapter 19 - solution test. Proves an Ingress object is inert without a
-# controller, installs pinned ingress-nginx in a dedicated throwaway kind
+# controller, installs pinned Traefik in a dedicated throwaway kind
 # cluster, and verifies host-based L7 routing plus the default backend.
 # Needs Docker, kind, kubectl, curl, network access, and 3 GiB free for Docker.
 set -euo pipefail
 
 CLUSTER=book-labs-ingress
 NS=lab-cap19
-NGINX_MANIFEST=https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.0/deploy/static/provider/kind/deploy.yaml
 DIR=$(cd "$(dirname "$0")" && pwd)
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/lab-cap19.XXXXXX")
 CREATED=0
@@ -20,7 +19,10 @@ cleanup() {
     kind delete cluster --name "$CLUSTER" >/dev/null 2>&1 || true
   else
     KC delete namespace "$NS" --ignore-not-found --wait=true >/dev/null 2>&1 || true
-    KC delete namespace ingress-nginx --ignore-not-found --wait=true >/dev/null 2>&1 || true
+    KC delete namespace traefik --ignore-not-found --wait=true >/dev/null 2>&1 || true
+    KC delete clusterrole lab-cap19-traefik --ignore-not-found >/dev/null 2>&1 || true
+    KC delete clusterrolebinding lab-cap19-traefik --ignore-not-found >/dev/null 2>&1 || true
+    KC delete ingressclass traefik --ignore-not-found >/dev/null 2>&1 || true
   fi
   if [ -n "$PREV_CTX" ] && [ "$PREV_CTX" != "kind-$CLUSTER" ]; then
     kubectl config use-context "$PREV_CTX" >/dev/null 2>&1 || true
@@ -56,7 +58,10 @@ sed "s/hostPort: 8081/hostPort: $PORT/" "$DIR/../start/kind-ingress.yaml" > "$WO
 if kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
   kind export kubeconfig --name "$CLUSTER" >/dev/null 2>&1
   echo "PRECHECK reusing $CLUSTER and exporting its kubeconfig context"
-  KC delete namespace "$NS" ingress-nginx --ignore-not-found --wait=true >/dev/null 2>&1 || true
+  KC delete namespace "$NS" traefik --ignore-not-found --wait=true >/dev/null 2>&1 || true
+  KC delete clusterrole lab-cap19-traefik --ignore-not-found >/dev/null 2>&1 || true
+  KC delete clusterrolebinding lab-cap19-traefik --ignore-not-found >/dev/null 2>&1 || true
+  KC delete ingressclass traefik --ignore-not-found >/dev/null 2>&1 || true
 else
   kind create cluster --config "$WORK/kind-ingress.yaml" --wait 180s
   CREATED=1
@@ -79,15 +84,15 @@ if [ "$curl_rc" -eq 0 ] || [ -n "$address" ]; then
 fi
 echo "OK 1 - the gate bites: rules stay inert and ADDRESS stays empty without a controller"
 
-KC apply -f "$NGINX_MANIFEST" >/dev/null
+KC apply -f "$DIR/traefik.yaml" >/dev/null
 waited=0
-until KC get pod -n ingress-nginx -l app.kubernetes.io/component=controller --no-headers 2>/dev/null | grep -q .; do
+until KC get pod -n traefik -l app.kubernetes.io/name=traefik --no-headers 2>/dev/null | grep -q .; do
   sleep 3
   waited=$((waited + 3))
   if [ "$waited" -ge 180 ]; then echo "timeout: ingress controller pod did not appear" >&2; exit 1; fi
 done
-KC wait -n ingress-nginx --for=condition=Ready pod -l app.kubernetes.io/component=controller --timeout=300s >/dev/null
-echo "OK 2 - the pinned ingress-nginx controller becomes Ready"
+KC wait -n traefik --for=condition=Ready pod -l app.kubernetes.io/name=traefik --timeout=300s >/dev/null
+echo "OK 2 - the pinned Traefik controller becomes Ready"
 
 check_host() {
   local host=$1 expected=$2 waited=0 output=""
@@ -112,10 +117,10 @@ echo "OK 5 - an unknown host reaches the controller's 404 default backend"
 check_host uno.labs.local app-uno
 waited=0
 logs=""
-until grep -q 'lab-cap19-uno-80' <<< "$logs"; do
+until grep -Eq '"RequestHost":"uno\.labs\.local".*"ServiceName":"lab-cap19-uno-80@kubernetes"|"ServiceName":"lab-cap19-uno-80@kubernetes".*"RequestHost":"uno\.labs\.local"' <<< "$logs"; do
   sleep 2
   waited=$((waited + 2))
-  logs=$(KC logs -n ingress-nginx -l app.kubernetes.io/component=controller --tail=100)
+  logs=$(KC logs -n traefik -l app.kubernetes.io/name=traefik --tail=100)
   if [ "$waited" -ge 30 ]; then
     echo "UNEXPECTED: the controller log does not contain the selected uno upstream" >&2
     exit 1
