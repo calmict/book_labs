@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Chapter 28 solution test. Builds a local CA, proves that an Ingress without
 # the cert-manager annotation and TLS request produces no certificate, then
-# verifies automatic issuance and trusted HTTPS through ingress-nginx. Uses a
+# verifies automatic issuance and trusted HTTPS through Traefik. Uses a
 # dedicated throwaway kind cluster; needs Docker, kind, kubectl, openssl,
 # network access, and 3 GiB free in Docker storage.
 set -euo pipefail
@@ -9,7 +9,6 @@ set -euo pipefail
 DIR=$(cd "$(dirname "$0")" && pwd)
 CLUSTER=book-labs-tls
 CTX=kind-${CLUSTER}
-INGRESS_MANIFEST=https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.0/deploy/static/provider/kind/deploy.yaml
 CERTMANAGER_MANIFEST=https://github.com/cert-manager/cert-manager/releases/download/v1.16.2/cert-manager.yaml
 
 command -v kind >/dev/null || { echo "ERROR: kind not found" >&2; exit 1; }
@@ -46,10 +45,10 @@ echo "== 0. A dedicated cluster, the doorman and the passport office =="
 kind delete cluster --name "$CLUSTER" >/dev/null 2>&1 || true
 kind create cluster --name "$CLUSTER" >/dev/null 2>&1
 kc label node "${CLUSTER}-control-plane" ingress-ready=true >/dev/null
-kc apply -f "$INGRESS_MANIFEST" >/dev/null 2>&1
+kc apply -f "$DIR/traefik.yaml" >/dev/null
 kc apply -f "$CERTMANAGER_MANIFEST" >/dev/null 2>&1
-echo -n "  waiting for ingress-nginx and cert-manager "
-kc -n ingress-nginx wait --for=condition=Available deploy/ingress-nginx-controller --timeout=240s >/dev/null
+echo -n "  waiting for Traefik and cert-manager "
+kc -n traefik wait --for=condition=Available deploy/traefik --timeout=240s >/dev/null
 kc -n cert-manager wait --for=condition=Available deploy --all --timeout=240s >/dev/null
 echo "ready"
 
@@ -78,13 +77,6 @@ echo
 echo "== 2. The incomplete request produces no passport =="
 kc apply -f "$DIR/../start/app.yaml" >/dev/null
 kc -n web rollout status deploy/shop --timeout=90s >/dev/null
-# the ingress-nginx admission webhook can refuse connections for a few
-# seconds after the controller is Available (chapter 19: rules before the
-# controller is really ready) — retry until the Ingress is accepted.
-for _ in $(seq 1 30); do
-  if kc apply -f "$DIR/../start/ingress.yaml" >/dev/null 2>&1; then break; fi
-  sleep 3
-done
 kc apply -f "$DIR/../start/ingress.yaml" >/dev/null
 sleep 5
 if kc -n web get certificate shop-tls >/dev/null 2>&1 || kc -n web get secret shop-tls >/dev/null 2>&1; then
@@ -107,15 +99,22 @@ echo
 
 echo "== 4. The visitor checks the passport (HTTPS, validated against our CA) =="
 kc -n web wait --for=condition=Ready pod/tlsclient --timeout=90s >/dev/null
-ip=$(kc -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.spec.clusterIP}')
-response=$(kc -n web exec tlsclient -- \
-  curl -sS --cacert /ca/ca.crt --resolve "shop.book-labs.local:443:$ip" \
-  https://shop.book-labs.local/)
+ip=$(kc -n traefik get svc traefik -o jsonpath='{.spec.clusterIP}')
+response=
+for _ in $(seq 1 30); do
+  response=$(kc -n web exec tlsclient -- \
+    curl -sS --cacert /ca/ca.crt --resolve "shop.book-labs.local:443:$ip" \
+    https://shop.book-labs.local/) || true
+  if [ "$response" = "secure shop" ]; then
+    break
+  fi
+  sleep 2
+done
 if [ "$response" != "secure shop" ]; then
   echo "UNEXPECTED: HTTPS returned '$response'" >&2
   exit 1
 fi
-echo "OK 4 - ingress-nginx serves secure shop over HTTPS trusted by the local CA"
+echo "OK 4 - Traefik serves secure shop over HTTPS trusted by the local CA"
 
 certificate=$(kc -n web get secret shop-tls -o jsonpath='{.data.tls\.crt}' | base64 -d)
 if ! grep -q 'DNS:shop.book-labs.local' <<< "$(openssl x509 -noout -ext subjectAltName <<< "$certificate" 2>/dev/null)"; then

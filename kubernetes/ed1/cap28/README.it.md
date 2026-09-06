@@ -4,14 +4,14 @@
 
 Il viaggio si chiude dando al portiere assunto nel capitolo 19 un'identità verificabile. In questo
 laboratorio costruisci una CA locale, chiedi a Cert-Manager di emettere il certificato e dimostri che
-Ingress-Nginx serve il negozio in HTTPS senza chiavi o certificati creati a mano.
+Traefik serve il negozio in HTTPS senza chiavi o certificati creati a mano.
 
 ## Obiettivi
 
 - Inquadrare acquisizione, scadenza e rinnovo dei certificati TLS (28.2).
 - Osservare la catena SelfSigned, CA e certificato foglia gestita da Cert-Manager (28.3).
 - Ottenere HTTPS automatico con annotazione e sezione tls dell'Ingress (28.4).
-- Verificare autorità emittente, SAN e risposta applicativa attraverso Ingress-Nginx (28.1, 28.4).
+- Verificare autorità emittente, SAN e risposta applicativa attraverso Traefik (28.1, 28.4).
 
 ## Prerequisiti
 
@@ -36,21 +36,23 @@ pubblicamente; la riconciliazione successiva resterebbe la stessa.
 
 ### Fase 2 — La richiesta automatica (28.4 — TODO 1)
 
-In start/ingress.yaml completa il TODO 1 aggiungendo la mappa annotations e selezionando il
-ClusterIssuer local-ca. È il segnale che chiede a Cert-Manager di procurare il certificato.
+In start/ingress.yaml completa il TODO 1 aggiungendo alle annotations la selezione del ClusterIssuer
+local-ca. È il segnale che chiede a Cert-Manager di procurare il certificato.
 
 ### Fase 3 — Identità e deposito (28.4 — TODO 2 e TODO 3)
 
 Completa la sezione tls: nel TODO 2 inserisci shop.book-labs.local fra gli host, perché la SAN deve
 corrispondere al nome visitato; nel TODO 3 indica shop-tls come secretName, punto d'incontro fra
-Cert-Manager e Ingress-Nginx.
+Cert-Manager e Traefik.
 
 Confronta il risultato con solution/ingress.yaml, poi esegui il controllo completo:
 
     bash solution/run.sh
 
-Lo script crea il cluster dedicato, installa le versioni fissate di ingress-nginx e Cert-Manager,
+Lo script crea il cluster dedicato, installa le versioni fissate di Traefik e Cert-Manager,
 prova prima l'Ingress incompleto e poi applica la soluzione.
+Il manifest abilita per Traefik l'entrypoint HTTPS websecure e pubblica la porta 443 nel Service:
+il controller carica da shop-tls il certificato indicato nella sezione tls dell'Ingress.
 
 ## Criteri di "fatto"
 
@@ -66,13 +68,13 @@ solution/run.sh verifica, punto per punto:
 - **OK 1** — la catena SelfSigned produce un ClusterIssuer CA pronto.
 - **OK 2** — il cancello morde: l'Ingress incompleto non produce né Certificate né Secret shop-tls.
 - **OK 3** — l'Ingress completo fa creare a Cert-Manager un Certificate pronto e un Secret TLS.
-- **OK 4** — Ingress-Nginx serve secure shop in HTTPS e il client si fida della CA locale.
+- **OK 4** — Traefik serve secure shop in HTTPS e il client si fida della CA locale.
 - **OK 5** — il certificato contiene la SAN richiesta ed è firmato dalla CA locale.
 
 ## Domande di riflessione
 
 **a.** Perché HTTPS richiede un certificato firmato da un'autorità fidata, perché la gestione manuale
-diventa fragile al rinnovo e quale ruolo svolge Ingress-Nginx (28.1–28.2)?
+diventa fragile al rinnovo e quale ruolo svolge Traefik (28.1–28.2)?
 
 **b.** Cosa crea Cert-Manager leggendo annotazione e sezione tls? Spiega la catena SelfSigned, CA e
 foglia, poi indica quale verifica ACME richiederebbe in produzione (28.3).

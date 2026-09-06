@@ -8,8 +8,10 @@ metadata:
   namespace: web
   annotations:
     cert-manager.io/cluster-issuer: local-ca
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - shop.book-labs.local

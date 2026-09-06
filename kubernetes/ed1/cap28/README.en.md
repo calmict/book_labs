@@ -3,7 +3,7 @@
 **Level:** Cloud Architect
 
 The journey ends by giving the doorman hired in chapter 19 a verifiable identity. In this lab you build
-a local CA, ask Cert-Manager to issue a certificate, and prove that Ingress-Nginx serves the shop over
+a local CA, ask Cert-Manager to issue a certificate, and prove that Traefik serves the shop over
 HTTPS without any hand-made keys or certificates.
 
 ## Objectives
@@ -11,7 +11,7 @@ HTTPS without any hand-made keys or certificates.
 - Frame TLS certificate acquisition, expiry, and renewal (28.2).
 - Observe the SelfSigned, CA, and leaf-certificate chain managed by Cert-Manager (28.3).
 - Obtain automatic HTTPS through the Ingress annotation and tls section (28.4).
-- Verify the issuer, SAN, and application response through Ingress-Nginx (28.1, 28.4).
+- Verify the issuer, SAN, and application response through Traefik (28.1, 28.4).
 
 ## Prerequisites
 
@@ -36,21 +36,23 @@ subsequent reconciliation would remain the same.
 
 ### Phase 2 — The automatic request (28.4 — TODO 1)
 
-In start/ingress.yaml, complete TODO 1 by adding the annotations map and selecting the local-ca
-ClusterIssuer. This is the signal asking Cert-Manager to obtain the certificate.
+In start/ingress.yaml, complete TODO 1 by adding the local-ca ClusterIssuer selection to annotations.
+This is the signal asking Cert-Manager to obtain the certificate.
 
 ### Phase 3 — Identity and storage (28.4 — TODO 2 and TODO 3)
 
 Complete the tls section: in TODO 2 put shop.book-labs.local in the hosts list, because the SAN must
 match the visited name; in TODO 3 set shop-tls as the secretName, the meeting point between
-Cert-Manager and Ingress-Nginx.
+Cert-Manager and Traefik.
 
 Compare your result with solution/ingress.yaml, then run the complete check:
 
     bash solution/run.sh
 
-The script creates the dedicated cluster, installs pinned ingress-nginx and Cert-Manager versions,
+The script creates the dedicated cluster, installs pinned Traefik and Cert-Manager versions,
 tests the incomplete Ingress first, and then applies the solution.
+The manifest enables Traefik's websecure HTTPS entrypoint and publishes port 443 through its Service:
+the controller loads the certificate named in the Ingress tls section from shop-tls.
 
 ## Definition of "done"
 
@@ -67,13 +69,13 @@ solution/run.sh verifies, point by point:
 - **OK 1** — the SelfSigned chain produces a Ready CA ClusterIssuer.
 - **OK 2** — the gate bites: the incomplete Ingress produces neither a Certificate nor shop-tls Secret.
 - **OK 3** — the completed Ingress makes Cert-Manager create a Ready Certificate and TLS Secret.
-- **OK 4** — Ingress-Nginx serves secure shop over HTTPS and the client trusts the local CA.
+- **OK 4** — Traefik serves secure shop over HTTPS and the client trusts the local CA.
 - **OK 5** — the certificate contains the requested SAN and is signed by the local CA.
 
 ## Reflection questions
 
 **a.** Why does HTTPS require a certificate signed by a trusted authority, why does manual management
-become fragile at renewal time, and what role does Ingress-Nginx play (28.1–28.2)?
+become fragile at renewal time, and what role does Traefik play (28.1–28.2)?
 
 **b.** What does Cert-Manager create after reading the annotation and tls section? Explain the
 SelfSigned, CA, and leaf chain, then identify the validation that ACME would require in production

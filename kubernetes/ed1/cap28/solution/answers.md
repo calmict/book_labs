@@ -6,9 +6,11 @@ TODO 1 selects the local CA issuer on the Ingress:
 
     annotations:
       cert-manager.io/cluster-issuer: local-ca
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
 
 TODO 2 declares the hostname that the certificate must cover, and TODO 3 names
-the Secret shared by cert-manager and ingress-nginx:
+the Secret shared by cert-manager and Traefik:
 
     tls:
       - hosts:
@@ -34,7 +36,7 @@ the Secret shared by cert-manager and ingress-nginx:
 
 **a. The certificate problem (28.1-28.2): why does HTTPS need a certificate
 from a trusted authority, why is doing it by hand a problem (especially
-renewal), and what role does the Ingress-Nginx doorman play?**
+renewal), and what role does the Traefik doorman play?**
 
 HTTPS is TLS, and TLS gives the client two things: encryption and IDENTITY.
 Encryption alone is worthless if you cannot be sure who you are encrypting
@@ -48,7 +50,7 @@ get it signed, install the resulting certificate into the server, and — the
 part that actually bites in production — you must RENEW it before it expires
 (Let's Encrypt certs last 90 days), or the site goes dark. Multiply by every
 host and every renewal and it becomes a recurring outage waiting to happen.
-The Ingress-Nginx doorman (chapter 19) is where TLS is terminated: it is the
+The Traefik doorman (chapter 19) is where TLS is terminated: it is the
 single edge that faces visitors, routes by host, and presents the
 certificate — so it is exactly the place that needs one, per host.
 
@@ -62,7 +64,7 @@ When it sees ours, it creates a CERTIFICATE object on its own — a declarative
 resource that says "I want a cert for shop.book-labs.local, stored in Secret
 shop-tls, signed by issuer local-ca" — then does the whole dance: generates
 the key, builds the request, gets it signed by the issuer, and writes the
-resulting key+cert into the Secret (type kubernetes.io/tls) that Ingress-Nginx
+resulting key+cert into the Secret (type kubernetes.io/tls) that Traefik
 mounts. It also tracks expiry and re-issues before the deadline: automatic
 renewal is the real win. The chain we built has three links: a SelfSigned
 ClusterIssuer (an issuer that signs with no authority above it, used only to
@@ -82,7 +84,7 @@ from, and what would change (and what would not) moving to a real ACME
 issuer.**
 
 A visitor opens https://shop.book-labs.local/. The TLS handshake reaches the
-Ingress-Nginx controller, which presents the shop-tls certificate from the
+Traefik controller, which presents the shop-tls certificate from the
 Secret cert-manager filled; the client validates it against the CA it trusts
 (here our local CA, mounted as ca.crt) — checking the signature and that the
 SAN matches the hostname — then the encrypted request is routed by the
