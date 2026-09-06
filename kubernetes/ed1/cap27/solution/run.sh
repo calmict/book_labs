@@ -18,7 +18,9 @@ DOCKER_ROOT=$(docker info --format '{{.DockerRootDir}}' 2>/dev/null || true)
 AVAILABLE_KB=$(df -Pk "${DOCKER_ROOT:-/var/lib/docker}" 2>/dev/null | awk 'NR==2 {print $4}')
 if [ -z "$AVAILABLE_KB" ] || [ "$AVAILABLE_KB" -lt "$MIN_KB" ]; then
   echo "SKIP 1 - dedicated cluster needs at least 3 GB free in Docker storage; available: ${AVAILABLE_KB:-unknown} KB"
-  echo "ALL CHECKS PASSED"; exit 0
+  # Nothing was verified, so this must not claim that everything passed: free the
+  # space and run the test again.
+  echo "NOTHING VERIFIED - the precondition above was not met"; exit 0
 fi
 echo "PRECHECK Docker storage has $((AVAILABLE_KB / 1024)) MB free; 3072 MB required"
 
@@ -32,7 +34,9 @@ cleanup
 kc() { kubectl --context "$CTX" "$@"; }
 
 kind create cluster --name "$CLUSTER" >/dev/null 2>&1
-istioctl install --context "$CTX" --set profile=minimal -y >/dev/null
+# stderr too: istioctl writes progress here without a trailing newline, and the
+# next echo would be swallowed onto the same line.
+istioctl install --context "$CTX" --set profile=minimal -y >/dev/null 2>&1
 echo "OK 1 - dedicated cluster and minimal Istio control plane are ready"
 
 kc apply -f "$DIR/mesh-app.yaml" >/dev/null

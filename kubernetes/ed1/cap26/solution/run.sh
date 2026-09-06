@@ -17,7 +17,9 @@ DOCKER_ROOT=$(docker info --format '{{.DockerRootDir}}' 2>/dev/null || true)
 AVAILABLE_KB=$(df -Pk "${DOCKER_ROOT:-/var/lib/docker}" 2>/dev/null | awk 'NR==2 {print $4}')
 if [ -z "$AVAILABLE_KB" ] || [ "$AVAILABLE_KB" -lt "$MIN_KB" ]; then
   echo "SKIP 1 - dedicated cluster needs at least 3 GB free in Docker storage; available: ${AVAILABLE_KB:-unknown} KB"
-  echo "ALL CHECKS PASSED"; exit 0
+  # Nothing was verified, so this must not claim that everything passed: free the
+  # space and run the test again.
+  echo "NOTHING VERIFIED - the precondition above was not met"; exit 0
 fi
 echo "PRECHECK Docker storage has $((AVAILABLE_KB / 1024)) MB free; 3072 MB required"
 
