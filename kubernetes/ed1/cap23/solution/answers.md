@@ -32,8 +32,8 @@
 root still dangerous, what does CapEff tell you, and what does each
 defence protect?**
 
-Container root is not host root: the user namespace maps it, and the
-runtime already trims the capability set — that is why the king's CapEff
+Container root is not host root: the runtime already trims the capability
+set — that is why the king's CapEff
 is a80425fb and not the full 1ffffffffff we saw in chapter 4 on the host.
 But a80425fb is still a fistful of dangerous capabilities (CHOWN,
 DAC_OVERRIDE, SETUID, NET_RAW, KILL...), and — this is the crux — the
