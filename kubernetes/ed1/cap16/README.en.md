@@ -57,7 +57,7 @@ By the end of this lab you will be able to:
        kubectl get pods -l app=diary
        kubectl get pvc
 
-   Pods gone (in reverse order, if you were quick with the watch), but the PVCs are all still there: data is never deleted by accident. Now recreate the StatefulSet (re-apply diary.yaml) and reread diary-0's diary: every line of its previous life, plus the new one. Each identity found its OWN disk again.
+   Pods all gone at once — deleting is not scaling down, which instead removes the highest ordinal first, one at a time — but the PVCs are all still there: data is never deleted by accident. Now recreate the StatefulSet (re-apply diary.yaml) and reread diary-0's diary: every line of its previous life, plus the new one. Each identity found its OWN disk again.
 
 6. The predictable address. From citizen 1, look citizen 0 up by name:
 

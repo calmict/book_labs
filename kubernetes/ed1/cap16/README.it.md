@@ -57,7 +57,7 @@ Al termine di questo laboratorio saprai:
        kubectl get pods -l app=diary
        kubectl get pvc
 
-   Pod spariti (in ordine inverso, se sei stato veloce col watch), ma i PVC sono ancora tutti lì: i dati non si cancellano per sbaglio. Ora ricrea lo StatefulSet (riapplica diary.yaml) e rileggi il diario di diary-0: tutte le righe della sua vita precedente, più quella nuova. Ogni identità ha ritrovato il SUO disco.
+   Pod spariti tutti insieme — cancellare non è scalare a zero, che invece smonta dall'ordinale più alto uno alla volta — ma i PVC sono ancora tutti lì: i dati non si cancellano per sbaglio. Ora ricrea lo StatefulSet (riapplica diary.yaml) e rileggi il diario di diary-0: tutte le righe della sua vita precedente, più quella nuova. Ogni identità ha ritrovato il SUO disco.
 
 6. L'indirizzo prevedibile. Dal cittadino 1, cerca il cittadino 0 per nome:
 
