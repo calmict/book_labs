@@ -55,6 +55,10 @@ wait_phase() {
 kubectl apply -f "$DIR/marriage.yaml" >/dev/null
 wait_phase bride Bound
 kubectl -n "$NS" wait --for=condition=Ready pod/writer --timeout=180s >/dev/null
+# The hostPath volume lives on the node that ran writer, and this PV has no
+# nodeAffinity to pin it: on a multi-node cluster the dowry is written on
+# whichever node the scheduler picked. Read it there, and clean it up there.
+NODE=$(kubectl -n "$NS" get pod writer -o jsonpath='{.spec.nodeName}')
 bound_pv=$(kubectl -n "$NS" get pvc bride -o jsonpath='{.spec.volumeName}')
 if [ "$bound_pv" != "manual-pv" ]; then
   echo "UNEXPECTED: bride bound to $bound_pv instead of manual-pv" >&2

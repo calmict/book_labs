@@ -39,6 +39,9 @@ DEP=$(kubectl -n "$NS" get rs "$RS" -o jsonpath='{.metadata.ownerReferences[0].n
 [ "$DEP" = relay ] || { echo "ERROR: broken ownership chain" >&2; exit 1; }
 echo "OK 2 - ownerReferences link Pod to ReplicaSet to Deployment"
 
+# The Pod decides the node, not the node list: on a multi-node cluster the first
+# node is rarely the one running relay, and crictl would look in the wrong place.
+NODE=$(kubectl -n "$NS" get pod "$POD" -o jsonpath='{.spec.nodeName}')
 CID=$(docker exec "$NODE" crictl ps --name relay -q | head -1)
 PID=$(docker exec "$NODE" crictl inspect -o go-template --template '{{.info.pid}}' "$CID")
 CGROUP=$(docker exec "$NODE" cat "/proc/$PID/cgroup")

@@ -39,6 +39,9 @@ done
 [ -n "${PAGE:-}" ] || { echo "ERROR: localhost and shared volume test failed" >&2; exit 1; }
 echo "OK 1 - the missing tenant bites, while the completed Pod shares localhost and data"
 
+# The Pod decides the node, not the node list: on a multi-node cluster condo is
+# rarely on the first node, and crictl would look in the wrong place.
+NODE=$(kubectl -n "$NS" get pod condo -o jsonpath='{.spec.nodeName}')
 W=$(docker exec "$NODE" crictl ps --name writer -q | head -1)
 H=$(docker exec "$NODE" crictl ps --name web -q | head -1)
 PW=$(docker exec "$NODE" crictl inspect -o go-template --template '{{.info.pid}}' "$W")
