@@ -28,3 +28,10 @@ image and discard only their private writable layer.
 c. Container root lacks CAP_SYS_TIME, so it cannot change the single system
 clock. Identical uname -r output shows why: host and container use the same
 kernel, even though namespaces restrict the container's view.
+
+d. No. The powers are cut, the identity is not. uid_map reads "0 0 ...": uid 0
+inside maps to uid 0 outside, and the node reports Uid 0 for that very process.
+Capabilities decide what uid 0 may do; only a user namespace changes who it is,
+by remapping the range - and it is off by default here. That is why a container
+escape lands on a real uid 0, and why the two mechanisms are quoted together
+when the chapter says root in the container is not root on the host.

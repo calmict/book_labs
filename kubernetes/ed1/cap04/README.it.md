@@ -3,8 +3,8 @@
 **Livello:** Fondamentale
 
 Dopo namespaces e cgroup manca l'ultimo pezzo dell'anatomia: il filesystem. In questo laboratorio
-apri un'immagine, segui i riferimenti tra i suoi oggetti e osservi ciò che separa il root del container
-dal root dell'host.
+apri un'immagine, segui i riferimenti tra i suoi oggetti e misuri quanto — e in che senso — il root
+del container è diverso dal root dell'host: i poteri sì, l'identità no.
 
 ## Obiettivi
 
@@ -38,7 +38,9 @@ etc/motd e cancella etc/hostname nella vista merged; registra checksum e presenz
 ### Fase 3 — Root con poteri limitati (4.3, 4.4 — TODO 3)
 
 Confronta CapEff di PID 1 con quello del processo nel container, tenta date -s nel container e confronta
-uname -r. Registra i risultati in isolation.env, poi esegui:
+uname -r. Poi guarda l'identità, che è un meccanismo a parte: l'uid che il container dichiara per sé, la
+prima riga del suo /proc/self/uid_map, e l'uid che il nodo vede per quello stesso processo. Registra i
+risultati in isolation.env, poi esegui:
 
     cd ../solution
     ./run.sh
@@ -48,15 +50,17 @@ uname -r. Registra i risultati in isolation.env, poi esegui:
 - I tre TODO sono completati e i file prodotti identificano oggetti reali.
 - Il layer inferiore resta invariato dopo modifica e cancellazione nella vista merged.
 - Il tentativo di cambiare l'ora è rifiutato e il kernel coincide.
-- run.sh stampa OK 1..5 e ALL CHECKS PASSED.
+- L'uid visto dal nodo è coerente con la uid_map del container.
+- run.sh stampa OK 1..6 e ALL CHECKS PASSED.
 
 ## Come viene verificato
 
 - OK 1 segue manifest, config e layer e valida le sezioni config e rootfs.
 - OK 2 controlla copy-up, cancellazione e immutabilità del layer inferiore.
 - OK 3 controlla capabilities diverse e rifiuto di date -s.
-- OK 4 confronta le versioni del kernel.
-- OK 5 è il cancello: senza upperdir la modifica deve fallire.
+- OK 4 controlla che l'uid visto dal nodo sia quello che la uid_map prevede, e stampa i due uid.
+- OK 5 confronta le versioni del kernel.
+- OK 6 è il cancello: senza upperdir la modifica deve fallire.
 
 ## Domande di riflessione
 
@@ -65,6 +69,9 @@ uname -r. Registra i risultati in isolation.env, poi esegui:
 **b.** Dove finiscono modifica e cancellazione, e perché questo rende usa-e-getta il container layer?
 
 **c.** Perché root nel container non può cambiare l'ora, e che relazione ha con il kernel condiviso?
+
+**d.** Il container ha meno poteri di root sull'host: ha anche un'identità diversa? Che cosa dice la
+uid_map, e che cosa servirebbe per cambiarla davvero?
 
 ## Pulizia
 

@@ -3,8 +3,8 @@
 **Level:** Foundational
 
 After namespaces and cgroups, one last piece of the anatomy is missing: the filesystem. In this lab you
-open an image, follow the references between its objects, and observe what separates container root
-from host root.
+open an image, follow the references between its objects, and measure how - and in what sense -
+container root differs from host root: in its powers, yes; in its identity, no.
 
 ## Objectives
 
@@ -39,7 +39,9 @@ and after.
 ### Phase 3 — Root with limited powers (4.3, 4.4 — TODO 3)
 
 Compare PID 1's CapEff with the process inside the container, attempt date -s in the container, and
-compare uname -r. Record the results in isolation.env, then run:
+compare uname -r. Then look at identity, which is a separate mechanism: the uid the container reports
+for itself, the first line of its /proc/self/uid_map, and the uid the node sees for that same process.
+Record the results in isolation.env, then run:
 
     cd ../solution
     ./run.sh
@@ -49,15 +51,17 @@ compare uname -r. Record the results in isolation.env, then run:
 - The three TODOs are complete and the generated files identify real objects.
 - The lower layer remains unchanged after the modification and deletion in the merged view.
 - The attempt to change the clock is refused and the kernels match.
-- run.sh prints OK 1..5 and ALL CHECKS PASSED.
+- The uid seen by the node matches what the container's uid_map predicts.
+- run.sh prints OK 1..6 and ALL CHECKS PASSED.
 
 ## How it is verified
 
 - OK 1 follows the manifest, config, and layer and validates the config and rootfs sections.
 - OK 2 checks copy-up, deletion, and lower-layer immutability.
 - OK 3 checks different capabilities and the refusal from date -s.
-- OK 4 compares the kernel versions.
-- OK 5 is the gate: without upperdir, the modification must fail.
+- OK 4 checks that the uid seen by the node is the one uid_map predicts, and prints both uids.
+- OK 5 compares the kernel versions.
+- OK 6 is the gate: without upperdir, the modification must fail.
 
 ## Reflection questions
 
@@ -66,6 +70,9 @@ compare uname -r. Record the results in isolation.env, then run:
 **b.** Where do the modification and deletion end up, and why does this make the container layer disposable?
 
 **c.** Why can container root not change the clock, and how does that relate to the shared kernel?
+
+**d.** The container has fewer powers than host root: does it also have a different identity? What does
+uid_map say, and what would it take to change it for real?
 
 ## Cleanup
 

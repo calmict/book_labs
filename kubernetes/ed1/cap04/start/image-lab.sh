@@ -24,4 +24,8 @@ tar -xf "$OUT/image.tar" -C "$OUT/image"
 # TODO 3 (4.3, 4.4): record the container and host CapEff masks, the refusal
 # from date -s, and uname -r on both sides. These observations prove that uid 0
 # lacks CAP_SYS_TIME and that the kernel is shared.
+# Then record the identity too, which is a separate mechanism: the uid the
+# container reports for itself, the first line of its /proc/self/uid_map, and the
+# uid the node sees for that same process. Reduced powers do not remap identity;
+# only a user namespace does, and the map says whether one is in play.
 : > "$OUT/isolation.env"

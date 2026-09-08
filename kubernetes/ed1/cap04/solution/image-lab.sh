@@ -50,8 +50,22 @@ host_cap=$(awk '/^CapEff:/ {print $2}' /proc/1/status)
 clock_output=$(docker run --rm "$IMAGE" date -s '2000-01-01' 2>&1 || true)
 host_kernel=$(uname -r)
 container_kernel=$(docker run --rm "$IMAGE" uname -r)
+
+# Identity is a separate mechanism from capabilities. uid_map says whether a user
+# namespace remaps it; the node's view of the very same process says what that
+# means in practice.
+container_uid=$(docker run --rm "$IMAGE" id -u)
+uid_map=$(docker run --rm "$IMAGE" awk 'NR==1 {print $1, $2, $3}' /proc/self/uid_map)
+map_inside=$(printf '%s' "$uid_map" | awk '{print $1}')
+map_outside=$(printf '%s' "$uid_map" | awk '{print $2}')
+probe=$(docker run -d "$IMAGE" sleep 30)
+host_pid=$(docker inspect -f '{{.State.Pid}}' "$probe")
+host_uid=$(awk '/^Uid:/ {print $2}' "/proc/$host_pid/status")
+docker rm -f "$probe" >/dev/null 2>&1 || true
 {
   printf 'container_cap=%s\nhost_cap=%s\n' "$container_cap" "$host_cap"
   printf 'clock_refused=%s\n' "$(printf '%s' "$clock_output" | grep -Eic 'not permitted|permission denied')"
   printf 'host_kernel=%s\ncontainer_kernel=%s\n' "$host_kernel" "$container_kernel"
+  printf 'container_uid=%s\nhost_uid=%s\n' "$container_uid" "$host_uid"
+  printf 'map_inside=%s\nmap_outside=%s\n' "$map_inside" "$map_outside"
 } > "$OUT/isolation.env"

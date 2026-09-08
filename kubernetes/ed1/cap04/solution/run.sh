@@ -33,14 +33,25 @@ test "$container_cap" != "$host_cap"
 test "$clock_refused" -gt 0
 echo "OK 3 - container root has fewer capabilities and cannot set the host clock"
 
+# The powers are cut, but who the process IS does not change with them: only a
+# user namespace remaps identity, and uid_map is what says so. This holds either
+# way, so the check states the rule and the output says which world you are in.
+expected_host_uid=$(( map_outside + container_uid - map_inside ))
+test "$host_uid" = "$expected_host_uid"
+if [ "$container_uid" = "$host_uid" ]; then
+  echo "OK 4 - powers are cut, identity is not: uid $container_uid inside is still uid $host_uid on the node (uid_map: $map_inside $map_outside)"
+else
+  echo "OK 4 - a user namespace is active here: uid $container_uid inside is uid $host_uid on the node (uid_map: $map_inside $map_outside)"
+fi
+
 test "$host_kernel" = "$container_kernel"
-echo "OK 4 - host and container report the same shared kernel"
+echo "OK 5 - host and container report the same shared kernel"
 
 if CAP04_READ_ONLY=1 "$HERE/image-lab.sh" "$WORK/contrast" >/dev/null 2>&1; then
   echo "UNEXPECTED: the write succeeded without a writable OverlayFS layer" >&2
   exit 1
 fi
-echo "OK 5 - the gate bites: without upperdir the copy-on-write change is refused"
+echo "OK 6 - the gate bites: without upperdir the copy-on-write change is refused"
 
 echo
 echo "ALL CHECKS PASSED"
