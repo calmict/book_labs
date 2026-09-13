@@ -16,7 +16,7 @@ is needed on the target — only SSH and Python.
 ## Objectives
 
 - Understand **agentless** and its three gifts: nothing to install/maintain on the
-  target, no daemon listening (unchanged attack surface), works on anything that
+  target, no daemon listening (no extra open port), works on anything that
   speaks SSH + Python.
 - Tell apart the **control node** (your machine, where you start from) and the
   **managed node** (the machine you configure, which hosts nothing of yours).
@@ -67,7 +67,7 @@ You are on the managed node. Now ask what runs *of ours* when you are not workin
     $SSH 'ps -e | grep -E "sshd|ansible" || true'
 
 You see sshd, and nothing else. **Second gift:** once the task is done, no process
-of yours stays listening on the target — no new attack surface, no daemon to
+of yours stays listening on the target — no extra open port, no daemon to
 watch. And since everything goes through SSH + Python, the same mechanism works on
 a server, a container, a network appliance: **third gift**, the barrier to entry
 is very low.
@@ -116,11 +116,11 @@ raw you install Python over SSH, and from there on you can use the real modules.
 ### Phase 4 — The interview (the facts)
 
 Re-read your module's output: you returned some **facts** inside ansible_facts. It
-is the **setup** module in miniature: before acting, Ansible "interviews" every
-machine — who are you, what system, how much memory, which IPs — and those facts
-become variables usable throughout the rest of the work (you will use them for real
-from chapter 12). The interview is the first thing that happens when you launch a
-playbook; here you wrote it yourself.
+is the **setup** module in miniature: normally, at the start of each play, Ansible
+"interviews" every machine — who are you, what system, how much memory, which IPs
+— and those facts become variables usable throughout the rest of the work (you
+will use them for real from chapter 12). Normally the interview is the first thing
+that happens in each play; here you wrote it yourself.
 
 ## Done when
 

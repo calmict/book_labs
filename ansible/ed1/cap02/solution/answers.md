@@ -39,7 +39,7 @@ seconds a task runs and leaves nothing behind. An *agent* would be a piece of yo
 software installed on all thousand machines: a long-lived daemon you must deploy,
 version, keep compatible with the control side, patch when it has a CVE, and watch
 because it listens on a port. Agentless removes that entire second system. For
-security it means no extra attack surface and no persistent listener to harden; the
+security it means no extra open port and no persistent listener to harden; the
 only door is SSH, which you already secure. For maintenance it means there is no
 fleet-wide agent rollout to coordinate and no "agent version skew" to debug — you
 upgrade Ansible in one place, the control node, and every managed node is

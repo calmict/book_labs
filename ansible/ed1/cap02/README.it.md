@@ -16,7 +16,7 @@ installi al capitolo 6): lo scopo è proprio dimostrare che sul target non serve
 ## Obiettivi
 
 - Capire **agentless** e i suoi tre regali: niente da installare/mantenere sul
-  target, nessun demone in ascolto (superficie d'attacco invariata), funziona su
+  target, nessun demone in ascolto (nessuna porta in più), funziona su
   qualunque cosa parli SSH + Python.
 - Distinguere **control node** (la tua macchina, da cui parti) e **managed node**
   (la macchina che configuri, che non ospita nulla di tuo).
@@ -68,7 +68,7 @@ lavorando:
     $SSH 'ps -e | grep -E "sshd|ansible" || true'
 
 Vedi sshd, e nient'altro. **Secondo regalo:** finito il task, sul target non resta
-in ascolto nessun processo tuo — nessuna nuova superficie d'attacco, nessun demone
+in ascolto nessun processo tuo — nessuna porta in più, nessun demone
 da sorvegliare. E siccome tutto passa da SSH + Python, lo stesso meccanismo
 funziona su un server, un container, un apparato di rete: **terzo regalo**, la
 barriera d'ingresso è bassissima.
@@ -116,11 +116,11 @@ l'ha: con raw installi Python via SSH, e da lì in poi puoi usare i moduli veri.
 ### Fase 4 — L'intervista (i facts)
 
 Rileggi l'output del tuo modulo: hai restituito dei **facts** dentro
-ansible_facts. È il modulo **setup** in miniatura: prima di agire, Ansible
-"intervista" ogni macchina — chi sei, che sistema hai, quanta memoria, quali IP —
-e quei facts diventano variabili utilizzabili nel resto del lavoro (li userai sul
-serio dal capitolo 12). L'intervista è la prima cosa che accade quando lanci un
-playbook; qui l'hai scritta tu.
+ansible_facts. È il modulo **setup** in miniatura: di norma, all'inizio di ogni
+play, Ansible "intervista" ogni macchina — chi sei, che sistema hai, quanta
+memoria, quali IP — e quei facts diventano variabili utilizzabili nel resto del
+lavoro (li userai sul serio dal capitolo 12). Di norma l'intervista è la prima cosa
+che accade in ogni play; qui l'hai scritta tu.
 
 ## Criteri di "fatto"
 
