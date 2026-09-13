@@ -5,10 +5,12 @@
     [defaults]
     inventory = ./inventory.ini
     forks = 10
-    host_key_checking = False        # lab only
+    # lab only
+    host_key_checking = False
 
     [privilege_escalation]
-    become = True                    # lab convenience; see question c
+    # lab convenience; see question c
+    become = True
     become_method = sudo
 
     [ssh_connection]

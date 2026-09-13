@@ -105,7 +105,8 @@ Complete the other two sections:
     pipelining = True
 
 - **become**: asking for administrator rank (chapter 11 goes deep); here you learn
-  that the *default* for this behaviour lives in the cfg;
+  that the *default* for this behaviour lives in the cfg, and that, set to True, it
+  escalates every task: question c asks you why production does not do it;
 - **pipelining**: fewer SSH round-trips per task — the sibling of chapter 3's
   ControlMaster; chapter 25 will measure what it is worth.
 

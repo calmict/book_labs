@@ -105,7 +105,8 @@ Completa le altre due sezioni:
     pipelining = True
 
 - **become**: chiedere i gradi di amministratore (il capitolo 11 ci va a fondo);
-  qui impari che il *default* di questo comportamento vive nel cfg;
+  qui impari che il *default* di questo comportamento vive nel cfg, e che, messo a
+  True, eleva ogni task: la domanda c ti chiede perché in produzione non si fa;
 - **pipelining**: meno andirivieni SSH per ogni task — il fratello del
   ControlMaster del capitolo 3; il capitolo 25 misurerà quanto vale.
 
