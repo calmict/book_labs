@@ -62,5 +62,5 @@ strategy and facts instead and leaves pipelining as reading.
 the target, often several times faster. It is genuinely powerful and genuinely a bigger commitment: an
 external dependency, tied to specific Ansible versions, that changes execution semantics - so the
 manual presents it as the deliberate, measured last resort, after the built-in levers here have been
-spent. profile_tasks (25.7), the built-in callback this lab uses, is how you decide any of this on
+spent. profile_tasks (25.7), the ansible.posix callback this lab uses, is how you decide any of this on
 evidence rather than on hunch: enable it, read which tasks actually cost time, then tune those.

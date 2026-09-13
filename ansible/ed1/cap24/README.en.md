@@ -83,6 +83,11 @@ runs its modules there), so you start from an image that already ships it (pre_b
 "use this image as is, do not build it"). The name cap24-instance is how Molecule will name the
 container: distinct, so it never touches your other containers.
 
+In the provisioner there is already an env line with **ANSIBLE_ROLES_PATH**: it tells Ansible where
+to look for roles, that is the folder that holds yours (${MOLECULE_PROJECT_DIRECTORY} is the role's
+folder, .. the one above it). Recent Molecule versions no longer add it on their own: without that
+line, converge.yml cannot find cap24_app.
+
 ### Phase 4 — The lifecycle (24.5 — TODO 2)
 
 The heart of Molecule is a sequence of phases:

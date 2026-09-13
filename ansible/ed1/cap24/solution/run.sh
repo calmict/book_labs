@@ -32,7 +32,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
-python3 -m venv "$VENV"
+# ansible-core 2.19 needs Python >= 3.11 on the control node: take the first
+# interpreter that has it (plain python3 on recent systems).
+PY=""
+for cand in python3.13 python3.12 python3.11 python3; do
+  if command -v "$cand" >/dev/null 2>&1 \
+    && "$cand" -c 'import sys; sys.exit(sys.version_info < (3, 11))'; then
+    PY=$cand
+    break
+  fi
+done
+[ -n "$PY" ] || { echo "ERROR: Python >= 3.11 not found (ansible-core 2.19 needs it)" >&2; exit 1; }
+"$PY" -m venv "$VENV"
 # shellcheck disable=SC1091
 . "$VENV/bin/activate"
 pip -q install -r "$HERE/requirements.txt"
@@ -50,7 +61,9 @@ if ! molecule test >"$WORK/test.log" 2>&1; then
   tail -20 "$WORK/test.log" >&2
   exit 1
 fi
-grep -q 'Idempotence completed successfully' "$WORK/test.log" \
+# molecule colours its log even into a file: strip the escapes before matching
+sed 's/\x1b\[[0-9;]*m//g' "$WORK/test.log" > "$WORK/test.txt"
+grep -q 'idempotence: Executed: Successful' "$WORK/test.txt" \
   || { echo "UNEXPECTED: the idempotence phase did not run" >&2; exit 1; }
 echo "OK 1 - molecule test green (create, converge, idempotence, verify, destroy)"
 
@@ -63,7 +76,8 @@ set +e
 molecule idempotence >"$WORK/idem.log" 2>&1
 idem_rc=$?
 set -e
-if [ "$idem_rc" -eq 0 ] || ! grep -q 'Idempotence test failed' "$WORK/idem.log"; then
+sed 's/\x1b\[[0-9;]*m//g' "$WORK/idem.log" > "$WORK/idem.txt"
+if [ "$idem_rc" -eq 0 ] || ! grep -q 'Idempotence test failed' "$WORK/idem.txt"; then
   echo "UNEXPECTED: idempotence did not catch the non-idempotent role" >&2
   exit 1
 fi

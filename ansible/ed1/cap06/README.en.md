@@ -22,7 +22,8 @@ configure in the coming chapters.
 
 ## Prerequisites
 
-- python3 (3.9+) with the venv module.
+- Python 3.11 or newer with the venv module: ansible-core 2.19 does not run on older versions. If
+  your python3 is older, use python3.11 or python3.12 instead of python3 in the commands.
 - Docker for the target nodes.
 - Network: pip downloads ansible-core, and preparing the nodes downloads sshd +
   python.
@@ -46,7 +47,7 @@ one command: great in production; here we use an explicit venv to *see* it.)
 Complete **TODO 2** in start/requirements.txt: **pin** the ansible-core version, so
 anyone can rebuild an environment identical to yours.
 
-    ansible-core==2.15.13
+    ansible-core==2.19.13
 
 Then install from it:
 

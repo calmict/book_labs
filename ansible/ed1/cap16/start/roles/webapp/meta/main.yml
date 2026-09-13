@@ -6,5 +6,5 @@ galaxy_info:
   author: Calm ICT
   description: A tiny web app config role
   license: MIT
-  min_ansible_version: "2.15"
+  min_ansible_version: "2.19"
 dependencies: []

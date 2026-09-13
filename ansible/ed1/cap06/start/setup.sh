@@ -7,11 +7,17 @@ set -euo pipefail
 DIR=$(cd "$(dirname "$0")" && pwd)
 VENV="$DIR/.venv"
 
+# ansible-core 2.19 needs Python >= 3.11. If your python3 is older, pick a newer
+# interpreter:  PYTHON=python3.11 bash setup.sh
+PY="${PYTHON:-python3}"
+"$PY" -c 'import sys; sys.exit(sys.version_info < (3, 11))' \
+  || { echo "ansible-core 2.19 needs Python >= 3.11: re-run with  PYTHON=python3.11 bash setup.sh" >&2; exit 1; }
+
 # TODO 1: create a virtualenv (an isolated box, so you never touch the system
 # Python) and use its pip to install from requirements.txt. Add the two commands
 # here, ABOVE the guard below:
 #
-#   python3 -m venv "$VENV"
+#   "$PY" -m venv "$VENV"
 #   "$VENV/bin/pip" install -q -r "$DIR/requirements.txt"
 #
 # (In an interactive shell you would usually run  . .venv/bin/activate  to put the

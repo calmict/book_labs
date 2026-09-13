@@ -12,10 +12,20 @@ set -euo pipefail
 #   7. forks: two hosts in parallel vs --forks 1 in a row (measured)
 #   8. the morning round: the reader's runbook.sh runs to completion
 #
-# Needs python3 (venv), a Docker engine, an ssh client, and network (pip + apt).
+# Needs Python >= 3.11 (venv), a Docker engine, an ssh client, and network (pip + apt).
 # Ephemeral venv, key and containers; guaranteed teardown on exit.
 
-command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 not found" >&2; exit 1; }
+# ansible-core 2.19 needs Python >= 3.11 on the control node: take the first
+# interpreter that has it (plain python3 on recent systems).
+PY=""
+for cand in python3.13 python3.12 python3.11 python3; do
+  if command -v "$cand" >/dev/null 2>&1 \
+    && "$cand" -c 'import sys; sys.exit(sys.version_info < (3, 11))'; then
+    PY=$cand
+    break
+  fi
+done
+[ -n "$PY" ] || { echo "ERROR: Python >= 3.11 not found (ansible-core 2.19 needs it)" >&2; exit 1; }
 command -v docker  >/dev/null 2>&1 || { echo "ERROR: docker not found (see SETUP.md)" >&2; exit 1; }
 
 DIR=$(cd "$(dirname "$0")" && pwd)
@@ -31,7 +41,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "== 0. Control node + two web nodes =="
-python3 -m venv "$VENV"
+"$PY" -m venv "$VENV"
 "$VENV/bin/pip" install -q --upgrade pip
 "$VENV/bin/pip" install -q -r "$START/requirements.txt"
 bash "$START/nodes.sh" up >/dev/null

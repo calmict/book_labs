@@ -9,10 +9,20 @@ set -euo pipefail
 #   3. the trap: in a world-writable directory the cwd cfg is IGNORED (warning)
 #   4. the production rulebook (solution/ansible.cfg) parses and is inspectable
 #
-# Pure configuration, no containers. Needs python3 (venv) and network for pip.
+# Pure configuration, no containers. Needs Python >= 3.11 (venv) and network for pip.
 # Ephemeral venv and workdirs; guaranteed cleanup on exit.
 
-command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 not found" >&2; exit 1; }
+# ansible-core 2.19 needs Python >= 3.11 on the control node: take the first
+# interpreter that has it (plain python3 on recent systems).
+PY=""
+for cand in python3.13 python3.12 python3.11 python3; do
+  if command -v "$cand" >/dev/null 2>&1 \
+    && "$cand" -c 'import sys; sys.exit(sys.version_info < (3, 11))'; then
+    PY=$cand
+    break
+  fi
+done
+[ -n "$PY" ] || { echo "ERROR: Python >= 3.11 not found (ansible-core 2.19 needs it)" >&2; exit 1; }
 
 DIR=$(cd "$(dirname "$0")" && pwd)
 TMP=$(mktemp -d)
@@ -21,7 +31,7 @@ WORK="$TMP/project"
 trap 'rm -rf "$TMP"' EXIT
 
 echo "== 0. Ephemeral control node (venv + ansible-core) =="
-python3 -m venv "$VENV"
+"$PY" -m venv "$VENV"
 "$VENV/bin/pip" install -q --upgrade pip
 "$VENV/bin/pip" install -q -r "$DIR/../start/requirements.txt"
 "$VENV/bin/ansible" --version | head -1 | sed 's/^/  /'

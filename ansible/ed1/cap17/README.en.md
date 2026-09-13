@@ -61,13 +61,13 @@ in start/requirements.yml:
     ---
     collections:
       - name: community.general
-        version: "8.6.0"
+        version: "13.4.0"
 
 and install everything with one command:
 
     ansible-galaxy collection install -r requirements.yml
 
-Note the **pinned version** ("8.6.0"): it is the same principle as chapter 7's pin (tofu).
+Note the **pinned version** ("13.4.0"): it is the same principle as chapter 7's pin (tofu).
 Without it you would get "the latest available" — and tomorrow that would be a different one,
 risking a playbook that changes behaviour on its own.
 

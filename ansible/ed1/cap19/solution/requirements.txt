@@ -1,2 +1,2 @@
-ansible-core==2.15.13
+ansible-core==2.19.13
 hvac==2.4.0

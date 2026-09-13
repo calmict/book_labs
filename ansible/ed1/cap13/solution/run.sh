@@ -9,10 +9,20 @@ set -euo pipefail
 #   3. -e wins over everything (level 22)
 #   4. the tool: ansible-inventory --host shows the inventory-resolved vars
 #
-# Needs python3 (venv) and network (pip). Everything runs with connection=local,
+# Needs Python >= 3.11 (venv) and network (pip). Everything runs with connection=local,
 # so there is nothing to tear down but the ephemeral venv.
 
-command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 not found" >&2; exit 1; }
+# ansible-core 2.19 needs Python >= 3.11 on the control node: take the first
+# interpreter that has it (plain python3 on recent systems).
+PY=""
+for cand in python3.13 python3.12 python3.11 python3; do
+  if command -v "$cand" >/dev/null 2>&1 \
+    && "$cand" -c 'import sys; sys.exit(sys.version_info < (3, 11))'; then
+    PY=$cand
+    break
+  fi
+done
+[ -n "$PY" ] || { echo "ERROR: Python >= 3.11 not found (ansible-core 2.19 needs it)" >&2; exit 1; }
 
 DIR=$(cd "$(dirname "$0")" && pwd)
 START="$DIR/../start"
@@ -27,7 +37,7 @@ trap cleanup EXIT
 need() { grep -Fq "$1" "$2" || { echo "  UNEXPECTED: missing '$1'"; exit 1; }; }
 
 echo "== 0. Control node (venv) — no managed nodes needed =="
-python3 -m venv "$VENV"
+"$PY" -m venv "$VENV"
 "$VENV/bin/pip" install -q --upgrade pip
 "$VENV/bin/pip" install -q -r "$START/requirements.txt"
 AP="$VENV/bin/ansible-playbook"

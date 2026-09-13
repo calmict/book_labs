@@ -23,6 +23,10 @@ skip_list:
   - var-naming[no-role-prefix]
 
 exclude_paths:
+  # The start/ trees are deliberately incomplete (the reader fills the TODOs), so
+  # only solution/ is validated. ansible-lint 26 scans the whole project, not
+  # just the paths it is given, so the exclusion has to be explicit.
+  - ansible/ed1/*/start/
   # Encrypted with Ansible Vault: a syntax-check needs the vault secret, which is
   # never committed to the repository. Readers run it with their own password.
   - ansible/ed1/cap18/solution/prod.yml

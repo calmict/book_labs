@@ -35,9 +35,9 @@ green end to end (create, converge, idempotence, verify, destroy); the idempoten
 start role's non-idempotent command (a touch with no creates guard); the Testinfra verifier catches
 a wrong expectation; and the teardown leaves no cap24-instance container behind.
 
-Note on the environment (verified): molecule is pinned to 5.1.0 (the last line that supports a
-Python 3.9 controller) with molecule-plugins[docker] 23.4.1, the docker SDK 6.1.3 and requests
-2.31.0; the collections are community.docker 3.4.11 and ansible.posix 2.2.1. On some hosts the molecule
+Note on the environment (verified): ansible-core 2.19.13 on a Python 3.11+ controller, molecule
+26.8.0 with molecule-plugins[docker] 26.7.15, pytest-testinfra 10.2.2, the docker SDK 7.2.0 and
+requests 2.34.2; the collections are community.docker 5.3.0 and ansible.posix 2.2.2. On some hosts the molecule
 docker driver's async create / destroy fails with a spurious "Not supported URL scheme http+docker"
 unless the venv is ACTIVATED (source venv/bin/activate) instead of calling molecule by its full
 path: the driver runs those steps in a detached async worker that mis-initialises without

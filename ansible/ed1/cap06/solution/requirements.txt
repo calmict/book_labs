@@ -4,4 +4,4 @@
 # package would be core PLUS hundreds of community collections; we do not need them
 # for these exercises. Pinning the version makes the environment reproducible.
 
-ansible-core==2.15.13
+ansible-core==2.19.13

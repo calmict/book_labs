@@ -23,8 +23,9 @@ real fleet — twelve nodes — and watch them bite: the same rollout drops from
 
 ## Prerequisites
 
-- The chapter 6 venv with **ansible-core** (in start/requirements.txt): nothing else — the fleet is
-  made of local hosts.
+- The chapter 6 venv with **ansible-core** (in start/requirements.txt), plus the **ansible.posix**
+  collection (in start/requirements.yml), which brings the profile_tasks callback: nothing else — the
+  fleet is made of local hosts.
 - The chapter 7 **ansible.cfg** (this is where one of the three levers lives) and **strategies** as a
   concept: you brushed against them with the parallelism of chapter 9.
 - The **facts** of chapter 2 and the **variables** of chapter 12: here you decide *when* it is worth
@@ -45,6 +46,7 @@ Set up the environment:
 
     python3 -m venv venv && . venv/bin/activate
     pip install -r start/requirements.txt
+    ansible-galaxy collection install -r start/requirements.yml
     cd start
 
 ### Phase 1 — The problem changes nature (25.1)
@@ -131,10 +133,11 @@ resort, after this chapter's levers have been spent — not as a first move.
 
 ### Phase 7 — Measure, don't guess (25.7)
 
-All of this is decided on numbers, not on feel. **profile_tasks** is a built-in callback that, once
-enabled, prints how much each task cost: read which tasks actually weigh, then tune those.
+All of this is decided on numbers, not on feel. **profile_tasks** is a callback from the ansible.posix
+collection (not from ansible-core: that is why you installed it during setup) that, once enabled,
+prints how much each task cost: read which tasks actually weigh, then tune those.
 
-    ANSIBLE_CALLBACKS_ENABLED=profile_tasks ansible-playbook deploy.yml
+    ANSIBLE_CALLBACKS_ENABLED=ansible.posix.profile_tasks ansible-playbook deploy.yml
 
 Compare the baseline profile with the tuned one: the "Gathering Facts" line is in the first and gone
 from the second, and the two steps no longer sum in lock-step. Question a.

@@ -5,7 +5,7 @@
     # TODO 1 — requirements.yml (the collection, pinned)
     collections:
       - name: community.general
-        version: "8.6.0"
+        version: "13.4.0"
 
     # TODO 2 — ansible.cfg (keep collections in the project)
     [defaults]
@@ -51,7 +51,7 @@ Because a project that depends on code it does not control should control *which
 of that code it runs, and where. Installed globally in ~/.ansible/collections, a collection
 is shared across every project on the machine and sits at whatever version was last
 installed — so the playbook's behaviour depends on the machine's history, not on the
-project, and "works on my laptop" becomes a real sentence: your community.general is 8.6.0,
+project, and "works on my laptop" becomes a real sentence: your community.general is 13.4.0,
 a colleague's is 9.x with a changed module, and the same playbook does different things with
 no diff to explain it. Pinning the version in requirements.yml and pointing collections_path
 at a folder inside the project fixes both halves: requirements.yml records exactly which

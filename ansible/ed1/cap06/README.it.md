@@ -22,7 +22,8 @@ configurerai.
 
 ## Prerequisiti
 
-- python3 (3.9+) con il modulo venv.
+- Python 3.11 o superiore con il modulo venv: ansible-core 2.19 non gira su versioni più vecchie. Se
+  il tuo python3 è precedente, usa python3.11 o python3.12 al posto di python3 nei comandi.
 - Docker per i nodi target.
 - Rete: pip scarica ansible-core, e la preparazione dei nodi scarica sshd + python.
 
@@ -45,7 +46,7 @@ in produzione; qui usiamo un venv esplicito per *vederlo*.)
 Completa il **TODO 2** in start/requirements.txt: **pinna** la versione di
 ansible-core, così chiunque ricostruisce l'ambiente identico al tuo.
 
-    ansible-core==2.15.13
+    ansible-core==2.19.13
 
 Poi installa da lì:
 

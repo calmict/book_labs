@@ -23,8 +23,9 @@ nodi — e le vedi mordere: la stessa consegna passa da ~24 secondi a ~8.
 
 ## Prerequisiti
 
-- Il venv del capitolo 6 con **ansible-core** (in start/requirements.txt): nient'altro, la flotta è
-  fatta di host locali.
+- Il venv del capitolo 6 con **ansible-core** (in start/requirements.txt), più la collection
+  **ansible.posix** (in start/requirements.yml), che porta il callback profile_tasks: nient'altro, la
+  flotta è fatta di host locali.
 - L'**ansible.cfg** del capitolo 7 (qui è dove vive una delle tre leve) e le **strategie** come
   concetto: le hai sfiorate col parallelismo del capitolo 9.
 - I **fatti** del capitolo 2 e le **variabili** del capitolo 12: qui decidi *quando* vale la pena
@@ -46,6 +47,7 @@ Prepara l'ambiente:
 
     python3 -m venv venv && . venv/bin/activate
     pip install -r start/requirements.txt
+    ansible-galaxy collection install -r start/requirements.yml
     cd start
 
 ### Fase 1 — Il problema cambia natura (25.1)
@@ -135,10 +137,11 @@ come prima mossa.
 
 ### Fase 7 — Misurare, non indovinare (25.7)
 
-Tutto questo si decide sui numeri, non sulle sensazioni. **profile_tasks** è un callback integrato che,
-attivato, stampa quanto è costato ogni task: leggi quali task pesano davvero, poi accorda quelli.
+Tutto questo si decide sui numeri, non sulle sensazioni. **profile_tasks** è un callback della collection
+ansible.posix (non di ansible-core: per questo l'hai installata nella preparazione) che, attivato,
+stampa quanto è costato ogni task: leggi quali task pesano davvero, poi accorda quelli.
 
-    ANSIBLE_CALLBACKS_ENABLED=profile_tasks ansible-playbook deploy.yml
+    ANSIBLE_CALLBACKS_ENABLED=ansible.posix.profile_tasks ansible-playbook deploy.yml
 
 Confronta il profilo del punto di partenza con quello della versione accordata: la riga "Gathering
 Facts" c'è nel primo e sparisce nel secondo, e i due passi non si sommano più in lock-step. Domanda a.

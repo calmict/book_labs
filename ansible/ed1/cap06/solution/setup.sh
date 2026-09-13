@@ -7,9 +7,15 @@ set -euo pipefail
 DIR=$(cd "$(dirname "$0")" && pwd)
 VENV="$DIR/.venv"
 
+# ansible-core 2.19 needs Python >= 3.11. If your python3 is older, pick a newer
+# interpreter:  PYTHON=python3.11 bash setup.sh
+PY="${PYTHON:-python3}"
+"$PY" -c 'import sys; sys.exit(sys.version_info < (3, 11))' \
+  || { echo "ansible-core 2.19 needs Python >= 3.11: re-run with  PYTHON=python3.11 bash setup.sh" >&2; exit 1; }
+
 # An isolated box, so we never touch the system Python. We call its binaries by
 # full path; in an interactive shell you would run  . .venv/bin/activate  instead.
-python3 -m venv "$VENV"
+"$PY" -m venv "$VENV"
 "$VENV/bin/pip" install -q --upgrade pip
 "$VENV/bin/pip" install -q -r "$DIR/requirements.txt"
 

@@ -15,11 +15,12 @@ node prep + SSH reachability) with an ephemeral venv and guaranteed teardown.
 
 requirements.txt (reproducible pin):
 
-    ansible-core==2.15.13
+    ansible-core==2.19.13
 
 setup.sh (the isolated install):
 
-    python3 -m venv "$VENV"
+    PY="${PYTHON:-python3}"                  # Python >= 3.11 for ansible-core 2.19
+    "$PY" -m venv "$VENV"
     "$VENV/bin/pip" install -q -r requirements.txt
     "$VENV/bin/ansible" localhost -m ping     # -> pong
 

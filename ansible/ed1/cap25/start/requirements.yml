@@ -1,0 +1,6 @@
+---
+# profile_tasks is not part of ansible-core: it ships in the ansible.posix
+# collection. Install with: ansible-galaxy collection install -r requirements.yml
+collections:
+  - name: ansible.posix
+    version: "2.2.2"

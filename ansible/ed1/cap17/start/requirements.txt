@@ -1,4 +1,4 @@
 # Chapter 17 — the control node PYTHON requirements (the venv). Not to be
 # confused with requirements.yml, which lists the Ansible COLLECTIONS.
 
-ansible-core==2.15.13
+ansible-core==2.19.13

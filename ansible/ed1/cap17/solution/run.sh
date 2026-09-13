@@ -8,10 +8,20 @@ set -euo pipefail
 #   3. run: a community.general module (FQCN) writes the INI, next to builtins
 #   4. the acid test: re-run -> changed=0
 #
-# Needs python3 (venv) and network (pip + galaxy.ansible.com). Everything runs
+# Needs Python >= 3.11 (venv) and network (pip + galaxy.ansible.com). Everything runs
 # with connection=local; only the ephemeral venv and temp files are created.
 
-command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 not found" >&2; exit 1; }
+# ansible-core 2.19 needs Python >= 3.11 on the control node: take the first
+# interpreter that has it (plain python3 on recent systems).
+PY=""
+for cand in python3.13 python3.12 python3.11 python3; do
+  if command -v "$cand" >/dev/null 2>&1 \
+    && "$cand" -c 'import sys; sys.exit(sys.version_info < (3, 11))'; then
+    PY=$cand
+    break
+  fi
+done
+[ -n "$PY" ] || { echo "ERROR: Python >= 3.11 not found (ansible-core 2.19 needs it)" >&2; exit 1; }
 
 DIR=$(cd "$(dirname "$0")" && pwd)
 START="$DIR/../start"
@@ -29,7 +39,7 @@ trap cleanup EXIT
 recap_field() { grep -E "^$2 " "$1" | sed -n "s/.*$3=\([0-9]*\).*/\1/p" | head -1; }
 
 echo "== 0. Control node (venv) — no managed nodes needed =="
-python3 -m venv "$VENV"
+"$PY" -m venv "$VENV"
 "$VENV/bin/pip" install -q --upgrade pip
 "$VENV/bin/pip" install -q -r "$START/requirements.txt"
 AP="$VENV/bin/ansible-playbook"
@@ -41,9 +51,9 @@ echo "== 1. Install the pinned collection INTO the project (collections_path) ==
 "$AG" collection install -r "$REQ" -p "$COLL" >/dev/null 2>&1
 test -f "$COLL/ansible_collections/community/general/MANIFEST.json" \
   || { echo "  UNEXPECTED: community.general did not land in the project folder"; exit 1; }
-"$AG" collection list -p "$COLL" 2>/dev/null | grep -E 'community\.general[[:space:]]+8\.6\.0' \
-  || { echo "  UNEXPECTED: pinned version 8.6.0 not present"; exit 1; }
-echo "  community.general 8.6.0 installed in the project's collections/ (not the global path)"
+"$AG" collection list -p "$COLL" 2>/dev/null | grep -E 'community\.general[[:space:]]+13\.4\.0' \
+  || { echo "  UNEXPECTED: pinned version 13.4.0 not present"; exit 1; }
+echo "  community.general 13.4.0 installed in the project's collections/ (not the global path)"
 echo
 
 # use OUR project-local collections for the rest

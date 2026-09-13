@@ -6,5 +6,5 @@
 # (a version pin is a lock, like chapter 7 — reproducibility, not surprises):
 #   collections:
 #     - name: community.general
-#       version: "8.6.0"
+#       version: "13.4.0"
 collections: []

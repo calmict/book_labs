@@ -84,7 +84,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install ansible-lint (pinned for reproducibility)
-        run: pip install "ansible-lint==6.22.2" "ansible-core==2.15.13"
+        run: pip install "ansible-lint==26.8.0" "ansible-core==2.19.13"
       - name: Install the collections the solutions declare (pinned)
         run: |
           # Reuse the pins the exercises already commit, so a syntax-check can

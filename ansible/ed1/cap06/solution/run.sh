@@ -7,10 +7,20 @@ set -euo pipefail
 #   2. core vs package: with an isolated collection path, core alone is ~74 modules
 #   3. target nodes: prepare cap06-web and cap06-db (sshd + python3), reachable over SSH
 #
-# Needs python3 (venv), a Docker engine, an ssh client, and network access
+# Needs Python >= 3.11 (venv), a Docker engine, an ssh client, and network access
 # (pip + apt). Ephemeral venv, key and containers; guaranteed teardown on exit.
 
-command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 not found" >&2; exit 1; }
+# ansible-core 2.19 needs Python >= 3.11 on the control node: take the first
+# interpreter that has it (plain python3 on recent systems).
+PY=""
+for cand in python3.13 python3.12 python3.11 python3; do
+  if command -v "$cand" >/dev/null 2>&1 \
+    && "$cand" -c 'import sys; sys.exit(sys.version_info < (3, 11))'; then
+    PY=$cand
+    break
+  fi
+done
+[ -n "$PY" ] || { echo "ERROR: Python >= 3.11 not found (ansible-core 2.19 needs it)" >&2; exit 1; }
 command -v docker  >/dev/null 2>&1 || { echo "ERROR: docker not found (see SETUP.md)" >&2; exit 1; }
 command -v ssh     >/dev/null 2>&1 || { echo "ERROR: ssh not found" >&2; exit 1; }
 
@@ -30,7 +40,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "== 0. Control node: isolated venv + ansible-core =="
-python3 -m venv "$VENV"
+"$PY" -m venv "$VENV"
 "$VENV/bin/pip" install -q --upgrade pip
 "$VENV/bin/pip" install -q -r "$DIR/requirements.txt"
 echo "  installed into an isolated venv (system Python untouched)"

@@ -12,8 +12,10 @@ ansible-core:
     # install: https://docs.ansible.com/ansible/latest/installation_guide/
     ansible --version
 
-A recent ansible-core (2.15+) is recommended, in a virtual environment so it
-never collides with your system Python:
+The exercises are tested with ansible-core 2.19, which needs Python 3.11 or
+newer on the control node. Install it in a virtual environment so it never
+collides with your system Python (if your python3 is older, call python3.11 or
+python3.12 explicitly):
 
     python3 -m venv ~/.venvs/ansible
     . ~/.venvs/ansible/bin/activate
