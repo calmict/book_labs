@@ -73,9 +73,9 @@ riprova:
 
     @@@ WARNING: UNPROTECTED PRIVATE KEY FILE! @@@
 
-SSH **rifiuta** una chiave privata leggibile da altri. Regola: privata a 600,
-~/.ssh a 700. È la prima cosa che rompe l'automazione di chi copia le chiavi con i
-permessi sbagliati.
+SSH **rifiuta** una chiave privata leggibile da altri. Regola: privata non
+accessibile ad altri (tipicamente 600), ~/.ssh a 700. È la prima cosa che rompe
+l'automazione di chi copia le chiavi con i permessi sbagliati.
 
 ### Fase 3 — L'alias, e il bastion
 

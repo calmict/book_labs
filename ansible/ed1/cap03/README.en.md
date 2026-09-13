@@ -74,9 +74,9 @@ again:
 
     @@@ WARNING: UNPROTECTED PRIVATE KEY FILE! @@@
 
-SSH **refuses** a private key others can read. The rule: private at 600, ~/.ssh at
-700. It is the first thing that breaks the automation of anyone who copies keys with
-the wrong permissions.
+SSH **refuses** a private key others can read. The rule: private key not accessible
+to others (typically 600), ~/.ssh at 700. It is the first thing that breaks the
+automation of anyone who copies keys with the wrong permissions.
 
 ### Phase 3 — The alias, and the bastion
 
