@@ -151,8 +151,8 @@ Due osservazioni chiudono il quadro, senza altro codice.
 **Crepa 2 — passi, non stato.** Rileggi provision.sh: è una lista di *comandi*.
 Se un collega ti chiede "che stato dovrebbe avere server2?", non puoi rispondere
 leggendo lo script — puoi solo *eseguirlo con la mente*. Uno strumento
-dichiarativo rovescia la cosa: gli descrivi lo *stato voluto* e lui calcola i
-passi. Lo script dice *come*; Ansible ti farà dire *cosa*.
+dichiarativo rovescia la cosa: gli descrivi lo *stato voluto*, tappa per tappa, e ogni
+tappa fa solo ciò che manca. Lo script dice *come*; Ansible ti farà dire *cosa*.
 
 **Tre, trenta, tremila.** Il tuo for è **seriale** e **push** (tu, dal centro,
 spingi comandi verso i server). Con tre server regge. Con tremila: nessun

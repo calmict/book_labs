@@ -150,7 +150,7 @@ Two observations close the picture, with no more code.
 **Crack 2 — steps, not state.** Re-read provision.sh: it is a list of *commands*.
 If a colleague asks you "what state should server2 be in?", you cannot answer by
 reading the script — you can only *run it in your head*. A declarative tool flips
-this around: you describe the *desired state* and it works out the steps. The
+this around: you describe the *desired state*, step by step, and each step does only what is missing. The
 script says *how*; Ansible will let you say *what*.
 
 **Three, thirty, three thousand.** Your for loop is **serial** and **push** (you,
