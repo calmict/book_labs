@@ -167,7 +167,7 @@ This is the qualitative jump of 1.1: at three thousand servers you need
 parallelism, per-host error handling, and a way to *describe* the state instead of
 *ordering* it. It is also the **push vs pull** choice: here the centre pushes; in
 the pull model each server would go and fetch its own configuration at intervals.
-Ansible is push — and the coming chapters give you everything the script lacks.
+Ansible is push by default — and the coming chapters give you everything the script lacks.
 
 ## Done when
 

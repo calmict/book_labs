@@ -167,7 +167,7 @@ dirti quali dei precedenti erano già a posto e quali no. Provalo:
 degli errori per-host, e un modo di *descrivere* lo stato invece di *ordinarlo*.
 È anche la scelta **push contro pull**: qui il centro spinge; nel modello pull
 ogni server andrebbe da solo a prendersi la sua configurazione a intervalli.
-Ansible è push — e i capitoli seguenti ti daranno tutto ciò che allo script manca.
+Ansible è push per impostazione predefinita — e i capitoli seguenti ti daranno tutto ciò che allo script manca.
 
 ## Criteri di "fatto"
 

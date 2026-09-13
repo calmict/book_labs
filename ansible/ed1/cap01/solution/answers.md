@@ -65,7 +65,7 @@ script is push — the centre reaches out and imposes state, so drift is only fi
 when someone remembers to run it. The pull model flips the initiative: each server
 runs an agent that periodically fetches its desired state and re-applies it, so
 drift is corrected on a schedule without anyone launching anything — at the cost of
-an agent on every node and a source of truth the nodes can reach. Ansible chooses
-push (agentless, nothing to install on the managed nodes); the trade-off is that
+an agent on every node and a source of truth the nodes can reach. Ansible defaults to
+push (agentless, no agent to install on the managed nodes); the trade-off is that
 convergence happens when you run it, which is why later chapters lean on CI/CD and
 scheduling to run it often enough that "when you run it" becomes "continuously".
