@@ -2,7 +2,7 @@
 
 **Livello:** Fondamentale
 
-YAML è lo spartito su cui scriverai ogni playbook e ogni inventario. Sembra banale
+YAML è lo spartito su cui scriverai ogni playbook, ogni file di variabili e molti inventari. Sembra banale
 — ed è proprio questa la trappola: un valore scritto come lo pensi può essere
 **letto dal parser come tutt'altro**. NO diventa Falso, 1.20 diventa 1.2, 22:30
 diventa 1350. In questo laboratorio impari l'anatomia di YAML e, soprattutto, a non
@@ -76,8 +76,8 @@ rilancia:
 
     python3 solution/inspect.py start/config.yml
 
-Ora country è "NO", version è "1.20", tutto stringa. Regola d'oro: **in caso di
-dubbio, quota** — soprattutto sigle di due lettere, numeri di versione, permessi
+Ora country è "NO", version è "1.20", tutto stringa. Regola d'oro: **per un valore che deve
+essere testo, in caso di dubbio quota** — soprattutto sigle di due lettere, numeri di versione, permessi
 con lo zero davanti, orari.
 
 ### Fase 4 — Block scalar: | tiene gli a-capo, > li fonde
@@ -155,6 +155,6 @@ Nessuna: questo capitolo è fatto solo di file, nessun container.
 
 ## Dove porta
 
-Ogni playbook, inventario e file di variabili che scriverai è YAML — e ora sai che
+Ogni playbook e file di variabili che scriverai è YAML, e spesso anche l'inventario — e ora sai che
 lo spartito va sempre riletto con l'occhio del parser. Al capitolo 8 (inventari) e
 al 12 (variabili) queste trappole diventano bug veri: quotale prima che mordano.

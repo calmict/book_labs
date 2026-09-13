@@ -2,7 +2,7 @@
 
 **Level:** Foundational
 
-YAML is the score you will write every playbook and every inventory on. It looks
+YAML is the score you will write every playbook, every variables file and many inventories on. It looks
 trivial — and that is exactly the trap: a value written the way you mean it can be
 **read by the parser as something else entirely**. NO becomes False, 1.20 becomes
 1.2, 22:30 becomes 1350. In this lab you learn the anatomy of YAML and, above all,
@@ -74,8 +74,8 @@ re-run:
 
     python3 solution/inspect.py start/config.yml
 
-Now country is "NO", version is "1.20", all strings. The golden rule: **when in
-doubt, quote** — especially two-letter codes, version numbers, permissions with a
+Now country is "NO", version is "1.20", all strings. The golden rule: **for a value that must be
+text, when in doubt, quote** — especially two-letter codes, version numbers, permissions with a
 leading zero, times.
 
 ### Phase 4 — Block scalars: | keeps newlines, > folds them
@@ -153,7 +153,7 @@ None: this chapter is made only of files, no containers.
 
 ## Where it leads
 
-Every playbook, inventory and variables file you will write is YAML — and now you
+Every playbook and variables file you will write is YAML, and often the inventory too — and now you
 know the score must always be re-read with the parser's eye. In chapter 8
 (inventories) and chapter 12 (variables) these traps become real bugs: quote them
 before they bite.
