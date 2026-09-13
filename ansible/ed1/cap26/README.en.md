@@ -92,9 +92,10 @@ quality gates on every push —
     - name: Validate
       run: ./ci/validate.sh
 
-The test job runs on push and pull_request: every change is validated before it can be merged. If
-lint.sh or validate.sh exits with an error, the job goes **red** and the pipeline stops. It is chapter
-23 made automatic and mandatory: no longer "remember to run the lint", but "you do not get in if the
+The test job runs on push and pull_request: every change is validated before the merge. If lint.sh
+or validate.sh exits with an error, the job goes **red** and the pipeline stops. It is chapter 23 made
+automatic; it becomes mandatory when the protection of the main branch requires this job (a
+*required status check*): then no longer "remember to run the lint", but "you do not get in if the
 lint does not pass".
 
 ### Phase 5 — Deploy and the production gate (26.5 — TODO 2)

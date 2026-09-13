@@ -93,10 +93,11 @@ cancelli di qualità a ogni push —
     - name: Validate
       run: ./ci/validate.sh
 
-Il job test gira su push e pull_request: ogni modifica è validata prima di poter essere fusa. Se
-lint.sh o validate.sh escono con errore, il job diventa **rosso** e la pipeline si ferma. È il cap23
-reso automatico e obbligatorio: non più "ricordati di lanciare il lint", ma "non entri se il lint non
-passa".
+Il job test gira su push e pull_request: ogni modifica è validata prima della fusione. Se lint.sh o
+validate.sh escono con errore, il job diventa **rosso** e la pipeline si ferma. È il cap23 reso
+automatico; obbligatorio lo diventa quando la protezione del ramo main richiede questo job (un
+*required status check*): allora non più "ricordati di lanciare il lint", ma "non entri se il lint
+non passa".
 
 ### Fase 5 — Il deploy e il cancello di produzione (26.5 — TODO 2)
 
