@@ -93,12 +93,13 @@ Ora fallo **viaggiare a mano**, esattamente come farebbe Ansible:
     # 3. eseguilo con il Python REMOTO — il JSON torna su stdout
     $SSH 'python3 ~/.ansible/tmp/mod.py'
 
-    # 4. pulizia: Ansible cancella sempre il file temporaneo
+    # 4. pulizia: Ansible cancella il file temporaneo
     $SSH 'rm -f ~/.ansible/tmp/mod.py'
 
-Questi quattro fotogrammi **sono** ciò che Ansible fa per ogni singolo task:
-connettersi, spedire il modulo in una tmp dir, eseguirlo col Python del target,
-raccogliere il JSON, ripulire. Tu li hai appena fatti a mano. Nessuno stato è
+Questi quattro fotogrammi sono ciò che Ansible fa per un task tipico, con le
+impostazioni di default: connettersi, spedire il modulo in una tmp dir, eseguirlo
+col Python del target, raccogliere il JSON, ripulire (il pipelining, che vedrai
+nel capitolo 7, salta il file temporaneo). Tu li hai appena fatti a mano. Nessuno stato è
 rimasto sul nodo: il messaggero è passato e se n'è andato.
 
 ### Fase 3 — Il ruolo di Python (e quando non serve)

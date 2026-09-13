@@ -92,12 +92,13 @@ Now make it **travel by hand**, exactly as Ansible would:
     # 3. run it with the REMOTE Python — the JSON comes back on stdout
     $SSH 'python3 ~/.ansible/tmp/mod.py'
 
-    # 4. cleanup: Ansible always deletes the temporary file
+    # 4. cleanup: Ansible deletes the temporary file
     $SSH 'rm -f ~/.ansible/tmp/mod.py'
 
-These four frames **are** what Ansible does for every single task: connect, ship
-the module into a tmp dir, run it with the target's Python, collect the JSON, clean
-up. You just did them by hand. No state was left on the node: the messenger passed
+These four frames are what Ansible does for a typical task, with the default
+settings: connect, ship the module into a tmp dir, run it with the target's Python,
+collect the JSON, clean up (pipelining, which you will see in chapter 7, skips the
+temporary file). You just did them by hand. No state was left on the node: the messenger passed
 through and left.
 
 ### Phase 3 — The role of Python (and when it is not needed)
