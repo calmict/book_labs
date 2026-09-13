@@ -47,7 +47,7 @@ copying it around destroys that guarantee.
 **b. Agent forwarding vs ProxyJump.**
 
 Agent forwarding (-A) exposes a socket to your local ssh-agent on the machine you
-log into, so further hops can ask *your* agent to sign challenges. The danger is
+log into, so further hops can ask *your* agent to sign authentication requests. The danger is
 that root on that intermediate box — or anyone who compromises it — can use the
 forwarded socket to authenticate as you to anything your key opens, for as long as
 your session lasts. On a shared or untrusted bastion that is exactly the machine you
