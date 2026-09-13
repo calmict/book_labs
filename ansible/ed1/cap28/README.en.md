@@ -31,7 +31,7 @@ not "click in the UI": it is GitOps here too.
   you define and validate its objects *as code*, offline.
 - The **wave release** of chapter 27: the playbooks the job templates run are exactly that deploy (plus
   smoke-test and rollback).
-- The **secret lookups** of chapter 19: the credential does not *hold* the key, it *references* it.
+- The **secret management** of chapter 19: the credential does not *hold* the key, it *references* it.
 - The **pipeline** of chapter 26: this exercise is the gate that validates the objects *before* the
   import into AWX — GitOps applied to the platform itself.
 
@@ -94,9 +94,12 @@ what the validator rejects. Question a.
 Here the platform earns its real value. Three ideas:
 
 - **Credentials**: the secret (an SSH key, a token) is **not written in the graph**. The credential
-  *references* it — the platform resolves it at run time from a secret manager (chapter 19). Look at
-  deploy-ssh: the secret field is a lookup, not a key in plaintext. The validator rejects any plaintext
-  secret.
+  *references* it, but not with a lookup in the playbook as in chapter 19: in AWX a credential field is
+  linked to an **external credential** — here vault-lookup, a HashiCorp Vault — through an **input
+  source**, whose metadata say where the secret sits. The controller fetches it at launch. Look at
+  credential_input_sources: the ssh_key_data field of deploy-ssh is a link, not a key in plaintext. The
+  validator rejects any plaintext secret, and also a lookup expression written into the field: the
+  controller does not evaluate it.
 - **RBAC**: who can do what. The principle is **least privilege**: give the narrowest role that
   suffices, on the most specific resource. The deployers team must not administer the organisation: it
   must be able to **execute** the deploy job template, and nothing else.
@@ -157,8 +160,8 @@ rises when someone decides" into "the season runs itself".
   validator stop an error *before* the import (chapter 26).
 - **Least privilege, always**: the narrowest role, on the most specific resource. Broad RBAC is
   convenient today and an incident tomorrow.
-- **The secret is referenced, not written**: never a key in the graph; always a lookup to a secret
-  manager (chapter 19).
+- **The secret is referenced, not written**: never a key in the graph; always an input source to a
+  secret manager.
 - **Reproducible environments**: versioned EEs, not improvised venvs on the control node.
 - **Every launch leaves a trace**: go through the platform, not the terminal, so the audit exists by
   construction.
@@ -182,8 +185,9 @@ solution/run.sh is the **pre-import gate**, all locally and offline (no AWX requ
 2. **The graph is valid and safe**: the validator accepts the completed graph — references resolved, no
    plaintext secret, RBAC scoped, workflow a DAG with a failure branch.
 3. **The checks actually bite**: run.sh introduces, one at a time, a dangling reference, an over-broad
-   RBAC grant, a plaintext secret and a workflow with no failure branch — and requires the validator to
-   **reject** each. It is exactly what AWX (or your review) would reject.
+   RBAC grant, a plaintext secret, a secret written as a lookup expression instead of linked, an input
+   source that does not point at a secret manager and a workflow with no failure branch — and requires
+   the validator to **reject** each, for its own reason. It is exactly what AWX (or your review) would reject.
 
 ## Reflection questions
 

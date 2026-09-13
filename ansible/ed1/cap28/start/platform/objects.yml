@@ -1,6 +1,6 @@
 # AWX / Automation Platform objects, defined as code (GitOps): this is what your CI
 # validates and then imports into the controller. No secret value lives here - only
-# a reference to where the controller fetches it at run time.
+# the link the controller follows to fetch it from a secret manager when the job runs.
 
 projects:
   - name: infra-playbooks
@@ -12,11 +12,32 @@ inventories:
     source: static
 
 credentials:
+  # The external credential: how the controller reaches the secret manager. Only the
+  # address travels in git; its own authentication (a token, an AppRole) is set on
+  # the controller, never here.
+  - name: vault-lookup
+    credential_type: HashiCorp Vault Secret Lookup
+    inputs:
+      url: https://vault.example.com:8200
+      api_version: v2
+  # The credential the job templates use. Its key field is NOT in inputs: the
+  # controller fills it at launch from vault-lookup, through the input source below.
   - name: deploy-ssh
-    kind: machine
-    # The value is NEVER stored here: the controller resolves it at run time from a
-    # secret manager (chapter 19). Only this reference travels in git.
-    secret: "{{ lookup('community.hashi_vault.vault_kv2_get', 'ansible/deploy-ssh').secret.ssh_key }}"
+    credential_type: Machine
+    inputs:
+      username: deploy
+
+# The link, not the value: which field of which credential comes from which secret
+# manager, and where the secret sits there (the metadata). This is how AWX pulls a
+# secret from a third-party system - it does not evaluate a lookup expression written
+# into the field.
+credential_input_sources:
+  - target_credential: deploy-ssh
+    input_field_name: ssh_key_data
+    source_credential: vault-lookup
+    metadata:
+      secret_path: /kv/ansible/deploy-ssh
+      secret_key: ssh_key
 
 job_templates:
   # TODO 1 (28.3) - complete the deploy job template. A job template binds a playbook

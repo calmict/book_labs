@@ -32,10 +32,12 @@
 
 solution/run.sh is the pre-import gate, all offline, no AWX required. It syntax-checks the project's
 three playbooks (the job templates point at playbooks that really exist and are well formed), runs the
-validator on the completed graph (references resolve, the secret is referenced not stored, the RBAC
-grant is scoped, the workflow is a valid DAG with a failure path to rollback), and then feeds the
-validator four broken graphs - a dangling reference, an over-broad grant, a plaintext secret, a
-workflow with no rollback path - and requires each to be rejected. That is exactly what AWX, or your
+validator on the completed graph (references resolve, the secret is linked to a secret manager through
+an input source rather than stored, the RBAC grant is scoped, the workflow is a valid DAG with a failure
+path to rollback), and then feeds the validator six broken graphs - a dangling reference, an over-broad
+grant, a plaintext secret, a secret written as a lookup expression instead of linked, an input source
+that does not point at a secret manager, a workflow with no rollback path - and requires each to be
+rejected for its own reason. That is exactly what AWX, or your
 review, would reject on import.
 
 ## The three questions

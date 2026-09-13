@@ -2,7 +2,7 @@
 # cap28 - solution test. The pre-import gate for an AWX / Automation Platform object
 # graph defined as code: no AWX needed, all local and offline. It syntax-checks the
 # project's real playbooks, validates the completed object graph (references resolve,
-# secrets referenced not stored, RBAC scoped, workflow a valid DAG), and proves each
+# secrets linked through input sources not stored, RBAC scoped, workflow a valid DAG), and proves each
 # check bites by feeding the validator a broken graph.
 set -euo pipefail
 
@@ -36,20 +36,49 @@ fi
 echo "OK 2 - $(cat "$WORK/v.out")"
 
 # --- 3. the checks bite: each broken graph is rejected ---
-expect_reject() {  # $1 = mutated objects file, $2 = label
-  if python3 "$HERE/validate.py" "$1" "$PROJ" >/dev/null 2>&1; then
+expect_reject() {  # $1 = mutated objects file, $2 = label, $3 = expected reason
+  if python3 "$HERE/validate.py" "$1" "$PROJ" >"$WORK/r.out" 2>&1; then
     echo "UNEXPECTED: the validator accepted a graph with $2" >&2; exit 1
+  fi
+  if ! grep -q "$3" "$WORK/r.out"; then
+    echo "UNEXPECTED: the graph with $2 was rejected for another reason:" >&2
+    cat "$WORK/r.out" >&2; exit 1
   fi
 }
 
+mutate_secret() {  # $1 = mode, $2 = output file
+  python3 - "$OBJ" "$2" "$1" <<'PY'
+import sys
+import yaml
+d = yaml.safe_load(open(sys.argv[1]))
+creds = {c["name"]: c for c in d["credentials"]}
+mode = sys.argv[3]
+if mode == "plaintext":
+    creds["deploy-ssh"]["inputs"]["ssh_key_data"] = "hunter2"
+elif mode == "template":
+    d["credential_input_sources"] = []
+    creds["deploy-ssh"]["inputs"]["ssh_key_data"] = (
+        "{{ lookup('community.hashi_vault.vault_kv2_get', 'ansible/deploy-ssh').secret.ssh_key }}")
+elif mode == "not-external":
+    d["credential_input_sources"][0]["source_credential"] = "deploy-ssh"
+yaml.safe_dump(d, open(sys.argv[2], "w"))
+PY
+}
+
 sed 's/inventory: production/inventory: staging/' "$OBJ" > "$WORK/m1.yml"
-expect_reject "$WORK/m1.yml" "a dangling inventory reference"
+expect_reject "$WORK/m1.yml" "a dangling inventory reference" "unknown or missing inventory"
 
 sed 's/role: execute/role: admin/' "$OBJ" > "$WORK/m2.yml"
-expect_reject "$WORK/m2.yml" "an over-broad RBAC grant"
+expect_reject "$WORK/m2.yml" "an over-broad RBAC grant" "over-broad role"
 
-sed 's|secret:.*|secret: hunter2|' "$OBJ" > "$WORK/m3.yml"
-expect_reject "$WORK/m3.yml" "a plaintext secret"
+mutate_secret plaintext "$WORK/m3.yml"
+expect_reject "$WORK/m3.yml" "a plaintext secret" "stores 'ssh_key_data' in the graph"
+
+mutate_secret template "$WORK/m5.yml"
+expect_reject "$WORK/m5.yml" "a secret written as a lookup expression" "holds a template expression"
+
+mutate_secret not-external "$WORK/m6.yml"
+expect_reject "$WORK/m6.yml" "an input source that is not a secret manager" "not an external secret-manager credential"
 
 python3 - "$OBJ" "$WORK/m4.yml" <<'PY'
 import sys
@@ -61,9 +90,9 @@ for n in d["workflows"][0]["nodes"]:
         n["success_nodes"] = sorted(set((n.get("success_nodes") or []) + failn))
 yaml.safe_dump(d, open(sys.argv[2], "w"))
 PY
-expect_reject "$WORK/m4.yml" "a workflow with no failure path to rollback"
+expect_reject "$WORK/m4.yml" "a workflow with no failure path to rollback" "no failure path"
 
-echo "OK 3 - every broken graph is rejected (dangling ref, broad RBAC, plaintext secret, no rollback path)"
+echo "OK 3 - every broken graph is rejected (dangling ref, broad RBAC, plaintext secret, lookup expression, non-external source, no rollback path)"
 
 echo
 echo "ALL CHECKS PASSED"

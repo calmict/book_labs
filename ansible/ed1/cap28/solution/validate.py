@@ -15,6 +15,12 @@ import yaml
 
 ALLOWED_ROLES = {"execute", "read", "use", "approve"}
 RESOURCE_KINDS = {"job_template", "workflow", "inventory", "project", "credential"}
+# credential types that fetch a secret from a third-party system (AWX: "secret lookups")
+EXTERNAL_TYPES = {"HashiCorp Vault Secret Lookup", "HashiCorp Vault Signed SSH",
+                  "CyberArk Central Credential Provider Lookup", "Microsoft Azure Key Vault",
+                  "AWS Secrets Manager lookup"}
+# credential fields whose value is a secret: never in the graph
+SECRET_FIELDS = {"password", "ssh_key_data", "ssh_key_unlock", "become_password", "token", "secret_id"}
 
 
 def reject(msg):
@@ -46,11 +52,28 @@ def main(objects_path, project_dir):
             if c not in creds:
                 reject(f"job template '{name}' references unknown credential '{c}'")
 
-    # 2. governing access: no plaintext secret, RBAC least privilege
+    # 2. governing access: no secret in the graph, secrets linked through input sources,
+    #    RBAC least privilege
     for cname, c in creds.items():
-        sec = str(c.get("secret", ""))
-        if not (sec.startswith("{{") or sec.startswith("$") or "lookup" in sec):
-            reject(f"credential '{cname}' stores its secret in plaintext; reference a lookup/vault instead")
+        for field, value in (c.get("inputs") or {}).items():
+            if "{{" in str(value):
+                reject(f"credential '{cname}' field '{field}' holds a template expression: the controller "
+                       "does not evaluate it; link the field to a secret manager through an input source")
+            if field in SECRET_FIELDS:
+                reject(f"credential '{cname}' stores '{field}' in the graph; link it to a secret manager "
+                       "through an input source instead")
+    for s in d.get("credential_input_sources", []):
+        tgt, src = s.get("target_credential"), s.get("source_credential")
+        if tgt not in creds:
+            reject(f"an input source targets unknown credential '{tgt}'")
+        if src not in creds:
+            reject(f"the input source for '{tgt}' uses unknown source credential '{src}'")
+        if creds[src].get("credential_type") not in EXTERNAL_TYPES:
+            reject(f"the input source for '{tgt}' uses '{src}', which is not an external secret-manager credential")
+        if creds[tgt].get("credential_type") in EXTERNAL_TYPES:
+            reject(f"'{tgt}' is an external credential: its fields cannot be linked to another secret manager")
+        if not s.get("input_field_name") or not s.get("metadata"):
+            reject(f"the input source for '{tgt}' needs an input_field_name and the metadata locating the secret")
     for g in d.get("rbac", []):
         who = g.get("team") or g.get("user")
         if not who:
@@ -101,7 +124,7 @@ def main(objects_path, project_dir):
         if not (rollbacks & failure_targets):
             reject(f"workflow '{w['name']}' has no failure path leading to a rollback template")
 
-    print("OK: the object graph resolves, secrets are referenced not stored, access is scoped, the workflow is a valid DAG")
+    print("OK: the object graph resolves, secrets are linked not stored, access is scoped, the workflow is a valid DAG")
 
 
 if __name__ == "__main__":

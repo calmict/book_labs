@@ -31,7 +31,7 @@ piattaforma non è "clicca nella UI": è GitOps anche qui.
   qui definisci e validi i suoi oggetti *come codice*, offline.
 - Il **rilascio a ondate** del capitolo 27: i playbook che i job template eseguono sono proprio quel
   deploy (più smoke-test e rollback).
-- I **lookup di segreti** del capitolo 19: la credenziale non *contiene* la chiave, la *riferisce*.
+- La **gestione dei segreti** del capitolo 19: la credenziale non *contiene* la chiave, la *riferisce*.
 - La **pipeline** del capitolo 26: questo esercizio è il cancello che valida gli oggetti *prima*
   dell'import in AWX — GitOps applicato alla piattaforma stessa.
 
@@ -94,9 +94,12 @@ ciò che il validatore rifiuta. Domanda a.
 Qui la piattaforma guadagna il suo valore vero. Tre idee:
 
 - **Credenziali**: il segreto (una chiave SSH, un token) **non è scritto nel grafo**. La credenziale lo
-  *riferisce* — la piattaforma lo risolve a runtime da un gestore di segreti (capitolo 19). Guarda
-  deploy-ssh: il campo secret è un lookup, non una chiave in chiaro. Il validatore rifiuta qualunque
-  segreto in chiaro.
+  *riferisce*, ma non con un lookup nel playbook come nel capitolo 19: in AWX un campo della credenziale
+  si collega a una **credenziale esterna** — qui vault-lookup, un HashiCorp Vault — attraverso un
+  **input source**, i cui metadata dicono dove sta il segreto. Il controller lo recupera al momento del
+  lancio. Guarda credential_input_sources: il campo ssh_key_data di deploy-ssh è un collegamento, non
+  una chiave in chiaro. Il validatore rifiuta qualunque segreto in chiaro, e anche un'espressione
+  lookup scritta dentro il campo: il controller non la valuta.
 - **RBAC**: chi può fare cosa. Il principio è il **minimo privilegio**: dai il ruolo più stretto che
   basta, sulla risorsa più specifica. Il team deployers non deve amministrare l'organizzazione: deve
   poter **eseguire** il job template di deploy, e nient'altro.
@@ -158,8 +161,8 @@ teatro da "si alza il sipario quando qualcuno lo decide" a "la stagione va avant
   permette a un validatore di fermare un errore *prima* dell'import (capitolo 26).
 - **Minimo privilegio, sempre**: il ruolo più stretto, sulla risorsa più specifica. L'RBAC largo è
   comodo oggi e un incidente domani.
-- **Il segreto si riferisce, non si scrive**: mai una chiave nel grafo; sempre un lookup a un gestore
-  di segreti (capitolo 19).
+- **Il segreto si riferisce, non si scrive**: mai una chiave nel grafo; sempre un input source verso
+  un gestore di segreti.
 - **Ambienti riproducibili**: EE versionati, non venv improvvisati sul nodo di controllo.
 - **Ogni lancio lascia traccia**: passa dalla piattaforma, non dal terminale, così l'audit esiste per
   costruzione.
@@ -183,8 +186,9 @@ solution/run.sh è il **cancello pre-import**, tutto in locale e senza rete (nes
 2. **Il grafo è valido e sicuro**: il validatore accetta il grafo completo — riferimenti risolti,
    nessun segreto in chiaro, RBAC scoped, workflow un DAG con ramo di fallimento.
 3. **I controlli mordono davvero**: run.sh introduce, una alla volta, un riferimento pendente, una
-   concessione RBAC troppo ampia, un segreto in chiaro e un workflow senza ramo di fallimento — e
-   pretende che il validatore **rifiuti** ciascuno. È esattamente ciò che AWX (o la tua revisione)
+   concessione RBAC troppo ampia, un segreto in chiaro, un segreto scritto come espressione lookup
+   invece che collegato, un input source che non punta a un gestore di segreti e un workflow senza
+   ramo di fallimento — e pretende che il validatore **rifiuti** ciascuno, per il suo motivo. È esattamente ciò che AWX (o la tua revisione)
    rifiuterebbe.
 
 ## Domande di riflessione
