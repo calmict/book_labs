@@ -175,8 +175,8 @@ secret. This lab's prod label passphrase is prod-pass.
   versioned); in production it comes from an external manager — that is chapter 19.
 - **Good habits** (18.9): separate vault.yml (encrypted) from vars.yml (clear, with the
   references); prefix secret variables with vault_; encrypt *the bare minimum*, not the
-  whole project; rotate keys with rekey; and a secret committed in clear *even once*
-  must be treated as **compromised** and changed — Git does not forget.
+  whole project; change Vault passwords with rekey; and a secret committed in clear
+  *even once* must be treated as **compromised** and changed — Git does not forget.
 
 ## Done when
 

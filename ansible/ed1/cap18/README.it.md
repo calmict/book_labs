@@ -177,9 +177,9 @@ prod-pass.
   non si versiona); in produzione arriva da un gestore esterno — è il capitolo 19.
 - **Buone abitudini** (18.9): separa vault.yml (cifrato) da vars.yml (in chiaro con i
   rimandi); prefissa le variabili segrete con vault_; cifra *il minimo
-  indispensabile*, non l'intero progetto; ruota le chiavi con rekey; e un segreto
-  committato in chiaro *anche una sola volta* va considerato **compromesso** e cambiato —
-  Git non dimentica.
+  indispensabile*, non l'intero progetto; cambia le password Vault con rekey; e un
+  segreto committato in chiaro *anche una sola volta* va considerato **compromesso** e
+  cambiato — Git non dimentica.
 
 ## Criteri di "fatto"
 
