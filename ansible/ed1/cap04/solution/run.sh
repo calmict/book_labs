@@ -76,7 +76,7 @@ if command -v yamllint >/dev/null 2>&1; then
   yamllint "$START" 2>&1 | grep -i truthy | head -3 | sed 's/^/  /' || true
   echo "  (yamllint shouts on no/NO/off before Ansible can misread them)"
 else
-  echo "  yamllint not installed here; in CI it runs and flags no/NO/off as truthy -- the net that catches these"
+  echo "  yamllint not installed here; install it to run the truthy check on no/NO/off"
 fi
 echo
 

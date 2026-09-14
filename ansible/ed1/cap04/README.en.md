@@ -115,9 +115,10 @@ the roles arrive, chapter 16.)
 
 ### Phase 6 — The safety net: yamllint
 
-The human eye is not enough: NO and "NO" look identical. **yamllint** reads the
-score with the parser's strictness and flags exactly these things — the truthy rule
-shouts on no/NO/off/yes — *before* Ansible misreads them:
+The human eye is not enough: NO and "NO" look identical. **yamllint** applies its
+enabled rules: the truthy rule shouts on no/NO/off/yes *before* Ansible misreads
+them. But it cannot know that 1.20 or 22:30 were meant to stay text: inspect.py is
+still needed for that.
 
     yamllint start/config.yml
 

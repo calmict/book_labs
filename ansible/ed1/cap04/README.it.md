@@ -117,9 +117,10 @@ riuso serio arriveranno i ruoli, capitolo 16.)
 
 ### Fase 6 — La rete di sicurezza: yamllint
 
-L'occhio umano non basta: NO e "NO" sembrano identici. **yamllint** legge lo
-spartito con la severità del parser e segnala proprio queste cose — la regola
-truthy urla su no/NO/off/yes — *prima* che Ansible le interpreti male:
+L'occhio umano non basta: NO e "NO" sembrano identici. **yamllint** applica le
+regole abilitate: la regola truthy urla su no/NO/off/yes *prima* che Ansible li
+interpreti male. Non può però sapere che 1.20 o 22:30 dovevano restare testo:
+per quello serve ancora inspect.py.
 
     yamllint start/config.yml
 
