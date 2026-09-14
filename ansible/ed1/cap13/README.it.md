@@ -61,7 +61,7 @@ Non serve memorizzare 22 righe. Tre principi ti portano al 90%:
 
 ### Fase 3 — La lista completa, dal più debole al più forte
 
-Quando l'intuizione non basta, questa è la verità (ansible-core 2.19), dal più debole (1)
+Quando l'intuizione non basta, questa è la verità (ansible-core 2.19.13), dal più debole (1)
 al più forte (22):
 
     1  command line -u/... (connessione, non variabili)

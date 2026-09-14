@@ -61,7 +61,7 @@ You do not need to memorise 22 lines. Three principles get you 90% of the way:
 
 ### Phase 3 — The complete list, from weakest to strongest
 
-When the intuition is not enough, this is the truth (ansible-core 2.19), from weakest (1)
+When the intuition is not enough, this is the truth (ansible-core 2.19.13), from weakest (1)
 to strongest (22):
 
     1  command line -u/... (connection, not variables)
