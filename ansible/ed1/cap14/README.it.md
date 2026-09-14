@@ -75,12 +75,14 @@ raccolto ed eseguito.
 
 Gli handler seguono tre regole che spiegano ogni loro comportamento:
 
-1. **Girano a fine play**, dopo *tutti* i task — non nel momento in cui li notifichi. Prima
-   si fa tutto il lavoro, poi si reagisce.
+1. **Girano alla fine della sezione di task** (qui, a fine play), dopo *tutti*
+   i suoi task — non nel momento in cui li notifichi. Prima si fa tutto il
+   lavoro, poi si reagisce.
 2. **Girano solo se notificati da un task changed.** Nessun changed, nessun richiamo,
    nessuna reazione.
-3. **Girano al massimo una volta per play**, per quante volte siano notificati. Due task
-   che notificano lo stesso handler → l'handler scatta **una** volta sola (dedup).
+3. **Girano al massimo una volta per sezione**, per quante volte siano
+   notificati. Due task che notificano lo stesso handler → l'handler scatta
+   **una** volta sola (dedup).
 
 La regola 3 la vedrai contando: due task notificano lo stesso richiamo, ma reloads.log
 guadagna **una** riga, non due.

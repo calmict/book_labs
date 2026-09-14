@@ -75,11 +75,13 @@ recall is collected and run.
 
 Handlers follow three rules that explain all of their behaviour:
 
-1. **They run at the end of the play**, after *all* tasks — not the moment you notify them.
-   First all the work, then the reaction.
+1. **They run at the end of the task section** (here, the end of the play),
+   after *all* its tasks — not the moment you notify them. First all the work,
+   then the reaction.
 2. **They run only if notified by a changed task.** No changed, no recall, no reaction.
-3. **They run at most once per play**, no matter how many times they are notified. Two tasks
-   notifying the same handler → the handler fires **once** only (dedup).
+3. **They run at most once per section**, no matter how many times they are
+   notified. Two tasks notifying the same handler → the handler fires **once**
+   only (dedup).
 
 You will see rule 3 by counting: two tasks notify the same recall, but reloads.log gains
 **one** line, not two.
