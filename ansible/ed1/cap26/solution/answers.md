@@ -63,7 +63,7 @@ thing you avoid by paying a few local seconds. But pre-commit is advisory and sk
 each person's machine, it can be bypassed (git commit --no-verify), a new contributor may not have run
 pre-commit install, and it never runs for a change that arrives by any path other than that laptop. So
 it cannot be the *authority*. The CI job is the authority: it runs on the server, on every push, for
-everyone, unskippably, and it is what a branch-protection rule can actually require before merge. Take
+everyone, and it is what a branch-protection rule can actually require before merge. Take
 the pre-commit away and keep only CI and nothing is unsafe - but every trivial lint slip now costs a
 full push/CI/red/fix/re-push cycle instead of a local re-edit, and reviewers spend attention on
 mistakes a hook would have eaten. Same gate, three levels: the early ones make it fast, the server one
