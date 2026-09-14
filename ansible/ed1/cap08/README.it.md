@@ -17,8 +17,8 @@ verifichi con gli attrezzi giusti, e alla fine il direttore chiama l'appello:
 - **Gruppi di gruppi** con :children.
 - I **pattern di host**: gruppi, esclusioni (web:!web2), combinazioni.
 - I **range**: edge[01:03] — tre host in una riga.
-- Variabili di host e di gruppo **nell'inventario**, e la forma ordinata: le
-  cartelle **group_vars/** e **host_vars/**.
+- Variabili di host e di gruppo **nell'inventario**, e la forma ordinata in
+  **group_vars/**, con uno sguardo alla convenzione **host_vars/**.
 - I **gruppi magici** all e ungrouped; la verifica con **ansible-inventory**.
 
 ## Prerequisiti

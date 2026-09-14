@@ -17,8 +17,8 @@ fleet, by name**.
 - **Groups of groups** with :children.
 - The **host patterns**: groups, exclusions (web:!web2), combinations.
 - The **ranges**: edge[01:03] — three hosts in one line.
-- Host and group variables **in the inventory**, and the tidy form: the
-  **group_vars/** and **host_vars/** directories.
+- Host and group variables **in the inventory**, and the tidy **group_vars/**
+  form, with a look at the **host_vars/** convention.
 - The **magic groups** all and ungrouped; verification with **ansible-inventory**.
 
 ## Prerequisites
