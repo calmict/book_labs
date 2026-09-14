@@ -65,8 +65,8 @@ Filtri per rimodellare, test per decidere, lookup per andare a prendere. Domanda
 Una variabile che non c'è fa esplodere il template con "undefined". Due reti:
 
 - **default**: un valore di ripiego. {{ region | default('eu-south-1') }} — se region manca,
-  usa il ripiego. Con default('x', true) il ripiego scatta anche se la variabile è *vuota*, non
-  solo se è indefinita.
+  usa il ripiego. Con default('x', true) il ripiego scatta anche se la variabile è *vuota* o
+  *falsa* (stringa o lista vuota, false, zero, null), non solo se è indefinita.
 - **mandatory**: il contrario. {{ api_key | mandatory }} — se manca, *fallisce apposta*,
   subito e con un messaggio chiaro ("Mandatory variable 'api_key' not defined"), invece di
   proseguire con un buco.

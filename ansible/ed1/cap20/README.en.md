@@ -67,7 +67,7 @@ A variable that is not there blows the template up with "undefined". Two nets:
 
 - **default**: a fallback value. {{ region | default('eu-south-1') }} — if region is missing, it
   uses the fallback. With default('x', true) the fallback also kicks in when the variable is
-  *empty*, not only when undefined.
+  *empty* or *false* (an empty string or list, false, zero, null), not only when undefined.
 - **mandatory**: the opposite. {{ api_key | mandatory }} — if it is missing, it *fails on
   purpose*, at once and with a clear message ("Mandatory variable 'api_key' not defined"),
   instead of proceeding with a hole.
