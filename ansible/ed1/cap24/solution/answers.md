@@ -71,7 +71,9 @@ role described a *state*. The second apply is the discriminator: a role that tru
 state finds reality already matching and reports changed=0, while a role that merely *runs actions*
 keeps acting and reports changed again. So the second pass separates "convergent" from "merely
 repeatable" - the exact distinction the whole manual is built on - and it does it with no extra
-fixtures, no assertions to write, just one more converge. The cost of a non-idempotent task that
+fixtures, no assertions to write, just one more converge. It reads the report, not the system: a
+task that changes state while claiming changed_when: false slips through, and that is what verify is
+for. The cost of a non-idempotent task that
 slips through is quiet but real: every subsequent run reports changed on a system that is already
 correct, which poisons the signal you rely on (you can no longer tell "something drifted" from
 "this task always lies"), it triggers handlers that should not fire (a needless restart on every

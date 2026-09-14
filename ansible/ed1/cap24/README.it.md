@@ -121,7 +121,7 @@ crea (changed); seconda → saltato (ok). Ora l'intero ciclo può chiudersi verd
 
     molecule test
 
-Vedrai la sequenza: create, converge (changed), idempotence (changed=0, "Idempotence completed
+Vedrai, fra le altre, la sequenza: create, converge (changed), idempotence (changed=0, "Idempotence completed
 successfully"), verify, destroy. Domanda b.
 
 ### Fase 5 — Scrivere le verifiche (24.6 — TODO 3)

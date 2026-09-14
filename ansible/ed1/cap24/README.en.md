@@ -121,7 +121,7 @@ creates tells Ansible: "if this file already exists, skip the command". First ap
 
     molecule test
 
-You will see the sequence: create, converge (changed), idempotence (changed=0, "Idempotence
+You will see, among others, the sequence: create, converge (changed), idempotence (changed=0, "Idempotence
 completed successfully"), verify, destroy. Question b.
 
 ### Phase 5 — Writing the verifications (24.6 — TODO 3)
