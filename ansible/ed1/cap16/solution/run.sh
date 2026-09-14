@@ -58,10 +58,10 @@ echo
 
 echo "== 1. ansible-galaxy init: the skeleton of a role =="
 "$AG" init "$TMP/role_demo" >/dev/null
-for d in defaults files handlers meta tasks templates vars; do
+for d in defaults files handlers meta tasks templates tests vars; do
   test -d "$TMP/role_demo/$d" || { echo "  UNEXPECTED: galaxy init missing $d/"; exit 1; }
 done
-echo "  created: defaults files handlers meta tasks templates vars (each with main.yml)"
+echo "  created: defaults files handlers meta tasks templates tests vars (main.yml where Ansible loads them)"
 echo
 
 for _ in $(seq 1 10); do

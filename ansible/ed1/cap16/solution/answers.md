@@ -72,15 +72,12 @@ The difference is *when* the role is brought in. import_role is static: Ansible 
 while it is parsing the playbook, before execution begins, splicing the role's tasks into
 the play as if you had written them there. include_role is dynamic: Ansible resolves it at
 run time, when execution actually reaches that line. For a plain "always run this role"
-either works and import_role is a touch more efficient and gives you the full task list up
-front (handy for --list-tasks). The distinction bites the moment the *decision* to include,
-or *which* role, or *how many times*, depends on something known only at run time. You
-cannot import_role inside a loop to run a role once per item, because static expansion
-happens before the loop's values exist — include_role can, resolving fresh on each
-iteration. Likewise a when on an import_role does not gate the include itself (it is applied
-to each imported task after the fact), whereas include_role under a when that depends on a
-registered result or a set_fact is evaluated at run time and genuinely skips the whole role
-when false. And a role name built from a variable — include_role: name: "{{ chosen_role }}"
-— only works dynamically, since the name is not known at parse time. So: import_role when
-the inclusion is fixed and you want it resolved statically; include_role when the inclusion
-is conditional on runtime state, driven by a loop, or chosen by a variable.
+either works and gives you the full task list up front (handy for --list-tasks). The
+distinction bites when you need to loop over the role, or when the role name itself is known
+only at run time. You cannot put a loop on import_role; include_role can run the whole role
+once per item. A when on import_role does not gate the import itself: it is applied to each
+imported task and evaluated when that task runs. On include_role, the same when gates the
+inclusion as a whole. A templated role name also works with import_role if its value is
+available during preprocessing; if it becomes known only at run time, use include_role. So:
+use import_role for fixed static reuse, and include_role when you need a loop or need the
+inclusion itself to depend on run-time state.

@@ -43,8 +43,9 @@ Un container (web1) con l'utente deploy.
 
 ### Fase 1 — Il problema, e cos'è un ruolo
 
-Un ruolo è una **cartella con una struttura precisa**: ogni tipo di contenuto ha la sua
-sotto-cartella, e ognuna ha un main.yml che Ansible carica da solo.
+Un ruolo è una **cartella con una struttura precisa**: ogni tipo di contenuto ha la
+sua sotto-cartella; defaults, handlers, meta, tasks e vars hanno un main.yml che
+Ansible carica da solo, mentre files e templates ospitano le risorse del ruolo.
 
     roles/webapp/
     ├── defaults/main.yml      # variabili sovrascrivibili (le manopole)
@@ -59,8 +60,10 @@ Non devi ricordarla a memoria: **ansible-galaxy init** te la crea (16.9):
 
     ansible-galaxy init roles/webapp
 
-crea defaults/, files/, handlers/, meta/, tasks/, templates/, vars/ (e tests/), ognuna col
-suo main.yml. Tu riempi i main.yml.
+crea defaults/, files/, handlers/, meta/, tasks/, templates/, tests/ e vars/, più
+README.md. I main.yml sono in defaults/, handlers/, meta/, tasks/ e vars/; files/ e
+templates/ nascono vuote, mentre tests/ contiene inventory e test.yml. Tu riempi i
+file che servono al ruolo.
 
 ### Fase 2 — files e templates: niente più percorsi (TODO 2)
 
@@ -137,11 +140,12 @@ app, sono di nuovo tre righe.
 - **meta/main.yml** (già scritto) porta i metadati (autore, licenza, versione minima di
   Ansible) e, sotto dependencies, gli **altri ruoli** che questo richiede: Ansible li esegue
   *prima*. È come dire "la sezione archi ha bisogno che gli ottoni siano già accordati".
-- Oltre a roles:, puoi tirare dentro un ruolo *a metà play* in due modi (16.8): **import_role**
-  è **statico** (Ansible lo espande quando *legge* il playbook, prima di partire);
-  **include_role** è **dinamico** (lo risolve *durante* l'esecuzione). La differenza conta
-  quando lo metti dentro un loop o sotto un when che dipende da una variabile decisa a
-  runtime: lì serve include_role — Domanda c.
+- Oltre a roles:, puoi tirare dentro un ruolo *a metà play* in due modi (16.8):
+  **import_role** è **statico** (Ansible lo espande quando *legge* il playbook,
+  prima di partire); **include_role** è **dinamico** (lo risolve *durante*
+  l'esecuzione). Su import_role, un when passa ai singoli task; su include_role
+  decide invece se includere l'intero ruolo. Per un loop sul ruolo serve
+  include_role — Domanda c.
 
 ### Fase 6 — Anatomia di un buon ruolo
 
@@ -172,10 +176,10 @@ mettessi config_dir in defaults, o app_name in vars?
 perché questa auto-risoluzione è ciò che rende un ruolo *portabile* (spostabile e
 condivisibile) mentre un percorso assoluto lo inchioderebbe a una macchina?
 
-**c.** import_role è statico, include_role è dinamico. Descrivi la differenza nel *momento*
-in cui i due vengono risolti, e porta un caso concreto in cui devi usare include_role perché
-import_role non funzionerebbe (pensa a un loop, o a un when su una variabile nota solo a
-runtime).
+**c.** import_role è statico, include_role è dinamico. Descrivi la differenza nel
+*momento* in cui i due vengono risolti, e porta un caso concreto in cui devi usare
+include_role perché import_role non funzionerebbe (pensa a un loop, o al nome del
+ruolo scelto solo a runtime).
 
 ## Pulizia
 

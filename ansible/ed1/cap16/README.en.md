@@ -44,7 +44,8 @@ One container (web1) with the deploy user.
 ### Phase 1 — The problem, and what a role is
 
 A role is a **folder with a precise structure**: each kind of content has its own
-sub-folder, and each has a main.yml that Ansible loads by itself.
+sub-folder; defaults, handlers, meta, tasks and vars have a main.yml that Ansible
+loads automatically, while files and templates hold the role's assets.
 
     roles/webapp/
     ├── defaults/main.yml      # overridable variables (the knobs)
@@ -59,8 +60,10 @@ You do not have to remember it: **ansible-galaxy init** creates it (16.9):
 
     ansible-galaxy init roles/webapp
 
-makes defaults/, files/, handlers/, meta/, tasks/, templates/, vars/ (and tests/), each with
-its main.yml. You fill in the main.yml files.
+makes defaults/, files/, handlers/, meta/, tasks/, templates/, tests/ and vars/,
+plus README.md. The main.yml files are in defaults/, handlers/, meta/, tasks/ and
+vars/; files/ and templates/ start empty, while tests/ contains inventory and
+test.yml. You fill in the files your role needs.
 
 ### Phase 2 — files and templates: no more paths (TODO 2)
 
@@ -137,11 +140,12 @@ the same app tomorrow, it is three lines again.
 - **meta/main.yml** (already written) carries the metadata (author, licence, minimum Ansible
   version) and, under dependencies, the **other roles** this one requires: Ansible runs them
   *first*. It is like saying "the strings section needs the brass tuned already".
-- Besides roles:, you can pull a role in *mid-play* two ways (16.8): **import_role** is
-  **static** (Ansible expands it when it *reads* the playbook, before starting);
-  **include_role** is **dynamic** (it resolves it *during* execution). The difference matters
-  when you put it inside a loop or under a when that depends on a runtime variable: there you
-  need include_role — Question c.
+- Besides roles:, you can pull a role in *mid-play* two ways (16.8):
+  **import_role** is **static** (Ansible expands it when it *reads* the playbook,
+  before starting); **include_role** is **dynamic** (it resolves it *during*
+  execution). On import_role, a when passes to each task; on include_role, it
+  decides whether to include the whole role. To loop over a role, you need
+  include_role — Question c.
 
 ### Phase 6 — Anatomy of a good role
 
@@ -172,10 +176,10 @@ config_dir in defaults, or app_name in vars?
 why is this auto-resolution what makes a role *portable* (movable and shareable) while an
 absolute path would nail it to one machine?
 
-**c.** import_role is static, include_role is dynamic. Describe the difference in the
-*moment* the two are resolved, and give a concrete case where you must use include_role
-because import_role would not work (think of a loop, or a when on a variable known only at
-run time).
+**c.** import_role is static, include_role is dynamic. Describe the difference in
+the *moment* the two are resolved, and give a concrete case where you must use
+include_role because import_role would not work (think of a loop, or a role name
+chosen only at run time).
 
 ## Cleanup
 
