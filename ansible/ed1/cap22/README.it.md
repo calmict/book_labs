@@ -118,7 +118,7 @@ Due strumenti dati nel play, che rovesciano il concetto di errore:
   successo. (Il gemello changed_when del cap. 5/9 fa lo stesso col colore giallo.)
 - **ignore_errors**: un passo *non critico* (mandare una metrica) può fallire senza affondare il
   deploy. ignore_errors: true prosegue. Ma con giudizio: ignorare un errore critico è come
-  togliere la spia dell'olio — il problema resta, tu non lo vedi più. Domanda c.
+  tirare dritto con la spia dell'olio accesa — il problema resta. Domanda c.
 
 ### Fase 6 — Gli handler e i fallimenti: force_handlers (22.8)
 

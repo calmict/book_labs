@@ -104,7 +104,7 @@ would be wrong. Complete **TODO 2**: a health check that retries until it passes
       delay: 0
       changed_when: false
 
-**until** is the condition to reach; **retries** how many times to try; **delay** the wait
+**until** is the condition to reach; **retries** how many times to retry; **delay** the wait
 between attempts. The check here passes only on the third go: Ansible retries (FAILED -
 RETRYING...) and moves on when it is healthy, instead of giving up at once.
 
@@ -117,7 +117,7 @@ Two tools given in the play, which turn the notion of error on its head:
   (Its twin changed_when from ch. 5/9 does the same with the yellow colour.)
 - **ignore_errors**: a *non-critical* step (sending a metric) can fail without sinking the
   deploy. ignore_errors: true carries on. But with judgement: ignoring a critical error is like
-  removing the oil light — the problem stays, you just stop seeing it. Question c.
+  driving on with the oil light on — the problem stays. Question c.
 
 ### Phase 6 — Handlers and failures: force_handlers (22.8)
 

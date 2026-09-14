@@ -36,7 +36,7 @@
 solution/run.sh proves it node-less against four local hosts: the deploy survives the
 injected failure on db1 (rescued, the play not failed); rescue ran only on db1 while
 always cleaned up every host; the slow health check was retried until healthy;
-ignore_errors and failed_when kept the play green; the notified handler ran; a bad
+ignore_errors and failed_when let the play finish with failed=0; the notified handler ran; a bad
 deploy_env failed fast and deployed nothing; any_errors_fatal aborted the rollout before
 it reached anyone; and force_handlers ran the pending handler despite a later failure.
 
@@ -72,10 +72,10 @@ triggers a recovery path (roll back, restore, alert) and the always path (cleanu
 host ends the play in a known, handled state rather than an unknown, half-broken one; it is
 right when the failure matters and leaving it unaddressed would be dangerous. The practical
 tell is whether the system is left consistent: after an ignored failure, nothing was fixed,
-so if the ignored step actually mattered you now have silent corruption; after a rescue, the
+so if the ignored step actually mattered you now have a hidden problem; after a rescue, the
 block either fully succeeded or was fully rolled back. Confusing them is dangerous because
 ignore_errors on something that needed a rescue turns a loud, recoverable failure into a
-quiet, permanent one - the deploy "succeeds", the recap is green, and the truth (a
+quiet, permanent one - the deploy "succeeds", the recap shows failed=0, and the truth (a
 half-applied change no one rolled back) surfaces later, at 3 a.m., far from the cause.
 
 **c. Per-host isolation versus any_errors_fatal.**
