@@ -122,19 +122,21 @@ deposit; the configuration that would go to production does not contain it.)
 
 ### Phase 4 — Who are you, to the strongroom? (19.4)
 
-The strongroom does not hand out to anyone who knocks: first you **identify**. In TODO 2 you
-used a **token** (VAULT_TOKEN) — handy for a person, but a root token in a script is itself a
-dangerous secret. In production a *process* identifies with an **AppRole**: a role_id +
-secret_id pair that is a **machine identity**, bound to a **policy** granting only the minimum
-(here: read *that* secret, nothing else). The script already created it; try it:
+The strongroom does not hand out to anyone who knocks: first you **identify**.
+In TODO 2 you passed a **token** (VAULT_TOKEN) directly — handy for an
+interactive test, but a root token in a script is itself a dangerous secret.
+In production a *process* identifies with an **AppRole**: a role_id + secret_id
+pair that is a **machine identity**, bound to a **policy** granting only the
+minimum (here: read *that* secret, nothing else). The script already created
+it; try it:
 
     ansible-playbook -i inventory.ini approle.yml \
         -e role_id="$(cat /tmp/cap19-lab/role_id)" \
         -e secret_id="$(cat /tmp/cap19-lab/secret_id)"
 
-Same secret, but the identity is no longer "the king with all the keys": it is a clerk with a
-badge that opens one door — and revocable. Tokens for people, machine identities for processes
-(19.4) — Question c.
+Same secret, but the identity is no longer "the king with all the keys": it is
+a clerk with a badge that opens one door — and revocable. A direct token for
+limited interactive use, machine identities for processes (19.4) — Question c.
 
 ### Phase 5 — no_log: the secret out of the logs (19.7 — TODO 3)
 

@@ -122,20 +122,22 @@ deposito fuori banda; la configurazione che andrebbe in produzione non lo contie
 
 ### Fase 4 — Chi sei tu, per il caveau? (19.4)
 
-Il caveau non consegna a chiunque bussi: prima ti **identifichi**. Nel TODO 2 hai usato un
-**token** (VAULT_TOKEN) — comodo per una persona, ma un token di root in uno script è esso
-stesso un segreto pericoloso. In produzione un *processo* si identifica con un'**AppRole**:
-una coppia role_id + secret_id che è **identità di macchina**, legata a una **policy** che
-concede solo il minimo (qui: leggere *quel* segreto, niente altro). Lo script l'ha già
-creata; provala:
+Il caveau non consegna a chiunque bussi: prima ti **identifichi**. Nel TODO
+2 hai passato direttamente un **token** (VAULT_TOKEN) — comodo per una prova
+interattiva, ma un token di root in uno script è esso stesso un segreto
+pericoloso. In produzione un *processo* si identifica con un'**AppRole**: una
+coppia role_id + secret_id che è **identità di macchina**, legata a una
+**policy** che concede solo il minimo (qui: leggere *quel* segreto, niente
+altro). Lo script l'ha già creata; provala:
 
     ansible-playbook -i inventory.ini approle.yml \
         -e role_id="$(cat /tmp/cap19-lab/role_id)" \
         -e secret_id="$(cat /tmp/cap19-lab/secret_id)"
 
-Stesso segreto, ma l'identità non è più "il re con tutte le chiavi": è un impiegato con un
-badge che apre una sola porta — e revocabile. Token per le persone, identità di macchina per
-i processi (19.4) — Domanda c.
+Stesso segreto, ma l'identità non è più "il re con tutte le chiavi": è un
+impiegato con un badge che apre una sola porta — e revocabile. Token diretto
+per un uso interattivo circoscritto, identità di macchina per i processi
+(19.4) — Domanda c.
 
 ### Fase 5 — no_log: il segreto fuori dai log (19.7 — TODO 3)
 
