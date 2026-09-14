@@ -19,7 +19,7 @@ la "prova a vuoto".
   agito), failed (rosso).
 - I **cigni neri**: operazioni non idempotenti per natura, e come giudicarle
   (changed_when).
-- La **prova generale**: check mode (dry-run) e diff.
+- La **prova generale**: check mode (dry-run).
 
 ## Prerequisiti
 

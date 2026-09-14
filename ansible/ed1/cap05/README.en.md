@@ -19,7 +19,7 @@ run".
   failed (red).
 - The **black swans**: operations that are not idempotent by nature, and how to
   judge them (changed_when).
-- The **dress rehearsal**: check mode (dry-run) and diff.
+- The **dress rehearsal**: check mode (dry-run).
 
 ## Prerequisites
 
