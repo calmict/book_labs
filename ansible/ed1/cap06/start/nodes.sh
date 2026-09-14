@@ -6,8 +6,9 @@ set -euo pipefail
 #   bash nodes.sh up      build cap06-web and cap06-db (sshd + python3)
 #   bash nodes.sh down     remove them
 #
-# A managed node needs only SSH and Python (agentless, chapter 2). Each node
-# publishes its SSH port on the host so you can reach it directly:
+# The managed nodes in this lab need only SSH and Python installed (agentless,
+# chapter 2). Each node publishes its SSH port on the host so you can reach it
+# directly:
 #   cap06-web -> host port 2206
 #   cap06-db  -> host port 2207
 # The lab (and its ephemeral key) live in /tmp/cap06-lab.

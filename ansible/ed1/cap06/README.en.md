@@ -11,7 +11,7 @@ configure in the coming chapters.
 ## Objectives
 
 - **ansible-core** versus the **ansible** package: the engine + the ansible.builtin
-  modules, against the bundle with hundreds of community collections.
+  modules, against the bundle with many community collections.
 - The installation methods (system / pip / pipx) and why the **venv** is your
   salvation (isolation).
 - Installing ansible-core in a venv and making it **reproducible** with a
@@ -54,7 +54,7 @@ Then install from it:
     pip install -r requirements.txt
 
 The key distinction: **ansible-core** is the engine plus the ansible.builtin
-modules; the **ansible** package is core *plus* hundreds of community collections
+modules; the **ansible** package is core *plus* many community collections
 (community.general, ansible.posix…). For these exercises core is enough.
 
 ### Phase 3 — Verification and the anatomy of the commands
@@ -85,12 +85,12 @@ With an isolated collection path, count the modules of **core alone**:
     ANSIBLE_COLLECTIONS_PATH=/tmp/empty ansible-doc -l | wc -l
 
 About **74**, all ansible.builtin (ping, copy, file, service, apt, command…). The
-full ansible package adds hundreds more: those are the community collections. Core is
+full ansible package adds hundreds more through the community collections. Core is
 small and stable on purpose; you install collections when you need them (chapter 17).
 
 ### Phase 5 — Tuning the players (the target nodes)
 
-A managed node, as you know from chapter 2, needs only SSH and Python. Prepare two:
+In this lab, you only need to install SSH and Python on a managed node. Prepare two:
 
     bash start/nodes.sh up
 

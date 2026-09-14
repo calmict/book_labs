@@ -11,7 +11,7 @@ configurerai.
 ## Obiettivi
 
 - **ansible-core** contro il pacchetto **ansible**: il motore + i moduli
-  ansible.builtin, contro il bundle con centinaia di collection della community.
+  ansible.builtin, contro il bundle con numerose collection della community.
 - I metodi di installazione (sistema / pip / pipx) e perché il **venv** è la tua
   salvezza (isolamento).
 - Installare ansible-core in un venv e renderlo **riproducibile** con un
@@ -53,7 +53,7 @@ Poi installa da lì:
     pip install -r requirements.txt
 
 Distinzione chiave: **ansible-core** è il motore più i moduli ansible.builtin; il
-pacchetto **ansible** è core *più* centinaia di collection della community
+pacchetto **ansible** è core *più* numerose collection della community
 (community.general, ansible.posix…). Per questi esercizi ci basta il core.
 
 ### Fase 3 — La verifica e l'anatomia dei comandi
@@ -84,13 +84,13 @@ Con un collection path isolato, conta i moduli del **solo core**:
     ANSIBLE_COLLECTIONS_PATH=/tmp/empty ansible-doc -l | wc -l
 
 Circa **74**, tutti ansible.builtin (ping, copy, file, service, apt, command…). Il
-pacchetto ansible completo ne aggiunge centinaia: sono le collection della
+pacchetto ansible completo ne aggiunge centinaia, attraverso le collection della
 community. Il core è piccolo e stabile di proposito; le collection le installi
 quando ti servono (capitolo 17).
 
 ### Fase 5 — Accordare i musicisti (i nodi target)
 
-Un managed node, lo sai dal capitolo 2, ha bisogno solo di SSH e Python. Preparane
+In questo laboratorio, su un managed node basta installare SSH e Python. Preparane
 due:
 
     bash start/nodes.sh up
