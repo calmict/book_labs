@@ -102,8 +102,8 @@ knowing what a playbook will do and finding out *afterwards*. Question b.
 
 ### Phase 5 — The limits of check mode, and check_mode: false (23.5 — TODO 2)
 
-The dress rehearsal has a limit: some things cannot be *simulated*. A command (command/shell) in
-check mode is **skipped** — Ansible does not know what it would do, so it does not run it. But if
+The dress rehearsal has a limit: some things cannot be *simulated*. A command (command/shell) without
+creates or removes is **skipped** in check mode — Ansible does not know what it would do, so it does not run it. But if
 that command only *reads* a state (and its result guides the tasks that follow), skipping it makes
 the rehearsal lie: the register variable stays empty, and the tasks that depend on it misbehave.
 

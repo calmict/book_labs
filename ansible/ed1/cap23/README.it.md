@@ -102,7 +102,7 @@ cosa farà un playbook e scoprirlo *dopo*. Domanda b.
 ### Fase 5 — I limiti del check mode, e check_mode: false (23.5 — TODO 2)
 
 La prova generale ha un limite: alcune cose non si possono *simulare*. Un comando (command/shell)
-in check mode viene **saltato** — Ansible non sa cosa farebbe, quindi non lo esegue. Ma se quel
+senza creates o removes in check mode viene **saltato** — Ansible non sa cosa farebbe, quindi non lo esegue. Ma se quel
 comando serve solo a *leggere* uno stato (e il suo risultato guida i task dopo), saltarlo rende la
 prova bugiarda: la variabile register resta vuota, e i task che dipendono da lei si comportano
 male.
