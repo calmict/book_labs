@@ -100,7 +100,7 @@ directories at *opposite precedence* (ch. 13):
 Complete **TODO 1** in roles/webapp/defaults/main.yml with the knobs:
 
     app_name: myapp
-    port: 8080
+    webapp_port: 8080
     features: [logs, cache]
 
 And look at vars/main.yml (already written), the internal gear:

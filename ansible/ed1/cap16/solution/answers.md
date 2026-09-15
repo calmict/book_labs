@@ -4,7 +4,7 @@
 
     # TODO 1 — roles/webapp/defaults/main.yml (the knobs, level 2)
     app_name: myapp
-    port: 8080
+    webapp_port: 8080
     features:
       - logs
       - cache
@@ -34,7 +34,7 @@ Because the two directories sit at opposite ends of the precedence scale, and th
 exactly what makes a role reusable. defaults is level 2, almost the weakest thing there is:
 anything a user might set — an inventory line, a group_vars file, a play var, a -e on the
 command line — beats it. So defaults is the role's *public interface*, the set of knobs the
-role invites you to turn: app_name, port, features are values every consumer will want to
+role invites you to turn: app_name, webapp_port, features are values every consumer will want to
 customise, and putting them in defaults means "here are the dials, override any of them
 however you like". vars is level 15, high up: it beats the inventory, group_vars, host_vars
 and play vars, so it is *not* casually overridable. That is where the role's internal gears

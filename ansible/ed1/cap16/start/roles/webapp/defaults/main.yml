@@ -5,7 +5,7 @@
 #
 # TODO 1: add the three knobs the template needs:
 #   app_name: myapp
-#   port: 8080
+#   webapp_port: 8080
 #   features:
 #     - logs
 #     - cache

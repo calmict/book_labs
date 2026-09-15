@@ -100,7 +100,7 @@ Ansible lo ottiene con due cartelle a *precedenza opposta* (cap. 13):
 Completa il **TODO 1** in roles/webapp/defaults/main.yml con le manopole:
 
     app_name: myapp
-    port: 8080
+    webapp_port: 8080
     features: [logs, cache]
 
 E guarda vars/main.yml (già scritto), l'ingranaggio interno:
