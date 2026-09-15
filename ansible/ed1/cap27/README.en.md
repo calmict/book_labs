@@ -151,7 +151,8 @@ state a halt leaves you in and having the way back.
 ### Phase 7 — Coordinating multiple tiers and groups (27.7)
 
 A real application is not one group: web, database, cache, load balancers. The order between tiers
-matters — usually the database before the web nodes, the balancers last. You express it with **multiple
+matters — the load balancer is taken out of rotation first and put back last; in between, usually
+the database before the web nodes. You express it with **multiple
 plays in the same playbook**, one per group, in the right order; with **run_once** for actions that must
 happen only once (a schema migration, not on every node); and with **delegate_to** to act on one tier
 while updating another. Same vocabulary — serial, delegate_to, pre/post — orchestrated over several

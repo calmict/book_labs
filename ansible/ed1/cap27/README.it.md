@@ -154,7 +154,8 @@ stato ti lascia un arresto e avere il modo di rientrare.
 ### Fase 7 — Coordinare più livelli e più gruppi (27.7)
 
 Un'applicazione reale non è un solo gruppo: web, database, cache, bilanciatori. L'ordine tra i livelli
-conta — di solito il database prima delle web, i bilanciatori per ultimi. Si esprime con **più play
+conta — il bilanciatore si toglie dal giro per primo e si rimette per ultimo; in mezzo, di solito,
+il database prima delle web. Si esprime con **più play
 nello stesso playbook**, uno per gruppo, nell'ordine giusto; con **run_once** per le azioni che vanno
 fatte una sola volta (una migrazione di schema, non su ogni nodo); e con **delegate_to** per agire su
 un livello mentre se ne aggiorna un altro. Stesso vocabolario — serial, delegate_to, pre/post —
