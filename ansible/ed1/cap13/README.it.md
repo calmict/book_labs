@@ -51,8 +51,9 @@ quindi i livelli sono 22.
 
 Non serve memorizzare 22 righe. Tre principi ti portano al 90%:
 
-1. **Gli estremi sono assoluti.** -e (extra vars) vince su *tutto*; i default di ruolo
-   (role defaults) perdono contro *tutto*. Nessuna eccezione, mai.
+1. **Gli estremi sono netti.** -e (extra vars) vince su *tutto*; i default di ruolo
+   (role defaults) perdono contro ogni altra *variabile*: sotto di loro restano solo le
+   opzioni di connessione come -u, che non sono variabili.
 2. **In mezzo, più sei specifico più sei forte** (di norma). host batte group; un gruppo
    più specifico batte uno più generico; una variabile di play, ruolo o task batte quella
    d'inventario. Ottima intuizione — ma *non* è una legge senza eccezioni (Fase 6).

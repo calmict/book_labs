@@ -50,8 +50,9 @@ wins. There are 22 places, so there are 22 levels.
 
 You do not need to memorise 22 lines. Three principles get you 90% of the way:
 
-1. **The extremes are absolute.** -e (extra vars) beats *everything*; role defaults lose
-   to *everything*. No exceptions, ever.
+1. **The extremes are clear-cut.** -e (extra vars) beats *everything*; role defaults lose
+   to every other *variable*: below them sit only connection options like -u, which are not
+   variables.
 2. **In between, the more specific you are the stronger you are** (usually). host beats
    group; a more specific group beats a more general one; a play, role or task variable
    beats an inventory one. An excellent intuition — but *not* a law without exceptions
