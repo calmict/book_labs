@@ -154,8 +154,9 @@ preciso, resta su sudo: è quello che i nodi già conoscono.
 
 - **Minimo privilegio**: become dove serve, non "acceso ovunque per comodità". Un task
   che non tocca root non deve salire.
-- **NOPASSWD ristretto**: se automatizzi senza password, non dare ALL — elenca i
-  **comandi specifici** nel sudoers (Domanda b).
+- **NOPASSWD blindato**: se automatizzi senza password, un elenco di comandi nel sudoers
+  non basta, perché con Ansible rompe become. Stringi invece l'accesso all'account e alle
+  sue chiavi (Domanda b).
 - **Niente login root diretto**: entra da utente, sali con become; disabilita il root via
   SSH.
 - **La password in Vault**: mai in chiaro nei file versionati (capitolo 18).
@@ -177,7 +178,8 @@ compare nei log, cosa succede se la chiave viene rubata, cosa puoi disabilitare 
 
 **b.** NOPASSWD è comodo — l'automazione non deve digitare nulla — ma ALL=(ALL)
 NOPASSWD:ALL è una chiave universale senza serratura. Perché è pericoloso, e come
-manterresti l'automazione *senza password* restringendo però cosa può fare? E se invece
+manterresti l'automazione *senza password* limitando però il danno se quell'account viene
+compromesso? E se invece
 scegli di usare la password, dov'è il posto giusto per tenerla (anticipo del cap. 18)?
 
 **c.** Il marcatore viene scritto con become_user: appsvc, non da root. Perché creare un

@@ -153,8 +153,9 @@ specific reason, stay on sudo: it is the one the nodes already know.
 
 - **Least privilege**: become where it is needed, not "on everywhere for convenience". A
   task that does not touch root should not rise.
-- **Narrow NOPASSWD**: if you automate without a password, do not grant ALL — list the
-  **specific commands** in sudoers (Question b).
+- **Locked-down NOPASSWD**: if you automate without a password, a command list in sudoers
+  is not the answer — with Ansible it breaks become; lock down access to the account and
+  its keys instead (Question b).
 - **No direct root login**: come in as a user, rise with become; disable root over SSH.
 - **The password in Vault**: never in plaintext in versioned files (chapter 18).
 - **Targeted become_user**: become the right user for the action, not root for
@@ -176,7 +177,7 @@ who shows up in the logs, what happens if the key is stolen, what you can disabl
 
 **b.** NOPASSWD is convenient — automation has nothing to type — but ALL=(ALL)
 NOPASSWD:ALL is a master key with no lock. Why is it dangerous, and how would you keep
-automation *passwordless* while narrowing what it can do? And if you choose to use the
+automation *passwordless* while limiting the damage if that account is compromised? And if you choose to use the
 password instead, where is the right place to keep it (a preview of ch. 18)?
 
 **c.** The marker is written with become_user: appsvc, not as root. Why is creating a file

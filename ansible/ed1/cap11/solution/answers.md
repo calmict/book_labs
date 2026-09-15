@@ -50,16 +50,19 @@ NOPASSWD is convenient precisely because automation cannot type a password at a 
 become anyone and run anything, with no second factor and no record of intent. If that
 account (or its SSH key) is compromised, the attacker inherits unrestricted root on
 every node it can reach; the "no password" that helped your robot helps theirs just as
-much. The fix is not to abandon passwordless automation but to *narrow the grant*:
-instead of NOPASSWD:ALL, list the exact commands the automation is allowed to run
-passwordless, e.g. deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart myapp,
-/usr/bin/apt-get update — so a stolen key can restart your app but cannot add a user or
-open a root shell. You keep the convenience (no prompt) while collapsing what that
-convenience can do. If instead you decide the account *should* supply a password, then
+much. The fix is not to abandon passwordless automation, and it is not a command list
+either: with Ansible, sudo does not see systemctl or apt-get, it sees /bin/sh running a
+Python module from a temporary file whose name changes on every run, so a rule like
+deploy ALL=(root) NOPASSWD: /usr/bin/systemctl, /usr/bin/apt-get breaks become ("a
+password is required") instead of protecting anything. What you narrow is who can *be*
+that account: a dedicated, protected SSH key, no login password, an account used only by
+the automation and reachable only from the control node, and sudo's own log as the audit
+trail. You keep the convenience (no prompt) while shrinking the ways a stranger can get
+it. If instead you decide the account *should* supply a password, then
 the right home for that password is not the plaintext inventory line we used for the
 lab but an encrypted store — Ansible Vault (chapter 18) — so the secret is versioned
-safely and decrypted only at run time. Passwordless-but-narrow, or password-but-
-encrypted: either is defensible; broad-and-passwordless is the one to avoid.
+safely and decrypted only at run time. Passwordless-but-locked-down, or
+password-but-encrypted: either is defensible; broad-and-unguarded is the one to avoid.
 
 **c. Why write the file AS appsvc rather than as root and then chown.**
 
