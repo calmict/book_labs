@@ -23,9 +23,9 @@ confirm all three levers are actually set.
 ## Why each lever matters
 
 **forks (25.2).** forks is how many nodes Ansible drives at the same time. Low forks does not make
-each node slower - it makes Ansible attend to the fleet in waves. Twelve nodes at forks=4 is three
-waves; the run cannot be shorter than the slowest node times the number of waves, no matter how
-trivial the work. Raising forks to the fleet size collapses the waves into one, so the run is bounded
+each node slower - it limits how many nodes Ansible attends to at once. At forks=4 at most four nodes
+work together, and a slow node holds a seat while the others flow through, so twelve nodes queue even
+when the work is trivial. Raising forks to the fleet size gives every node its own seat, so the run is bounded
 by the single slowest node instead of by fleet size. This is the cheapest win at scale and the first
 knob to reach for, with one caution the manual makes: forks is load on the control node (each fork is
 work, memory and an SSH connection), so on real fleets you raise it deliberately, not to infinity.

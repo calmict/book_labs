@@ -14,7 +14,7 @@ real fleet — twelve nodes — and watch them bite: the same rollout drops from
 ## Objectives
 
 - Why at **scale** the problem changes nature: not the task, but the distribution (25.1).
-- **forks**: how many nodes Ansible drives in parallel, and why "in waves" costs (25.2).
+- **forks**: how many nodes Ansible drives in parallel, and why few seats cost (25.2).
 - **Strategies** — linear vs free: the per-task barrier and how to remove it (25.3).
 - **Pipelining** and ControlPersist: fewer SSH round trips per task (25.4).
 - **Taming facts**: gather_facts off, gather_subset, fact caching (25.5).
@@ -39,7 +39,7 @@ different load: t1 and t2 are the seconds the rollout's two steps take on that n
 the point — some nodes are quick, some slow, and a slow node must not hold the quick ones hostage.
 
 deploy.yml runs two steps (a "sleep" stands in for per-host work) across the fleet. As it stands it
-runs in waves, in lock-step, and gathers facts nobody uses. Three gaps slow it down; you close them
+runs with few seats, in lock-step, and gathers facts nobody uses. Three gaps slow it down; you close them
 and measure the gain.
 
 Set up the environment:
@@ -51,9 +51,9 @@ Set up the environment:
 
 ### Phase 1 — The problem changes nature (25.1)
 
-With three nodes you notice nothing. With a thousand, the arithmetic dominates. If Ansible drives the
-nodes in waves, the total time is not the slowest node's: it is the slowest node **times the number of
-waves**. If every play waits for all nodes to finish a task before any node starts the next, the quick
+With three nodes you notice nothing. With a thousand, the arithmetic dominates. If Ansible drives few
+nodes at a time, every slow node holds a seat while the others wait their turn: the total time grows
+with the **fleet size**, not just with the slowest node. If every play waits for all nodes to finish a task before any node starts the next, the quick
 nodes stand idle at every step. If every play gathers facts it never looks at, you pay a round of
 setup on a thousand nodes for nothing. None of these costs shows at small scale; all become dominant
 at large scale. This chapter's levers remove these wastes one by one. First measure the baseline:
@@ -65,15 +65,15 @@ Keep the number in mind: it is the yardstick against which you measure every imp
 ### Phase 2 — forks (25.2 — TODO 1)
 
 forks is **how many nodes Ansible drives at the same time**. It does not make each node faster: it
-decides in how many waves the fleet is served. Twelve nodes at forks=4 is three waves, and the run
-cannot be shorter than the slowest node times the number of waves, however trivial the work. Open
+decides how many seats there are. At forks=4 at most four nodes work together, and a slow node holds a
+seat while the others flow through: with twelve nodes there is a queue even when the work is trivial. Open
 start/ansible.cfg: forks is deliberately low. Complete **TODO 1** by raising it to the fleet size —
 
     [defaults]
     inventory = inventory.ini
     forks = 12
 
-Now the waves collapse into one: the run is bounded by the single slowest node, not by fleet size. It
+Now every node has its own seat: the run is bounded by the single slowest node, not by fleet size. It
 is the cheapest win at scale, the first lever to reach for. With one caution the manual stresses: each
 fork is work, memory and an SSH connection on the **control node**, so on real fleets you raise forks
 deliberately, not to infinity.
@@ -144,7 +144,7 @@ from the second, and the two steps no longer sum in lock-step. Question a.
 
 ## Done when
 
-- ansible.cfg carries **forks = 12** (TODO 1): the fleet runs in a single wave.
+- ansible.cfg carries **forks = 12** (TODO 1): every node has its own seat.
 - deploy.yml uses **strategy: free** (TODO 2): no per-task barrier.
 - deploy.yml uses **gather_facts: false** (TODO 3): no useless setup.
 - The tuned rollout is **clearly faster** than the starting one (here ~8s vs ~24s) and profile_tasks

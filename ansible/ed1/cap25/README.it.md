@@ -14,7 +14,7 @@ nodi — e le vedi mordere: la stessa consegna passa da ~24 secondi a ~8.
 ## Obiettivi
 
 - Perché a **larga scala** il problema cambia natura: non il task, ma la distribuzione (25.1).
-- **forks**: quanti nodi Ansible guida in parallelo, e perché "a ondate" costa (25.2).
+- **forks**: quanti nodi Ansible guida in parallelo, e perché pochi posti costano (25.2).
 - **Strategie** — linear contro free: la barriera per-task e come toglierla (25.3).
 - **Pipelining** e ControlPersist: meno round-trip SSH per task (25.4).
 - **Domare i fatti**: gather_facts off, gather_subset, fact caching (25.5).
@@ -40,7 +40,7 @@ quel nodo. Lo squilibrio è il punto — alcuni nodi sono rapidi, altri lenti, e
 tenere in ostaggio quelli rapidi.
 
 deploy.yml fa scorrere due passi (una "sleep" fa da lavoro reale per host) sulla flotta. Così com'è
-gira a ondate, in lock-step, e raccoglie fatti che nessuno usa. Tre lacune la rallentano; le colmi e
+gira con pochi posti, in lock-step, e raccoglie fatti che nessuno usa. Tre lacune la rallentano; le colmi e
 misuri il guadagno.
 
 Prepara l'ambiente:
@@ -52,9 +52,9 @@ Prepara l'ambiente:
 
 ### Fase 1 — Il problema cambia natura (25.1)
 
-Con tre nodi non ti accorgi di niente. Con mille, l'aritmetica domina. Se Ansible guida i nodi a
-ondate, il tempo totale non è quello del nodo più lento: è quello del più lento **moltiplicato per il
-numero di ondate**. Se ogni play aspetta che tutti finiscano un task prima che qualcuno cominci il
+Con tre nodi non ti accorgi di niente. Con mille, l'aritmetica domina. Se Ansible guida pochi nodi
+alla volta, ogni nodo lento tiene occupato un posto mentre gli altri aspettano il turno: il tempo totale
+cresce con la **dimensione della flotta**, non solo col nodo più lento. Se ogni play aspetta che tutti finiscano un task prima che qualcuno cominci il
 successivo, i nodi rapidi stanno fermi a ogni passo. Se ogni play raccoglie fatti che non guarda,
 paghi un giro di setup su mille nodi per niente. Nessuno di questi costi si vede a scala piccola;
 tutti diventano dominanti a scala grande. Le leve di questo capitolo tolgono, una a una, questi
@@ -66,9 +66,9 @@ Tieni il numero a mente: è il metro contro cui misurerai ogni miglioramento.
 
 ### Fase 2 — forks (25.2 — TODO 1)
 
-forks è **quanti nodi Ansible guida contemporaneamente**. Non rende ogni nodo più veloce: decide in
-quante ondate serve la flotta. Dodici nodi a forks=4 sono tre ondate, e la corsa non può durare meno
-del nodo più lento moltiplicato per il numero di ondate, per quanto banale sia il lavoro. Apri
+forks è **quanti nodi Ansible guida contemporaneamente**. Non rende ogni nodo più veloce: decide quanti
+posti ci sono. A forks=4 al massimo quattro nodi lavorano insieme, e un nodo lento occupa un posto mentre
+gli altri scorrono: con dodici nodi si fa coda anche se il lavoro è banale. Apri
 start/ansible.cfg: forks è basso di proposito. Completa il **TODO 1** portandolo alla dimensione
 della flotta —
 
@@ -76,7 +76,7 @@ della flotta —
     inventory = inventory.ini
     forks = 12
 
-Ora le ondate collassano in una: la corsa è limitata dal singolo nodo più lento, non dalla dimensione
+Ora ogni nodo ha il suo posto: la corsa è limitata dal singolo nodo più lento, non dalla dimensione
 della flotta. È la vittoria più economica a scala, la prima leva da toccare. Con una cautela che il
 manuale sottolinea: ogni fork è lavoro, memoria e una connessione SSH sul **control node**, quindi su
 flotte vere forks si alza con criterio, non all'infinito.
@@ -148,7 +148,7 @@ Facts" c'è nel primo e sparisce nel secondo, e i due passi non si sommano più 
 
 ## Criteri di "fatto"
 
-- ansible.cfg porta **forks = 12** (TODO 1): la flotta gira in una sola ondata.
+- ansible.cfg porta **forks = 12** (TODO 1): ogni nodo ha il suo posto.
 - deploy.yml usa **strategy: free** (TODO 2): niente barriera per-task.
 - deploy.yml usa **gather_facts: false** (TODO 3): niente setup inutile.
 - La consegna accordata è **nettamente più veloce** di quella di partenza (qui ~8s contro ~24s) e
