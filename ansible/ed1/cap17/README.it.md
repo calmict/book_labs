@@ -24,7 +24,7 @@ dei giganti senza perdere la riproducibilità.
 
 - Il venv del capitolo 6 (o start/requirements.txt).
 - Rete: scaricheremo una collezione da galaxy.ansible.com (come pip da PyPI).
-- I ruoli del capitolo 16; il lock/pin del capitolo 7; l'FQCN ansible.builtin già intravisto.
+- I ruoli del capitolo 16; l'ansible.cfg di progetto del capitolo 7; l'FQCN ansible.builtin già intravisto.
 - (Nessun nodo: questo capitolo lavora sul **control node** — installare e usare una
   collezione avviene a casa.)
 
@@ -67,7 +67,7 @@ e installi tutto con un comando:
 
     ansible-galaxy collection install -r requirements.yml
 
-Nota la **versione fissata** ("13.4.0"): è lo stesso principio del pin del capitolo 7 (tofu).
+Nota la **versione fissata** ("13.4.0"): è il pin di cui parla il manuale nel 17.4.
 Senza, prenderesti "l'ultima disponibile" — e domani sarebbe un'altra, con il rischio di un
 playbook che cambia comportamento da solo.
 
@@ -82,7 +82,7 @@ il progetto**. Completa il **TODO 2** in start/ansible.cfg:
     collections_path = ./collections
 
 Ora ansible-galaxy install scarica in ./collections, accanto al codice. Progetto +
-requirements.yml (il pin) + collections_path (il posto) = riproducibilità: come il lock file
+requirements.yml (il pin) + collections_path (il posto) = riproducibilità, come l'ansible.cfg di progetto
 del capitolo 7 — Domanda b. (La cartella ./collections **non** si versiona: si rigenera da
 requirements.yml, come si fa con le dipendenze scaricate.)
 
@@ -140,7 +140,7 @@ modulo chiamato ini_file?
 
 **b.** Le collezioni potrebbero stare comodamente in ~/.ansible, condivise fra tutti i
 progetti. Perché invece conviene tenerle *dentro il progetto* (collections_path) e fissarne
-la versione in requirements.yml? Collega la risposta al lock file del capitolo 7 e al
+la versione in requirements.yml? Collega la risposta al pin del 17.4 e al
 concetto di riproducibilità.
 
 **c.** Installare una collezione di terzi significa eseguire codice scritto da altri — e i

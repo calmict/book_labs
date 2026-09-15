@@ -57,7 +57,7 @@ no diff to explain it. Pinning the version in requirements.yml and pointing coll
 at a folder inside the project fixes both halves: requirements.yml records exactly which
 versions this project was written against, and collections_path puts them somewhere tied to
 the project rather than to the user account, so ansible-galaxy install reproduces the same
-set for anyone who clones the repo. It is the same idea as chapter 7's lock file for tofu:
+set for anyone who clones the repo. It is the same idea as the pin in 17.4:
 declare the dependency and freeze its version, so the environment is reproducible instead of
 "whatever happened to be there". You do not commit the downloaded collection itself — it is
 regenerated from requirements.yml, exactly as you do not commit downloaded packages — but

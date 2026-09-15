@@ -24,7 +24,7 @@ stand on the shoulders of giants without losing reproducibility.
 
 - The chapter 6 venv (or start/requirements.txt).
 - Network: we download a collection from galaxy.ansible.com (like pip from PyPI).
-- The roles of chapter 16; the lock/pin of chapter 7; the ansible.builtin FQCN already glimpsed.
+- The roles of chapter 16; the project ansible.cfg of chapter 7; the ansible.builtin FQCN already glimpsed.
 - (No nodes: this chapter works on the **control node** — installing and using a collection
   happens at home.)
 
@@ -67,7 +67,7 @@ and install everything with one command:
 
     ansible-galaxy collection install -r requirements.yml
 
-Note the **pinned version** ("13.4.0"): it is the same principle as chapter 7's pin (tofu).
+Note the **pinned version** ("13.4.0"): it is the pin the manual discusses in 17.4.
 Without it you would get "the latest available" — and tomorrow that would be a different one,
 risking a playbook that changes behaviour on its own.
 
@@ -82,8 +82,8 @@ is to keep them **inside the project**. Complete **TODO 2** in start/ansible.cfg
     collections_path = ./collections
 
 Now ansible-galaxy install downloads into ./collections, next to the code. Project +
-requirements.yml (the pin) + collections_path (the place) = reproducibility: like chapter 7's
-lock file — Question b. (The ./collections folder is **not** committed: it is regenerated from
+requirements.yml (the pin) + collections_path (the place) = reproducibility, like chapter 7's
+project ansible.cfg — Question b. (The ./collections folder is **not** committed: it is regenerated from
 requirements.yml, as you do with downloaded dependencies.)
 
 ### Phase 4 — Using it in a playbook (TODO 3)
@@ -141,7 +141,7 @@ called ini_file?
 
 **b.** Collections could sit comfortably in ~/.ansible, shared across all projects. Why is it
 better to keep them *inside the project* (collections_path) and pin their version in
-requirements.yml? Tie the answer to chapter 7's lock file and the idea of reproducibility.
+requirements.yml? Tie the answer to the pin of 17.4 and the idea of reproducibility.
 
 **c.** Installing a third-party collection means running code written by others — and your
 playbooks often run with become (ch. 11), that is, as root. Why is it unwise to install the
