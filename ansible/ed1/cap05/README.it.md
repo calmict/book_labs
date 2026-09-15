@@ -43,7 +43,7 @@ Lancialo su uno stato vuoto e poi di nuovo:
     bash solution/ensure.sh /tmp/cap05-state
 
 Primo giro: tutto [changed] (giallo) — ha agito. Secondo giro: [ok] (verde) — niente
-da fare. **Questa è l'idempotenza**: la seconda volta non fa nulla, e lo *dice*.
+da fare. **Questa è l'idempotenza**: la seconda volta non cambia nulla, e lo *dice*.
 Un'automazione che sa dire "ok, era già così" è un'automazione che puoi rilanciare
 mille volte senza paura.
 

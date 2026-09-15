@@ -43,7 +43,7 @@ state, then again:
     bash solution/ensure.sh /tmp/cap05-state
 
 First run: everything [changed] (yellow) — it acted. Second run: [ok] (green) —
-nothing to do. **This is idempotence**: the second time it does nothing, and it
+nothing to do. **This is idempotence**: the second time it changes nothing, and it
 *says so*. An automation that can say "ok, it was already like this" is one you can
 re-run a thousand times without fear.
 
