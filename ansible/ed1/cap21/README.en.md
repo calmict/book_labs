@@ -67,8 +67,9 @@ which one:
 
 The plugin (one per source: docker, aws_ec2, azure_rm, gcp_compute...) knows how to query *that*
 source and turn the answer into hosts, groups and variables. You pass the file to -i as you would
-a static address book: Ansible recognises it as a plugin config and runs it. (The plugin must be
-*enabled*: see ansible.cfg, section [inventory].)
+a static address book: Ansible recognises it as a plugin config and runs it. (Here
+ansible.cfg sets enable_plugins, section [inventory], but it is not required: the auto plugin, on by
+default, would load it anyway.)
 
 ### Phase 3 — AWS, the real case (21.3, gallery)
 

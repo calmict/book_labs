@@ -67,8 +67,9 @@ quale:
 
 Il plugin (uno per fonte: docker, aws_ec2, azure_rm, gcp_compute...) sa come interrogare
 *quella* fonte e trasformare la risposta in host, gruppi e variabili. Tu passi il file a -i come
-faresti con una rubrica statica: Ansible riconosce che è la config di un plugin e lo esegue. (Il
-plugin va *abilitato*: lo trovi in ansible.cfg, sezione [inventory].)
+faresti con una rubrica statica: Ansible riconosce che è la config di un plugin e lo esegue. (Qui
+ansible.cfg imposta enable_plugins, sezione [inventory], ma non è obbligatorio: il plugin auto, attivo
+per default, lo caricherebbe comunque.)
 
 ### Fase 3 — AWS, il caso reale (21.3, galleria)
 
