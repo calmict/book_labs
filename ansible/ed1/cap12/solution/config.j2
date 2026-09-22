@@ -1,6 +1,6 @@
 # {{ app_name }} config, rendered on {{ ansible_hostname }}
 app_name = {{ app_name }}
-port = {{ port }}
+port = {{ webapp_port }}
 debug = {{ debug_mode }}
 features = {{ features | join(', ') }}
 max_connections = {{ limits.max_connections }}

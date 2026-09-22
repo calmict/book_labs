@@ -50,7 +50,7 @@ che divergono nel tempo (la crepa del cap. 1). Con le variabili scrivi **un** pl
 cambi solo i valori. E i valori hanno una **forma** — i tipi del cap. 4, ora al lavoro:
 
 - **stringa**: app_name: orchestra
-- **intero**: port: 8080
+- **intero**: webapp_port: 8080
 - **booleano**: debug_mode: false
 - **lista**: features: [metrics, tracing, healthcheck]
 - **dizionario**: limits: { max_connections: 200, timeout_seconds: 30 }
@@ -65,7 +65,7 @@ start/config.j2 e completa il **TODO 2** — le righe che pescano dalle variabil
 l'accesso a una **lista** e a un **dizionario**:
 
     # {{ app_name }} config, rendered on {{ ansible_hostname }}
-    port = {{ port }}
+    port = {{ webapp_port }}
     features = {{ features | join(', ') }}
     max_connections = {{ limits.max_connections }}
     log_level = {{ log_level | default('info') }}
@@ -81,9 +81,9 @@ La stessa variabile può stare in posti diversi. Completa il **TODO 1** in
 start/group_vars/web.yml, aggiungendo la lista features e il dizionario limits. Poi guarda
 le quattro fonti in gioco:
 
-- **group_vars/web.yml**: valgono per *tutto* il gruppo web (app_name, port, features,
+- **group_vars/web.yml**: valgono per *tutto* il gruppo web (app_name, webapp_port, features,
   limits).
-- **host_vars/web2.yml**: valgono per *quel solo* host — qui port: 8081, che **vince**
+- **host_vars/web2.yml**: valgono per *quel solo* host — qui webapp_port: 8081, che **vince**
   sul group_vars per web2.
 - **vars: del play** (config_dir: /etc/myapp): locali a questo play.
 - **riga di comando -e**: la più forte di tutte. Prova:
@@ -150,7 +150,7 @@ capitolo 13.
 
 ## Criteri di "fatto"
 
-- config.ini renderizzato contiene tutti i tipi: stringa (app_name), intero (port),
+- config.ini renderizzato contiene tutti i tipi: stringa (app_name), intero (webapp_port),
   booleano (debug), lista (features), dizionario (max_connections/timeout).
 - **web1 port=8080** (group_vars), **web2 port=8081** (host_vars vince).
 - **-e app_name=canary** → canary su entrambi (extra var vince).

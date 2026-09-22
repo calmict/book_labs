@@ -51,7 +51,7 @@ identical files that drift apart over time (chapter 1's crack). With variables y
 of chapter 4, now at work:
 
 - **string**: app_name: orchestra
-- **integer**: port: 8080
+- **integer**: webapp_port: 8080
 - **boolean**: debug_mode: false
 - **list**: features: [metrics, tracing, healthcheck]
 - **dictionary**: limits: { max_connections: 200, timeout_seconds: 30 }
@@ -66,7 +66,7 @@ start/config.j2 and complete **TODO 2** — the lines that draw from the variabl
 including reaching into a **list** and a **dictionary**:
 
     # {{ app_name }} config, rendered on {{ ansible_hostname }}
-    port = {{ port }}
+    port = {{ webapp_port }}
     features = {{ features | join(', ') }}
     max_connections = {{ limits.max_connections }}
     log_level = {{ log_level | default('info') }}
@@ -82,9 +82,9 @@ The same variable can sit in different places. Complete **TODO 1** in
 start/group_vars/web.yml, adding the features list and the limits dictionary. Then look at
 the four sources in play:
 
-- **group_vars/web.yml**: apply to the *whole* web group (app_name, port, features,
+- **group_vars/web.yml**: apply to the *whole* web group (app_name, webapp_port, features,
   limits).
-- **host_vars/web2.yml**: apply to *that one* host — here port: 8081, which **beats** the
+- **host_vars/web2.yml**: apply to *that one* host — here webapp_port: 8081, which **beats** the
   group_vars for web2.
 - **the play's vars:** (config_dir: /etc/myapp): local to this play.
 - **the command line -e**: the strongest of all. Try:
@@ -149,7 +149,7 @@ the subject of chapter 13.
 
 ## Done when
 
-- The rendered config.ini holds all the types: string (app_name), integer (port), boolean
+- The rendered config.ini holds all the types: string (app_name), integer (webapp_port), boolean
   (debug), list (features), dictionary (max_connections/timeout).
 - **web1 port=8080** (group_vars), **web2 port=8081** (host_vars wins).
 - **-e app_name=canary** → canary on both (extra var wins).

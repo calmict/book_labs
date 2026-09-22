@@ -12,7 +12,7 @@
       timeout_seconds: 30
 
     # TODO 2 — the template lines in config.j2
-    port = {{ port }}
+    port = {{ webapp_port }}
     debug = {{ debug_mode }}
     features = {{ features | join(', ') }}
     max_connections = {{ limits.max_connections }}

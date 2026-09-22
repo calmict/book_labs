@@ -2,7 +2,7 @@
 # Chapter 12 — variables for the whole 'web' group. Two of the value types are
 # already here; TODO 1 adds the structured ones the template needs.
 app_name: orchestra
-port: 8080
+webapp_port: 8080
 debug_mode: false
 
 # TODO 1: add the two structured types the template reads:
