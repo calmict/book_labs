@@ -57,8 +57,8 @@ this is already a complete cue:
 
 The first prints **literally** ciao | wc -c: command uses **no** shell, the pipe is
 just text. The second prints **5**: shell hands it all to /bin/sh, the pipe runs.
-Rule: **command by default** (safer), **shell only** when you truly need pipes,
-redirections or variables. And watch the colour: both always say **CHANGED** — they
+Rule: **command by default** (safer), **shell only** when you truly need pipes
+or redirections. And watch the colour: both always say **CHANGED** — they
 are *doorbells* (ch. 5): the exit code cannot tell whether anything really changed.
 
 ### Phase 3 — The switch of the arsenal: copy

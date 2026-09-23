@@ -57,8 +57,8 @@ command, quindi questo è già un cenno completo:
 
 Il primo stampa **letteralmente** ciao | wc -c: command **non** usa una shell, la pipe
 è solo testo. Il secondo stampa **5**: shell passa tutto a /bin/sh, la pipe gira.
-Regola: **command di default** (più sicuro), **shell solo** quando ti servono pipe,
-redirezioni o variabili. E guarda il colore: entrambi dicono sempre **CHANGED** — sono
+Regola: **command di default** (più sicuro), **shell solo** quando ti servono pipe
+o redirezioni. E guarda il colore: entrambi dicono sempre **CHANGED** — sono
 *campanelli* (cap. 5): l'exit code non sa se qualcosa è davvero cambiato.
 
 ### Fase 3 — L'arsenale interruttore: copy

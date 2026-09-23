@@ -53,15 +53,17 @@ read-only or truly unmodelled actions, and teach it changed_when when you cannot
 
 Because command does not invoke a shell at all: Ansible splits your argument string
 into a plain argv and executes the program directly, so the shell metacharacters —
-pipes, redirections, &&, backticks, $(...), globbing, variable expansion — are passed
-as literal text, not interpreted. That is exactly why the lab's echo ciao | wc -c
+pipes, redirections, &&, backticks, $(...), globbing — are passed as literal text, not
+interpreted. (Environment variables such as $HOME are the one exception: command expands
+them itself, in Python, without a shell — the expand_argument_vars parameter, on by
+default.) That is exactly why the lab's echo ciao | wc -c
 prints the string "ciao | wc -c" under command and the number 5 under shell. The
 safety consequence is the whole point: with command there is no shell to hijack, so a
 value that happens to contain ; rm -rf / or $(something) is just an odd-looking
 argument, harmless. Pass that same untrusted input to shell and the shell will
 faithfully interpret it — the classic injection. So command is the secure default and
 shell is the deliberate exception you reach for *only* when you genuinely need shell
-features (a pipe, a redirection, an environment variable), and when you do, you take
+features (a pipe, a redirection, a chain of commands), and when you do, you take
 on the duty of not feeding it untrusted data (or of quoting/escaping it, which is
 error-prone — another reason to prefer a real module). Least power by default:
 command asks the shell for nothing, so nothing can go wrong in the shell.
