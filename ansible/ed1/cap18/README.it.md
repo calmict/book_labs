@@ -113,6 +113,10 @@ Genera il segreto cifrato (un token applicativo) col suo nome di variabile:
 
     ansible-vault encrypt_string --name app_api_token 'tkn-9f3a-SECRET'
 
+(Qui il token è finto e pubblico, quindi lo scrivi nel comando. Con un segreto vero usa
+ansible-vault encrypt_string --prompt, come nel manuale al 18.5: scritto nel comando, il
+segreto resterebbe in chiaro nella cronologia della shell.)
+
 Incolla l'uscita in group_vars/web/vars.yml, al posto del token in chiaro: sarà una
 cosa così —
 

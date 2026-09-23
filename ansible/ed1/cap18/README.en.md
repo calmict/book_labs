@@ -112,6 +112,10 @@ Generate the encrypted secret (an app token) with its variable name:
 
     ansible-vault encrypt_string --name app_api_token 'tkn-9f3a-SECRET'
 
+(The token here is fake and public, so you type it in the command. With a real secret use
+ansible-vault encrypt_string --prompt, as in 18.5 of the handbook: typed in the command,
+the secret would stay in plain text in your shell history.)
+
 Paste the output into group_vars/web/vars.yml, in place of the plaintext token: it looks
 like this —
 
