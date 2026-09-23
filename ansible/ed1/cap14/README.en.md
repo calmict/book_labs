@@ -75,15 +75,15 @@ recall is collected and run.
 
 Handlers follow three rules that explain all of their behaviour:
 
-1. **They run at the end of the task section** (here, the end of the play),
-   after *all* its tasks — not the moment you notify them. First all the work,
-   then the reaction.
-2. **They run only if notified by a changed task.** No changed, no recall, no reaction.
-3. **They run at most once per section**, no matter how many times they are
+1. **They run only if notified by a changed task.** No changed, no recall, no reaction.
+2. **They run at most once per section**, no matter how many times they are
    notified. Two tasks notifying the same handler → the handler fires **once**
    only (dedup).
+3. **They run at the end of the task section** (here, the end of the play),
+   after *all* its tasks — not the moment you notify them. First all the work,
+   then the reaction.
 
-You will see rule 3 by counting: two tasks notify the same recall, but reloads.log gains
+You will see rule 2 by counting: two tasks notify the same recall, but reloads.log gains
 **one** line, not two.
 
 ### Phase 4 — Several handlers, and the listen trick (TODO 2)
@@ -133,7 +133,7 @@ Put it all in a row and watch reloads.log grow only when it must:
 
     # 1. first run: the config is born -> handler fires
     ansible-playbook ... start/site.yml                         # reloads.log: 1 line
-    # 2. re-run, nothing changes -> handler does NOT fire (rule 2)
+    # 2. re-run, nothing changes -> handler does NOT fire (rule 1)
     ansible-playbook ... start/site.yml                         # reloads.log: still 1
     # 3. change the config -> handler fires
     ansible-playbook ... start/site.yml -e greeting=ciao        # reloads.log: 2 lines
@@ -147,7 +147,7 @@ Four runs, three reloads: exactly the ones that were needed. No idle restarts.
 - **Clear names and topics**: notify an intention ("app config changed"), not a command.
 - **Idempotent handlers** too: a reload is fine, a "delete and recreate" is not.
 - **The failed-play pitfall**: if a task notifies a handler and then the play **fails before
-  the end**, the handler does *not* run (rule 1: it fires at the end of the play). On the
+  the end**, the handler does *not* run (rule 3: it fires at the end of the play). On the
   next run the task finds the config already in place → changed=no → it no longer notifies →
   **the handler never fires**: new config, service never reloaded. That is Question c. The
   cure: **--force-handlers** (runs notified handlers even if a later task fails) or
@@ -157,7 +157,7 @@ Four runs, three reloads: exactly the ones that were needed. No idle restarts.
 
 - First run: reloads.log and metrics.log have **1 line** each (two tasks notify, two
   handlers via listen, each fires **once**).
-- Re-running with no changes: the logs **stay at 1** (rule 2).
+- Re-running with no changes: the logs **stay at 1** (rule 1).
 - With **-e greeting=ciao**: the config changes → the logs go to **2**.
 - With **-e force_reload=true**: even with no file changes, changed_when triggers → the logs
   grow again.

@@ -75,16 +75,16 @@ raccolto ed eseguito.
 
 Gli handler seguono tre regole che spiegano ogni loro comportamento:
 
-1. **Girano alla fine della sezione di task** (qui, a fine play), dopo *tutti*
-   i suoi task — non nel momento in cui li notifichi. Prima si fa tutto il
-   lavoro, poi si reagisce.
-2. **Girano solo se notificati da un task changed.** Nessun changed, nessun richiamo,
+1. **Girano solo se notificati da un task changed.** Nessun changed, nessun richiamo,
    nessuna reazione.
-3. **Girano al massimo una volta per sezione**, per quante volte siano
+2. **Girano al massimo una volta per sezione**, per quante volte siano
    notificati. Due task che notificano lo stesso handler → l'handler scatta
    **una** volta sola (dedup).
+3. **Girano alla fine della sezione di task** (qui, a fine play), dopo *tutti*
+   i suoi task — non nel momento in cui li notifichi. Prima si fa tutto il
+   lavoro, poi si reagisce.
 
-La regola 3 la vedrai contando: due task notificano lo stesso richiamo, ma reloads.log
+La regola 2 la vedrai contando: due task notificano lo stesso richiamo, ma reloads.log
 guadagna **una** riga, non due.
 
 ### Fase 4 — Più handler, e il trucco di listen (TODO 2)
@@ -136,7 +136,7 @@ Metti tutto in fila e guarda reloads.log crescere solo quando deve:
 
     # 1. prima esecuzione: la config nasce -> handler scatta
     ansible-playbook ... start/site.yml                         # reloads.log: 1 riga
-    # 2. rieseguo, nulla cambia -> handler NON scatta (regola 2)
+    # 2. rieseguo, nulla cambia -> handler NON scatta (regola 1)
     ansible-playbook ... start/site.yml                         # reloads.log: ancora 1
     # 3. cambio la config -> handler scatta
     ansible-playbook ... start/site.yml -e greeting=ciao        # reloads.log: 2 righe
@@ -150,7 +150,7 @@ Quattro esecuzioni, tre reload: esattamente quelli che servivano. Nessun riavvio
 - **Nomi e topic chiari**: notify un'intenzione ("app config changed"), non un comando.
 - **Handler idempotenti** anch'essi: un reload va bene, un "cancella e ricrea" no.
 - **Il trabocchetto del play fallito**: se un task notifica un handler e poi il play
-  **fallisce prima della fine**, l'handler *non* gira (regola 1: scatta a fine play). Al run
+  **fallisce prima della fine**, l'handler *non* gira (regola 3: scatta a fine play). Al run
   successivo il task trova la config già a posto → changed=no → non notifica più →
   **l'handler non scatta mai**: config nuova, servizio mai ricaricato. È la Domanda c. Il
   rimedio: **--force-handlers** (esegue gli handler notificati anche se un task successivo
@@ -160,7 +160,7 @@ Quattro esecuzioni, tre reload: esattamente quelli che servivano. Nessun riavvio
 
 - Prima esecuzione: reloads.log e metrics.log hanno **1 riga** ciascuno (due task
   notificano, due handler via listen, ognuno gira **una** volta).
-- Rieseguendo senza modifiche: i log **restano a 1** (regola 2).
+- Rieseguendo senza modifiche: i log **restano a 1** (regola 1).
 - Con **-e greeting=ciao**: la config cambia → i log salgono a **2**.
 - Con **-e force_reload=true**: pur senza modifiche ai file, changed_when innesca → i log
   salgono ancora.

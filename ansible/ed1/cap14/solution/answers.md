@@ -39,7 +39,7 @@ tasks might each touch a piece of the same config; if the handler ran immediatel
 first notification, the service would restart mid-configuration, on a half-applied state,
 and then again on the next notification, and the next — many restarts, some against a
 broken intermediate config. Deferring to the end means all the changes land first, then the
-service reloads once, against the finished state. And it is what allows rule 3
+service reloads once, against the finished state. And it is what allows rule 2
 (deduplication): because handlers are collected and run at the end, ten notifications of the
 same handler collapse into one run. Immediate execution would make dedup impossible and
 "restart once after everything settled" unexpressible. Together the rules encode the real
@@ -65,7 +65,7 @@ when a real change occurred. Any time a command feeds a handler, you owe it a ch
 
 **c. The failed-play trap, and how to prevent it.**
 
-Handlers run at the end of the play (rule 1), so there is a dangerous window: a task
+Handlers run at the end of the play (rule 3), so there is a dangerous window: a task
 notifies the reload, then a later task fails and the play aborts before the end — the
 handler never runs. That alone would be recoverable if the next run retried the reload, but
 it does not, and that is the trap: on the next run the config task finds the file already in

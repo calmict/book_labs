@@ -35,7 +35,7 @@
         dest: /etc/myapp/app.env
         mode: "0644"
       # TODO 1 (again): notify the SAME topic here too. Two tasks notifying the
-      # same topic still fire each handler only ONCE per play (rule 3).
+      # same topic still fire each handler only ONCE per play (rule 2).
 
     - name: Force a reload on demand
       ansible.builtin.command: "echo force={{ force_reload }}"
