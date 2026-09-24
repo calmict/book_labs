@@ -64,8 +64,8 @@ With app_env=dev, the output says skipping: [web1] and the file is not born. Wit
 **The braces trap (15.3):** in a module you write "{{ app_env }}" to *insert* the value; in
 when you write app_env == 'prod' **without** braces. Because when is *already* a Jinja2
 expression: Ansible evaluates it by itself. If you add braces — when: "{{ app_env == 'prod'
-}}" — it works but you earn the warning "conditional statements should not include jinja2
-templating". Rule: inside when, bare expressions.
+}}" — it works, but you earn a deprecation warning: braces in conditions
+will be removed in ansible-core 2.23. Rule: inside when, bare expressions.
 
 (Note: the variable is called app_env, not environment — the latter is a *reserved* Ansible
 name.)

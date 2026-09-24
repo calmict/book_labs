@@ -64,8 +64,8 @@ task agisce.
 **La trappola delle graffe (15.3):** in un modulo scrivi "{{ app_env }}" per *inserire* il
 valore; in when scrivi app_env == 'prod' **senza** graffe. Perché when è *già*
 un'espressione Jinja2: Ansible la valuta da sola. Se ci metti le graffe — when: "{{ app_env
-== 'prod' }}" — funziona ma ti becchi il WARNING "conditional statements should not include
-jinja2 templating". Regola: dentro when, espressioni nude.
+== 'prod' }}" — funziona, ma ti becchi un avviso di deprecazione: le graffe nelle condizioni
+spariranno in ansible-core 2.23. Regola: dentro when, espressioni nude.
 
 (Nota: la variabile si chiama app_env, non environment — quest'ultimo è un nome *riservato*
 di Ansible.)
