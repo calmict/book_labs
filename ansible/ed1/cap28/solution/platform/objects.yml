@@ -1,5 +1,6 @@
-# AWX / Automation Platform objects, defined as code (GitOps): this is what your CI
-# validates and then imports into the controller. No secret value lives here - only
+# AWX / Automation Platform objects, defined as code (GitOps), in a teaching format for
+# this exercise: your CI validates it, and a real import translates it into AWX API
+# objects or awx.awx modules. No secret value lives here - only
 # the link the controller follows to fetch it from a secret manager when the job runs.
 
 projects:
