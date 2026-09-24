@@ -120,7 +120,7 @@ When "why does that value win?" drives you mad, two tools:
 - **debug** where you use it: {{ }} resolved at the right moment is the final truth.
   Printing the variable *at the point* where you use it beats any abstract reasoning.
 
-And remember: -vvv on the playbook shows where each value comes from.
+And remember: -vvv shows connection, commands and temporary files, not which level a value comes from.
 
 ### Phase 6 — The two pitfalls (TODO 2, TODO 3)
 

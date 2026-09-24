@@ -120,7 +120,7 @@ Quando "perché vince quel valore?" ti fa impazzire, due strumenti:
 - **debug** dove la usi: {{ }} risolto al momento giusto è la verità finale. Stampare la
   variabile *nel punto* in cui la usi batte ogni ragionamento astratto.
 
-E ricorda: -vvv sul playbook mostra da dove arriva ciascun valore.
+E ricorda: -vvv mostra connessione, comandi e file temporanei, non da quale livello arriva un valore.
 
 ### Fase 6 — I due trabocchetti (TODO 2, TODO 3)
 
