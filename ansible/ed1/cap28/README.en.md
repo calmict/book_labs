@@ -1,4 +1,4 @@
-# Chapter 28 — The standing theatre
+# Chapter 28 — The resident theater
 
 **Level:** Cloud Architect
 
@@ -8,7 +8,7 @@ kept in your head or scattered across files. That works for one person. It does 
 **organisation**: ten teams, hundreds of playbooks, thousands of nodes, reviewers and audits. At that
 point the terminal is no longer enough — the way a troupe touring from town to town is no longer enough
 once the city wants a resident season, with a home, a box office, a company roster and an archive.
-**AWX** (and its supported edition, **Ansible Automation Platform**) is that standing theatre:
+**AWX** (and its supported edition, **Ansible Automation Platform**) is that resident theater:
 automation stops being a gesture at a terminal and becomes a **service** with a console, its own
 permissions, and its own history. This chapter assembles its core objects — the **job template**,
 **credentials with RBAC**, **workflows** — not by clicking in a UI, but by defining them **as code**,
@@ -62,8 +62,8 @@ platform.
 
 ### Phase 2 — AWX and Ansible Automation Platform: who is who (28.2)
 
-They are the same theatre, in two productions. **AWX** is the upstream project, free and community,
-where features appear first — the edition to experiment with. **Ansible Automation Platform (AAP)** is
+They are the same theater, in two productions. **AWX** is the upstream project, free and community,
+that the product grows out of (its releases have been on hold since July 2024) — the edition to experiment with. **Ansible Automation Platform (AAP)** is
 Red Hat's commercial, supported version, with SLAs, certified content and the official Execution
 Environments — the edition for the organisation's production. Same object model, same API: job
 templates, credentials, workflows. What you learn on one holds on the other; here you work on the
@@ -150,7 +150,7 @@ ansible-core and the collections: the job does not run in an improvised venv but
 versioned** environment — the same idea as chapter 24, standardised for the whole organisation.
 **Scheduling** launches job templates on a calendar (the nightly compliance run). **EDA (Event-Driven
 Ansible)** flips the direction: no longer "a person launches", but "an event launches" — an alert, a
-webhook, a log line fires a rulebook. These are the blocks that turn the theatre from "the curtain
+webhook, a log line fires a rulebook. These are the blocks that turn the theater from "the curtain
 rises when someone decides" into "the season runs itself".
 
 ### Phase 7 — Good habits with the platform (28.7)
@@ -215,8 +215,8 @@ venv with:
 With chapter 28 automation has a home: the platform's objects defined as code, access governed, jobs
 chained into workflows with a way out. **It closes the Cloud Architect tier and closes the manual**:
 from the three ways to break of chapter 1, you have reached orchestrating a thousand nodes from a
-platform with its own governance. The conductor now has a standing theatre. From here there are no new
+platform with its own governance. The conductor now has a resident theater. From here there are no new
 concepts to learn, only a craft to sharpen: the **appendices** give you the desk tools — the command
 cheat sheet, the essential Jinja2 filters, the map of variable precedence, the glossary, the
-troubleshooting, and the resources for certification — because a theatre, once built, keeps its doors
+troubleshooting, and the resources for certification — because a theater, once built, keeps its doors
 open every night.

@@ -62,8 +62,8 @@ luogo dove l'automazione *vive* — con un organico (RBAC), un botteghino (chi e
 
 ### Fase 2 — AWX e Ansible Automation Platform: chi è chi (28.2)
 
-Sono lo stesso teatro, in due allestimenti. **AWX** è il progetto upstream, gratuito e community, dove
-le funzionalità nascono per prime — l'edizione da sperimentare. **Ansible Automation Platform (AAP)** è
+Sono lo stesso teatro, in due allestimenti. **AWX** è il progetto upstream, gratuito e community, da cui
+nasce il prodotto (i suoi rilasci sono sospesi dal luglio 2024) — l'edizione da sperimentare. **Ansible Automation Platform (AAP)** è
 la versione commerciale e supportata di Red Hat, con SLA, contenuti certificati e gli Execution
 Environment ufficiali — l'edizione per la produzione dell'organizzazione. Stesso modello a oggetti,
 stessa API: job template, credenziali, workflow. Ciò che impari su uno vale sull'altro; qui lavori
