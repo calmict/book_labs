@@ -2,7 +2,8 @@
 #
 # Your first COMPLETE configuration, written by you, block by block. The
 # README shows the code: type it here (no copy-paste — the fingers learn
-# too), running tofu validate after every block. Order:
+# too), running tofu fmt after every block; tofu validate comes after
+# init, in Phase 2 (it needs the provider). Order:
 #
 # 1. The terraform block — who translates: required_providers with the
 #    docker provider (source kreuzwerker/docker, version ~> 3.0).
@@ -19,4 +20,5 @@
 #
 # 4. The output — what to expose: "url", value http://localhost:8087.
 #
-# An empty file is a valid configuration: validate passes even now.
+# An empty file is a valid configuration; the moment the terraform block
+# asks for docker, validate wants init first.

@@ -58,8 +58,9 @@ same language, same cycle, same providers.
 ### Phase 1 — The first complete configuration (you write it all)
 
 In start/ you will find main.tf almost empty: only the comments guiding
-you. Write it yourself, block by block, validating at every step (tofu
-validate):
+you. Write it yourself, block by block, and at every step let tofu fmt tidy
+the form. (validate waits for Phase 2: it needs the provider, and init is
+what brings it.)
 
 The terraform block — who translates:
 
@@ -122,6 +123,14 @@ is chapter 7's protagonist: for now know that it exists and is not to be
 touched). Run init a second time: it finishes in a flash — idempotent,
 like everything around here.
 
+Now that the translator is there, you can validate:
+
+    tofu validate
+
+Success! The configuration is valid. Before init it could not say so:
+validate queries the provider's schema, and without the provider it stops
+at Missing required provider.
+
 ### Phase 3 — The saved plan
 
 So far you used the "interactive" apply: it computes the plan, shows it,
@@ -136,9 +145,10 @@ attributes the wording (known after apply). Then execute it:
     tofu apply first.plan
 
 No questions. It is not impudence: a saved plan is a contract — apply
-executes *exactly* what is written in the file, no more, no less. Had the
-world changed in the meantime, the execution would fail rather than
-improvise. (Keep it in mind: plan -out under review, apply of the approved
+executes *exactly* what is written in the file, no more, no less. If the
+state changed in the meantime (another apply, say), the file is refused as
+stale: no improvising. A change made by hand to reality, however, escapes
+the saved plan: only the next plan will find it. (Keep it in mind: plan -out under review, apply of the approved
 file — it is the heart of chapter 22's pipelines.)
 
 The first stone is laid:
@@ -200,8 +210,8 @@ disk (keep_locally); docker rmi if you want them gone.
 
 ## Definition of done
 
-- You wrote the whole main.tf yourself, and tofu validate passed after
-  every block.
+- You wrote the whole main.tf yourself, and after init tofu validate
+  passed.
 - You found and weighed the provider binary inside .terraform (tens of
   MB) and watched .terraform.lock.hcl being born.
 - tofu apply first.plan started without asking for confirmation, and curl

@@ -59,7 +59,9 @@ stesso ciclo, stessi provider.
 ### Fase 1 — La prima configurazione completa (si scrive tutta)
 
 In start/ trovi main.tf quasi vuoto: solo i commenti che ti fanno da guida.
-Scrivi tu, blocco per blocco, validando a ogni passo (tofu validate):
+Scrivi tu, blocco per blocco, e a ogni passo lascia che tofu fmt metta in
+ordine la forma. (validate aspetta la Fase 2: ha bisogno del provider, e il
+provider lo porta init.)
 
 Il blocco terraform — chi traduce:
 
@@ -122,6 +124,14 @@ protagonista del capitolo 7: per ora sappi che esiste e che non si tocca).
 Rilancia init una seconda volta: finisce in un lampo — è idempotente, come
 tutto da queste parti.
 
+Ora che il traduttore c'è, puoi validare:
+
+    tofu validate
+
+Success! The configuration is valid. Prima di init non poteva dirlo:
+validate interroga lo schema del provider, e senza provider si ferma su
+Missing required provider.
+
 ### Fase 3 — Il piano salvato
 
 Finora hai usato apply "interattivo": calcola il piano, te lo mostra, chiede
@@ -136,8 +146,10 @@ conoscibili la dicitura (known after apply). Poi eseguilo:
 
 Nessuna domanda. Non è sfrontatezza: un piano salvato è un contratto — apply
 esegue *esattamente* ciò che è scritto nel file, né più né meno. Se nel
-frattempo il mondo fosse cambiato, l'esecuzione fallirebbe piuttosto che
-improvvisare. (Tienilo a mente: plan -out in revisione, apply del file
+frattempo è cambiato lo stato (un altro apply, per esempio), il file viene
+rifiutato come scaduto: niente improvvisazioni. Una modifica fatta a mano
+sulla realtà, invece, sfugge al piano salvato: la scoprirà solo il plan
+successivo. (Tienilo a mente: plan -out in revisione, apply del file
 approvato — è il cuore delle pipeline del capitolo 22.)
 
 La prima pietra è posata:
@@ -199,8 +211,7 @@ restano sul disco (keep_locally); docker rmi se le vuoi togliere.
 
 ## Criteri di "fatto"
 
-- Hai scritto tu l'intero main.tf, e tofu validate è passato dopo ogni
-  blocco.
+- Hai scritto tu l'intero main.tf, e dopo init tofu validate è passato.
 - Hai trovato e pesato il binario del provider dentro .terraform (decine di
   MB) e visto nascere .terraform.lock.hcl.
 - tofu apply first.plan è partito senza chiedere conferma, e curl sulla

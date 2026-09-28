@@ -49,9 +49,12 @@ first.plan asks nothing because the acceptance already happened — the
 file IS the approved decision, and apply's only job is to execute it
 exactly, no recomputation, no improvisation. That exactness is the whole
 value when review and approval sit between plan and execution: what the
-reviewer read is byte-for-byte what will run, and if reality drifted in
-the meantime the apply fails loudly instead of silently doing something
-nobody reviewed. This is why pipelines (chapter 22) are built on
+reviewer read is byte-for-byte what will run, and if the state changed in
+the meantime (another apply got there first) the file is refused as stale
+instead of silently doing something nobody reviewed. What the saved plan
+does not do is re-check reality: a container stopped by hand after the
+plan goes unnoticed, the apply ends with 0 changes, and only the next plan
+sees the drift. This is why pipelines (chapter 22) are built on
 plan -out, review, apply-the-file.
 
 **c. The three everyday questions, and the destroy asymmetry.**
