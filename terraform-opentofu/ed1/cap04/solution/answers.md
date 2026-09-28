@@ -47,7 +47,7 @@ admits no execution order — caught before touching reality.**
 With no edges the three floors are three disconnected nodes: nothing in the
 graph says one must wait for another, so the foreman dispatches all crews
 at once and the wall time is the longest single job — 5 seconds. With the
-chain, each node has an incoming edge from the previous one: floor_2 cannot
+chain, each floor after the first has an outgoing edge to the previous one: floor_2 cannot
 start before floor_1 finishes, so the jobs serialise and the times add up —
 15 seconds. Same resources, same durations: only the edges changed, and the
 schedule with them. A cycle destroys the very possibility of a schedule:
