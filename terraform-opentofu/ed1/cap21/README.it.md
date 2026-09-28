@@ -44,8 +44,8 @@ Alla fine saprai:
 
 - OpenTofu (o Terraform) installato — vedi SETUP.md.
 - Docker in esecuzione. Porta libera: 8130.
-- I capitoli 14 (validazione delle variabili) e 6 (fmt, validate): qui diventano
-  una piramide.
+- I capitoli 14 (validazione delle variabili), 5 (fmt) e 6 (validate): qui
+  diventano una piramide.
 
 ## Consegna
 

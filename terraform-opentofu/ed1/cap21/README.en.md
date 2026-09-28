@@ -44,8 +44,8 @@ By the end you will be able to:
 
 - OpenTofu (or Terraform) installed — see SETUP.md.
 - Docker running. Free port: 8130.
-- Chapters 14 (variable validation) and 6 (fmt, validate): here they become a
-  pyramid.
+- Chapters 14 (variable validation), 5 (fmt) and 6 (validate): here they
+  become a pyramid.
 
 ## Your task
 
