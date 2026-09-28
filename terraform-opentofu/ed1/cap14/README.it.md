@@ -2,7 +2,7 @@
 
 **Livello:** Intermedio
 **Tempo stimato:** 45–55 minuti
-**Argomenti del manuale:** le variabili di input (14.1), la validazione degli input (14.2), gli output (14.3), i locals: la cucina interna (14.4), le tre porte insieme (14.5)
+**Argomenti del manuale:** le variabili di input e la loro validazione (14.1), gli output (14.2), i locals: la cucina interna (14.3), le tre porte insieme (14.4)
 
 ## L'idea
 

@@ -2,7 +2,7 @@
 
 **Level:** Intermediate
 **Estimated time:** 45–55 minutes
-**Manual topics:** input variables (14.1), input validation (14.2), outputs (14.3), locals: the internal kitchen (14.4), the three doors together (14.5)
+**Manual topics:** input variables and their validation (14.1), outputs (14.2), locals: the internal kitchen (14.3), the three doors together (14.4)
 
 ## The idea
 
