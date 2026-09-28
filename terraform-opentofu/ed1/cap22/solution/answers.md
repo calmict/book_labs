@@ -18,8 +18,11 @@
 plan sits on the pull request and apply on the merge because proposing a change
 and delivering it are different acts with different risk. On a PR you want to SEE
 what would happen — run the pyramid, produce a plan, let a human review the diff —
-without touching anything real; that is the gate, and it can run on every push,
-even from a fork, safely, because it changes nothing. apply is the act that
+without changing anything real; that is the gate, and it can run on every push.
+Not changing is not the same as not running, though: plan executes the providers
+and data sources of the proposed code (a data "external" runs its program during
+the plan), which is why a plan on a pull request from a fork, with real
+credentials, is a known risk. apply is the act that
 mutates production, so it must happen only once, after the change is reviewed and
 merged into the branch that represents "what should be live". Separating them
 protects production from two things: an unreviewed change reaching reality, and an
