@@ -122,10 +122,13 @@ in silenzio.
 
 ### Fase 4 — Il ripasso dei meta-argomenti
 
-Riguarda il main.tf completo: senza accorgertene hai già collezionato i
-meta-argomenti del 9.4 — provider (capitolo 8: il piazzamento), depends_on
-(capitolo 4: l'arco dichiarato a mano), lifecycle (capitolo 3 e oggi: le
-regole di sostituzione e tolleranza). Sono argomenti che parlano *allo
+Riguarda il main.tf completo: dei meta-argomenti del 9.4 qui ne trovi uno,
+lifecycle (capitolo 3 e oggi: le regole di sostituzione e tolleranza). Gli
+altri due li hai incontrati altrove: provider (capitolo 8: il piazzamento)
+e depends_on (capitolo 4: l'arco dichiarato a mano). Attento al blocco
+provider "docker" {} in cima al file: configura il provider, non è il
+meta-argomento, che si scrive dentro una risorsa per sceglierle una
+configurazione con alias. Sono argomenti che parlano *allo
 strumento* anziché al provider: nessuno di loro finisce nell'API di
 Docker. Mancano all'appello count e for_each: capitolo 15, e vedrai che
 meritano un capitolo intero.

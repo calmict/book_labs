@@ -122,10 +122,13 @@ ignore_changes is a knob your model abdicates, forever and silently.
 
 ### Phase 4 — The meta-arguments recap
 
-Look at the complete main.tf again: without noticing you have already
-collected 9.4's meta-arguments — provider (chapter 8: placement),
-depends_on (chapter 4: the hand-declared edge), lifecycle (chapter 3 and
-today: replacement and tolerance rules). They are arguments that speak
+Look at the complete main.tf again: of 9.4's meta-arguments you find one
+here, lifecycle (chapter 3 and today: replacement and tolerance rules).
+The other two you met elsewhere: provider (chapter 8: placement) and
+depends_on (chapter 4: the hand-declared edge). Mind the
+provider "docker" {} block at the top of the file: it configures the
+provider, it is not the meta-argument, which goes inside a resource to
+pick an aliased configuration for it. They are arguments that speak
 *to the tool* rather than to the provider: none of them ends up in
 Docker's API. Missing from the roll call: count and for_each — chapter
 15, and you will see they deserve a whole chapter.
