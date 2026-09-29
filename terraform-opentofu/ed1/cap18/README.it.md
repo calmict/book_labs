@@ -137,7 +137,10 @@ Pagina strappata dal registro, palazzo in piedi.
 >       }
 >     }
 >
-> Stesso effetto (dimentica senza distruggere); solo due dialetti.
+> Stesso effetto (dimentica senza distruggere); solo due dialetti. Il rovescio
+> è quello pericoloso: in Terraform un removed senza quel lifecycle la cache la
+> distrugge. (OpenTofu accetta la forma con lifecycle dalla 1.10; fino alla 1.9
+> la rifiuta.)
 
 ### Fase 3 — import: adottare l'esistente (TODO 3)
 

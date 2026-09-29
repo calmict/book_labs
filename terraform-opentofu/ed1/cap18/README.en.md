@@ -135,7 +135,9 @@ Page torn from the register, building still standing.
 >       }
 >     }
 >
-> Same effect (forget without destroying); just two dialects.
+> Same effect (forget without destroying); just two dialects. The reverse is the
+> dangerous one: in Terraform a removed block without that lifecycle destroys the
+> cache. (OpenTofu accepts the lifecycle form from 1.10; up to 1.9 it rejects it.)
 
 ### Phase 3 — import: adopting the existing (TODO 3)
 

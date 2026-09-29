@@ -14,6 +14,7 @@
 ## removed and import (Phases 2-3)
 
     # docker_container.cache will be removed from the OpenTofu state but will not be destroyed
+    # (Terraform: docker_container.cache will no longer be managed by Terraform, but will not be destroyed)
     # cache container status after apply: running
     # docker_volume.data will be imported
     Plan: 1 to import, 0 to add, 0 to change, 0 to destroy.  ->  then: No changes.
@@ -43,8 +44,9 @@ keeps running, it is simply no longer managed. So: without the block, the
 container dies; with the block, it survives, orphaned but alive. The syntax
 differs because the two tools implemented the feature differently: OpenTofu's
 removed block forgets by default (bare removed { from = ... }), while Terraform
-requires an explicit lifecycle { destroy = false } inside the block (and can also
-express destroy = true to actually delete). Same outcome for our case — forget
+needs an explicit lifecycle { destroy = false } inside the block, because without
+it the block destroys (destroy defaults to true there). OpenTofu accepts the
+lifecycle form too, from 1.10. Same outcome for our case — forget
 without destroying — reached through two dialects; a reminder that "one language,
 two binaries" is true in the large but has a few seams.
 

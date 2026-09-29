@@ -111,9 +111,15 @@ echo
 
 echo "== 2. The refactor: moved + removed + import, zero destroy =="
 cp "$DIR/main.tf" "$WORK/main.tf"
+# main.tf carries OpenTofu's bare removed block (up to 1.9 the only form it
+# accepts). On Terraform that same block DESTROYS the cache: forgetting needs
+# lifecycle { destroy = false } inside, so the runner adds it there.
+if [ "$TF" = terraform ]; then
+  sed -i 's|^  from = docker_container.cache$|&\n  lifecycle {\n    destroy = false\n  }|' "$WORK/main.tf"
+fi
 "$TF" plan -input=false -no-color >refactor.out
 grep -E 'has moved to' refactor.out | sed 's/^ *# /  moved:   /'
-grep -E 'will be removed from the OpenTofu state' refactor.out | sed 's/^ *# /  removed: /'
+grep -E '(removed from the OpenTofu state|no longer be managed by Terraform).*will not be destroyed' refactor.out | sed 's/^ *# /  removed: /'
 grep -E 'docker_volume.data will be imported' refactor.out | sed 's/^ *# /  import:  /'
 grep -E '^Plan: 1 to import, 0 to add, 0 to change, 0 to destroy' refactor.out | sed 's/^/  /'
 "$TF" apply -input=false -auto-approve >/dev/null

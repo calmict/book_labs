@@ -41,7 +41,9 @@ moved {
 
 # TODO 2, completed: the cache resource is gone from the code; this removed
 # block forgets it from the state without destroying the running container.
-# (Terraform users write this with an inner lifecycle { destroy = false }.)
+# This bare form is OpenTofu's, the only one it accepts up to 1.9. On
+# Terraform it DESTROYS the cache: there (and in OpenTofu from 1.10) write
+# lifecycle { destroy = false } inside the block. run.sh does it for you.
 removed {
   from = docker_container.cache
 }
