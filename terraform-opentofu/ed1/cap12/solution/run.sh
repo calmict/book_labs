@@ -81,8 +81,12 @@ sed -i 's|terraform {|terraform {\n  backend "consul" {\n    address = "127.0.0.
 "$TF" state list | sed 's/^/  state list (via backend): /'
 test ! -s terraform.tfstate
 echo "  local terraform.tfstate: zero bytes (a courtesy .backup remains)"
-curl -s http://127.0.0.1:8500/v1/kv/book-labs/cap12 | grep -q 'eyJ2ZXJzaW9uIjo0'
-echo "  Consul KV holds the state (base64 starting eyJ2ZXJzaW9uIjo0 = version 4)"
+# ?raw returns the stored JSON decoded; tofu writes it compact, terraform
+# indented, so spaces and newlines are dropped before looking inside.
+kv=$(curl -s 'http://127.0.0.1:8500/v1/kv/book-labs/cap12?raw' | tr -d ' \n')
+grep -q '"version":4' <<<"$kv"
+grep -q '"type":"random_pet"' <<<"$kv"
+echo "  Consul KV holds the state (decoded: version 4, with random_pet.site inside)"
 echo
 
 echo "== 2. The colleague, second act: same notebook =="
@@ -125,4 +129,4 @@ docker rm -f "$CONSUL" >/dev/null
 echo "  noticeboard removed"
 echo
 
-echo "=== where the state lives is a decision — and the lock turns chaos into a queue ==="
+echo "=== where the state lives is a decision — and the lock turns chaos into orderly turns ==="

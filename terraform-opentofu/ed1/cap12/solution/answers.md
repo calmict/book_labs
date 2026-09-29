@@ -4,7 +4,10 @@
 
     -rw-r--r--. 1 user user 0 ... terraform.tfstate      (zero bytes)
     "Value":"eyJ2ZXJzaW9uIjo0...                          (the state, base64,
-                                                           in Consul's KV)
+                                                           in Consul's KV;
+                                                           terraform writes it
+                                                           indented, so there it
+                                                           starts ewogICJ2ZXJz...)
 
 ## The colleague, second act (Phase 2)
 
@@ -19,7 +22,7 @@
       Operation: OperationTypeApply
       Who:       user@myworkstation
 
-    # after my apply finished: No changes — the queue moved on
+    # after my apply finished, run again: No changes
 
 ## The three questions
 

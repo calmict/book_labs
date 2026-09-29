@@ -22,8 +22,8 @@ attaches to the same backend and his first plan says No changes: *he sees
 your resources*, because he reads your very memory. And the grand finale:
 while one of your applies is running, he tries to work — and the lock
 stops him, with a full name tag: Error acquiring the state lock, stating
-who holds it and for which operation. Chapter 11's chaos has become an
-orderly queue.
+who holds it and for which operation. Chapter 11's chaos has become
+orderly turns.
 
 ## Goals
 
@@ -90,8 +90,9 @@ Answer yes to the copy question, then verify the move, from both sides:
 
 state list works as before (the resource is there) — but the local file
 is down to zero bytes (with a courtesy .backup), and in Consul's KV there
-is a base64 Value starting with eyJ2ZXJzaW9uIjo0: it is your state,
-version 4, moved bag and baggage. Custody included: whoever can read that
+is a base64 Value (with tofu it starts eyJ2ZXJzaW9uIjo0, with terraform
+ewogICJ2ZXJzaW9uIjogNCwK: the same JSON, compact or indented): it is your
+state, version 4, moved bag and baggage. Custody included: whoever can read that
 key also reads chapter 11's secrets — changing house does not change the
 rules (restricted access, encryption: and remember OpenTofu's ace,
 chapter 20).
@@ -129,8 +130,9 @@ While it runs, from the colleague's terminal:
 Error acquiring the state lock — and below, the full name tag: lock ID,
 path, Operation (OperationTypeApply), Who (user@machine). It is not a
 failure: it is the lock doing its trade — one write at a time, everyone
-else waits *knowing who is inside*. When your apply finishes, his plan
-passes. (There is also tofu force-unlock <ID>: the break-glass hammer for
+else is stopped *knowing who is inside*. His plan does not sit waiting:
+when your apply finishes, he runs it again and it passes (with
+-lock-timeout, say -lock-timeout=5m, it would have waited on its own). (There is also tofu force-unlock <ID>: the break-glass hammer for
 locks orphaned by a dead process — used after reading the name tag, never
 out of impatience.)
 
@@ -174,4 +176,4 @@ Why did the attach ask for no migration?
 applies (think of what would happen to the memory with two interleaved
 writes)? Read the lock's name tag: what are ID and Who for, in team
 practice? And when is force-unlock legitimate — and when is it just a way
-to turn an orderly queue back into chaos?
+to turn orderly turns back into chaos?

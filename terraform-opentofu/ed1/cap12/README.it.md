@@ -23,7 +23,7 @@ risorse*, perché legge la tua stessa memoria. E il gran finale: mentre un
 tuo apply è in corso, lui prova a lavorare — e il lucchetto glielo
 impedisce, per nome e cognome: Error acquiring the state lock, con scritto
 chi lo tiene e per quale operazione. Il caos del capitolo 11 è diventato
-una coda ordinata.
+un turno ordinato.
 
 ## Obiettivi
 
@@ -90,8 +90,9 @@ i lati:
 
 state list funziona come prima (la risorsa c'è) — ma il file locale è
 rimasto a zero byte (con un .backup di cortesia), e nel KV di Consul c'è un
-Value in base64 che comincia per eyJ2ZXJzaW9uIjo0: è il tuo stato,
-version 4, trasferito armi e bagagli. Custodia inclusa: chi può leggere
+Value in base64 (con tofu comincia per eyJ2ZXJzaW9uIjo0, con terraform per
+ewogICJ2ZXJzaW9uIjogNCwK: lo stesso JSON, compatto o indentato): è il tuo
+stato, version 4, trasferito armi e bagagli. Custodia inclusa: chi può leggere
 quella chiave legge anche i segreti del capitolo 11 — cambiare casa non
 cambia le regole (accessi ristretti, cifratura: e ricorda l'asso di
 OpenTofu, capitolo 20).
@@ -129,8 +130,9 @@ Mentre gira, dal terminale del collega:
 Error acquiring the state lock — e sotto, il cartellino completo: ID del
 lock, path, Operation (OperationTypeApply), Who (utente@macchina). Non è
 un guasto: è il lucchetto che fa il suo mestiere — una scrittura alla
-volta, gli altri aspettano *sapendo chi c'è dentro*. Quando il tuo apply
-finisce, il suo plan passa. (Esiste anche tofu force-unlock <ID>: è il
+volta, gli altri vengono fermati *sapendo chi c'è dentro*. Il suo plan
+non resta in attesa: quando il tuo apply finisce, lo rilancia e passa (con
+-lock-timeout, per esempio -lock-timeout=5m, avrebbe aspettato da solo). (Esiste anche tofu force-unlock <ID>: è il
 martelletto rompi-vetro per i lock orfani di un processo morto — si usa
 leggendo prima il cartellino, mai per impazienza.)
 
@@ -174,4 +176,4 @@ ottenere questo effetto? Perché l'aggancio non ha chiesto migrazione?
 simultanei (pensa a che cosa succederebbe alla memoria con due scritture
 intrecciate)? Leggi il cartellino del lock: a che cosa servono ID e Who
 nella pratica di squadra? E quando è legittimo force-unlock — e quando è
-solo un modo per trasformare una coda ordinata di nuovo in caos?
+solo un modo per trasformare un turno ordinato di nuovo in caos?
