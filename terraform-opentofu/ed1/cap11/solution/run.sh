@@ -46,19 +46,22 @@ echo "== 0. A small world with a secret =="
 echo
 
 echo "== 1. Inside the notebook =="
-grep -o '"serial":[0-9]*' terraform.tfstate | sed 's/^/  /'
-grep -o '"lineage":"[^"]*"' terraform.tfstate | sed 's/^/  /'
-cid=$(grep -o '"name":"cap11-web"' terraform.tfstate)
+# tofu writes the state as compact JSON, terraform indented: spaces and
+# newlines are dropped once, so the same checks read both.
+state=$(tr -d ' \n' < terraform.tfstate)
+grep -o '"serial":[0-9]*' <<<"$state" | sed 's/^/  /'
+grep -o '"lineage":"[^"]*"' <<<"$state" | sed 's/^/  /'
+cid=$(grep -o '"name":"cap11-web"' <<<"$state")
 test -n "$cid"
 echo "  the binding is there: docker_container.web <-> the real container"
-grep -o '"dependencies":\["docker_image.web"\]' terraform.tfstate | sed 's/^/  even the graph: /'
+grep -o '"dependencies":\["docker_image.web"\]' <<<"$state" | sed 's/^/  even the graph: /'
 echo
 
 echo "== 2. The secret, in plain text in the very same file =="
-secret=$(grep -o '"result":"[^"]*"' terraform.tfstate | head -1)
+secret=$(grep -o '"result":"[^"]*"' <<<"$state" | head -1)
 test -n "$secret"
 echo "  found in the state: \"result\":\"******\" (redacted here — but NOT in the file)"
-grep -o '"value":"[^"]*"' terraform.tfstate >/dev/null
+grep -o '"value":"[^"]*"' <<<"$state" >/dev/null
 echo "  (the sensitive OUTPUT value is in the state too: whoever reads the"
 echo "   state reads every secret — never commit it, restrict it, encrypt it)"
 echo
