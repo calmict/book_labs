@@ -14,12 +14,13 @@ set -euo pipefail
 # throwaway temp dir; guaranteed cleanup on exit. An ephemeral passphrase is
 # generated at runtime — nothing secret is committed.
 
+# This lab needs tofu: steps 3-4 are OpenTofu's native state encryption,
+# which terraform does not have. terraform is optional (steps 1 and 4).
 if command -v tofu >/dev/null 2>&1; then
   TF=tofu
-elif command -v terraform >/dev/null 2>&1; then
-  TF=terraform
 else
-  echo "ERROR: neither tofu nor terraform found (see SETUP.md)" >&2
+  echo "ERROR: this lab needs tofu — state encryption (steps 3-4) exists only" >&2
+  echo "       in OpenTofu; terraform alone cannot run it (see SETUP.md)" >&2
   exit 1
 fi
 
