@@ -73,7 +73,7 @@ the pyramid's rungs —
     - run: tofu fmt -check -recursive
     - run: tofu init -input=false
     - run: tofu validate
-    - run: tofu plan -input=false -no-color
+    - run: tofu plan -input=false -no-color -out tfplan
 
 These four steps are chapter 21 put on the belt: they run on *every* proposal,
 before a single line touches production.
@@ -89,6 +89,12 @@ guard: the job must run only on a push to the main branch.
 Without this line, any pull request would apply to production: proposing and
 delivering would collapse back into one act. The guard keeps the gate and the
 delivery apart.
+
+Look also at *what* it applies: not a recomputed plan, but the tfplan file the
+gate saved with -out and handed over as an artifact (22.1). That way what gets
+applied is exactly the plan that was shown; if the state changed in the
+meantime, apply refuses it and a new run is needed. And that file holds the
+sensitive values in clear: that is why it is kept for one day only.
 
 ### Phase 3 — The belt locally: from commit to production
 
@@ -131,8 +137,8 @@ belt enforces it continuously.
 
 ### Phase 5 — The badge, not the key: OIDC (22.4, reading)
 
-Look in pipeline.yml.example at the deploy job and the line permissions: id-token:
-write, with the (commented) example of configure-aws-credentials assuming a role.
+Look in pipeline.yml.example at the deploy job and its line permissions: id-token:
+write (only that job gets it, not the plan job), with the (commented) example of configure-aws-credentials assuming a role.
 This is OIDC: instead of pasting a permanent cloud key into the CI's secrets —
 which, if it leaks, is valid forever — the belt asks the cloud for a
 *short-lived token*, valid for that single run, tied to that repository and that

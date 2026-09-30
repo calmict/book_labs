@@ -74,7 +74,7 @@ l'installazione di tofu, aggiungi i gradini della piramide —
     - run: tofu fmt -check -recursive
     - run: tofu init -input=false
     - run: tofu validate
-    - run: tofu plan -input=false -no-color
+    - run: tofu plan -input=false -no-color -out tfplan
 
 Questi quattro passi sono cap21 messo su nastro: girano a *ogni* proposta, prima
 che una riga tocchi la produzione.
@@ -90,6 +90,12 @@ mettere la guardia: il job deve girare solo su un push al ramo main.
 Senza questa riga, una qualsiasi pull request applicherebbe in produzione:
 proporre e consegnare tornerebbero un gesto solo. La guardia tiene separati il
 cancello e la consegna.
+
+Guarda anche *che cosa* applica: non un piano ricalcolato, ma il file tfplan che
+il cancello ha salvato con -out e gli ha passato come artifact (22.1). Così ciò
+che viene applicato è esattamente il piano mostrato; se nel frattempo lo stato è
+cambiato, l'apply lo rifiuta e serve un nuovo giro. E quel file contiene in
+chiaro i valori sensibili: per questo resta in giro un giorno solo.
 
 ### Fase 3 — Il nastro in locale: dal commit alla produzione
 
@@ -132,8 +138,8 @@ versionato è la *volontà*, e il nastro la impone di continuo.
 
 ### Fase 5 — Il badge, non la chiave: OIDC (22.4, si legge)
 
-Guarda in pipeline.yml.example il job deploy e la riga permissions: id-token:
-write, con l'esempio (commentato) di configure-aws-credentials che assume un
+Guarda in pipeline.yml.example il job deploy e la sua riga permissions: id-token:
+write (solo lui la riceve, non il job plan), con l'esempio (commentato) di configure-aws-credentials che assume un
 ruolo. È OIDC: invece di incollare una chiave cloud permanente nei segreti della
 CI — che se trapela vale per sempre — il nastro chiede al cloud un *token a vita
 brevissima*, valido per quella singola corsa, legato a quel repository e a quel

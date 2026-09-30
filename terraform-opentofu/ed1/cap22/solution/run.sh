@@ -37,6 +37,7 @@ echo "== 0. The pipeline: is the belt wired correctly? =="
 PIPE="$DIR/pipeline.yml.example"
 grep -q 'tofu plan' "$PIPE"                                    && echo "  gate: the plan step is on the belt (TODO 1)"
 grep -q "if: github.ref == 'refs/heads/main'" "$PIPE"         && echo "  delivery: apply is guarded to push-to-main (TODO 2)"
+grep -q 'apply -input=false tfplan' "$PIPE"                    && echo "  delivery: applies the saved plan, not a recomputed one"
 grep -q 'id-token: write' "$PIPE"                              && echo "  OIDC: id-token permission present (no static keys)"
 echo
 

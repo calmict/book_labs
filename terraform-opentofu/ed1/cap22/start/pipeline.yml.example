@@ -6,7 +6,8 @@
 #
 # Two stretches of the belt:
 #   plan   (the gate)     -> runs on every pull request: checks + propose
-#   deploy (the delivery) -> runs only on push to main:  apply
+#   deploy (the delivery) -> runs only on push to main:  apply the plan file
+#                            the gate saved, not a recomputed one (22.1)
 
 name: terraform
 
@@ -18,9 +19,6 @@ on:
 
 permissions:
   contents: read
-  # OIDC (22.4): lets the deploy job request a short-lived cloud token instead
-  # of a static key. See the deploy job below.
-  id-token: write
 
 jobs:
   # ---- The gate: chapter 21's pyramid, on every proposal ----
@@ -31,22 +29,44 @@ jobs:
       run:
         working-directory: terraform-opentofu/ed1/cap22/solution
     steps:
-      - uses: actions/checkout@v4
-      - uses: opentofu/setup-opentofu@v1
+      - uses: actions/checkout@v7
+      - uses: opentofu/setup-opentofu@v2
 
       # TODO 1 (Phase 1): put the pyramid on the belt. Add the four steps that
       # in chapter 21 you ran by hand, in order:
       #   - run: tofu fmt -check -recursive
       #   - run: tofu init -input=false
       #   - run: tofu validate
-      #   - run: tofu plan -input=false -no-color
+      #   - run: tofu plan -input=false -no-color -out tfplan
       - run: tofu fmt -check -recursive
+
+      # On main only: hand the saved plan (and the lock file it was made with)
+      # to the deploy job. The plan file holds sensitive values in clear: short
+      # retention, and remember that whoever can read this run's artifacts can
+      # read it.
+      - if: github.event_name == 'push'
+        uses: actions/upload-artifact@v7
+        with:
+          name: tfplan
+          path: |
+            terraform-opentofu/ed1/cap22/solution/tfplan
+            terraform-opentofu/ed1/cap22/solution/.terraform.lock.hcl
+          include-hidden-files: true
+          retention-days: 1
 
   # ---- The delivery: apply, only after merge ----
   deploy:
     name: Apply (the delivery)
     needs: plan
     runs-on: ubuntu-latest
+    # A GitHub environment: give it required reviewers in the repository
+    # settings and the run stops here until a human approves the plan above.
+    environment: production
+    # OIDC (22.4): only this job may request a short-lived cloud token instead
+    # of a static key.
+    permissions:
+      contents: read
+      id-token: write
     defaults:
       run:
         working-directory: terraform-opentofu/ed1/cap22/solution
@@ -55,15 +75,22 @@ jobs:
     # on a pull request. Add the right if: condition here.
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: opentofu/setup-opentofu@v1
+      - uses: actions/checkout@v7
+      - uses: opentofu/setup-opentofu@v2
+      - uses: actions/download-artifact@v8
+        with:
+          name: tfplan
+          path: terraform-opentofu/ed1/cap22/solution
 
       # OIDC (22.4): assume a cloud role with a short-lived token — no static
       # keys pasted into secrets. (Commented: needs a real cloud + trust setup.)
-      # - uses: aws-actions/configure-aws-credentials@v4
+      # - uses: aws-actions/configure-aws-credentials@v6
       #   with:
       #     role-to-assume: arn:aws:iam::123456789012:role/tofu-deployer
       #     aws-region: eu-south-1
 
+      # The saved plan, not a new one. If the state changed since the plan,
+      # apply refuses it ("Saved plan is stale"): re-run the workflow for a
+      # fresh plan.
       - run: tofu init -input=false
-      - run: tofu apply -input=false -auto-approve
+      - run: tofu apply -input=false tfplan
