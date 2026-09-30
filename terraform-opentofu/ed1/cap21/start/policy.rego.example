@@ -12,8 +12,11 @@
 
 package main
 
+# Rego v1 syntax (deny contains msg if { ... }): what OPA 1.x and current
+# conftest accept without compatibility flags.
+
 # Deny any docker_image whose name uses the moving :latest tag.
-deny[msg] {
+deny contains msg if {
   rc := input.resource_changes[_]
   rc.type == "docker_image"
   name := rc.change.after.name
@@ -22,7 +25,7 @@ deny[msg] {
 }
 
 # Deny any docker_image with no tag at all (also resolves to :latest at pull).
-deny[msg] {
+deny contains msg if {
   rc := input.resource_changes[_]
   rc.type == "docker_image"
   name := rc.change.after.name
