@@ -1,6 +1,6 @@
 # Capitolo 14 — Le tre porte
 
-**Livello:** Intermedio
+**Livello:** Fondamentale
 **Tempo stimato:** 45–55 minuti
 **Argomenti del manuale:** le variabili di input e la loro validazione (14.1), gli output (14.2), i locals: la cucina interna (14.3), le tre porte insieme (14.4)
 

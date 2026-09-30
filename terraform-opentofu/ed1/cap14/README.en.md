@@ -1,6 +1,6 @@
 # Chapter 14 — The three doors
 
-**Level:** Intermediate
+**Level:** Foundational
 **Estimated time:** 45–55 minutes
 **Manual topics:** input variables and their validation (14.1), outputs (14.2), locals: the internal kitchen (14.3), the three doors together (14.4)
 
