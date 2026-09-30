@@ -126,7 +126,7 @@ Separate directories isolate beautifully, but they pay a price: the *boilerplate
 — the terraform block, the provider, the backend configuration — repeats in every
 folder. Terragrunt is the tool that removes that copy-paste while keeping the
 isolation. In start/directories/terragrunt.hcl.example you find an example to
-read: a root file that *generates* the backend configuration (a different state
+read: a root file (root.hcl) that *generates* the backend configuration (a different state
 key per environment) and defines common providers once, and per-environment
 folders that only include the root plus their own inputs. A single source of
 truth for the boilerplate, rooms still separate. It is not OpenTofu nor Terraform:

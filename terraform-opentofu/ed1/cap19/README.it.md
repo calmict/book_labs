@@ -130,7 +130,7 @@ Le directory separate isolano benissimo, ma un prezzo lo pagano: il *contorno* �
 il blocco terraform, il provider, la configurazione del backend — si ripete in
 ogni cartella. Terragrunt è lo strumento che toglie quel copia-incolla tenendo
 l'isolamento. In start/directories/terragrunt.hcl.example trovi un esempio da
-leggere: un file radice che *genera* la configurazione del backend (una chiave di
+leggere: un file radice (root.hcl) che *genera* la configurazione del backend (una chiave di
 stato diversa per ambiente) e definisce provider comuni una volta sola, e cartelle
 per ambiente che fanno solo include del radice più i propri inputs. Una sola fonte
 di verità per il contorno, stanze ancora separate. Non è OpenTofu né Terraform: è

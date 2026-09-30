@@ -5,12 +5,14 @@
 # The layout it enables:
 #
 #   live/
-#     terragrunt.hcl          <- this ROOT file: the single source of truth
+#     root.hcl                <- this ROOT file: the single source of truth
 #     dev/  terragrunt.hcl     <- includes the root + dev inputs
 #     prod/ terragrunt.hcl     <- includes the root + prod inputs
 #     modules/webapp/          <- the same shared module you already have
 
-# ---- ROOT terragrunt.hcl (live/terragrunt.hcl) ----
+# ---- ROOT file (live/root.hcl) ----
+# Named root.hcl, not terragrunt.hcl: Terragrunt warns that a root
+# terragrunt.hcl is an anti-pattern, due to become an error.
 
 # Generate the backend config for EVERY environment, with a state key that
 # differs per folder — so dev and prod never share a state (isolation kept).
@@ -38,7 +40,7 @@ generate "provider" {
 # ---- Per-environment child (e.g. live/prod/terragrunt.hcl) ----
 #
 # include "root" {
-#   path = find_in_parent_folders()   # pull in the root's backend + provider
+#   path = find_in_parent_folders("root.hcl")   # the root's backend + provider
 # }
 #
 # terraform {
