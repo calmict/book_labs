@@ -92,11 +92,11 @@ unset TF_ENCRYPTION
 # strip ANSI colour codes the CLIs put in their error output
 strip() { sed -E 's/\x1b\[[0-9;]*m//g'; }
 "$TF" state list >noread.out 2>&1 && { echo "unexpected: read without passphrase" >&2; exit 1; }
-grep -iE 'encrypted and can not be read' noread.out | strip | sed 's/^.*Failed/Failed/;s/^/  no passphrase -> /' | head -1
+grep -iE 'encrypted and can not be read' noread.out | strip | sed 's/^.*Failed/Failed/;s/^/  no passphrase -> /' | sed -n 1p
 if command -v terraform >/dev/null 2>&1; then
   terraform init -input=false >/dev/null 2>&1 || true
   terraform show -no-color >tfread.out 2>&1 && { echo "unexpected: terraform read the encrypted state" >&2; exit 1; }
-  grep -iE 'Unsupported state file format' tfread.out | strip | sed -E 's/^.*(Unsupported state file format).*/\1/;s/^/  terraform -> /' | head -1
+  grep -iE 'Unsupported state file format' tfread.out | strip | sed -E 's/^.*(Unsupported state file format).*/\1/;s/^/  terraform -> /' | sed -n 1p
 else
   echo "  terraform: not installed — the twin's failure you read in the manual"
 fi

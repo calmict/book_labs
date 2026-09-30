@@ -37,14 +37,14 @@ cp "$DIR/main.tf" "$WORK/"
 cd "$WORK"
 
 echo "== 0. The binary YOU installed =="
-"$TF" version | head -1 | sed 's/^/  /'
+"$TF" version | sed -n 1p | sed 's/^/  /'
 echo
 
 echo "== 1. init, under the lens =="
 "$TF" init -input=false >/dev/null
 test -f .terraform.lock.hcl
 echo "  .terraform.lock.hcl: born (chapter 7's protagonist)"
-bin=$(find .terraform -name 'terraform-provider-*' | head -1)
+bin=$(find .terraform -name 'terraform-provider-*' | sed -n 1p)
 size_mb=$(du -m "$bin" | cut -f1)
 echo "  provider binary: ${size_mb} MB — THIS is the translators' installation"
 test "$size_mb" -gt 10

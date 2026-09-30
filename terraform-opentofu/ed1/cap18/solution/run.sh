@@ -137,7 +137,7 @@ echo
 
 echo "== 4. The manual scalpel: state list / show / mv =="
 "$TF" state list | sed 's/^/  in the notebook: /'
-"$TF" state show docker_container.frontend | grep -E '^\s+name ' | head -1 | sed 's/^ */  show: /'
+"$TF" state show docker_container.frontend | grep -E '^\s+name ' | sed -n 1p | sed 's/^ */  show: /'
 "$TF" state mv docker_container.frontend docker_container.web_front 2>&1 | grep -iE 'moved' | sed 's/^/  mv: /'
 "$TF" state mv docker_container.web_front docker_container.frontend >/dev/null
 echo "  (mv done and undone — a cut no plan ever announced)"

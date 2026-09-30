@@ -42,7 +42,7 @@ echo "  \"steel\" in the list: ${list_steel} times (order kept, duplicates kept)
 echo "  \"steel\" in the set:  ${set_steel} time  (duplicate gone)"
 test "$list_steel" -eq 2
 test "$set_steel" -eq 1
-"$TF" output -no-color unique_materials | head -1 | grep -q 'toset' \
+"$TF" output -no-color unique_materials | sed -n 1p | grep -q 'toset' \
   && echo "  the output even labels it: toset([...]) — alphabetical, unordered by nature"
 first_item=$("$TF" output -no-color unique_materials | sed -n '2p')
 case "$first_item" in *concrete*) echo "  first element: concrete (sorted, not insertion order)" ;; *) echo "unexpected order: $first_item"; exit 1 ;; esac

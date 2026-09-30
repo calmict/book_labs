@@ -31,7 +31,7 @@ command -v docker >/dev/null 2>&1 || { echo "ERROR: docker not found" >&2; exit 
 WORK=$(mktemp -d)
 cleanup() {
   (cd "$WORK" 2>/dev/null && "$TF" destroy -input=false -auto-approve >/dev/null 2>&1) || true
-  docker rm -f "$DC" >/dev/null 2>&1 || true
+  docker rm -fv "$DC" >/dev/null 2>&1 || true
   rm -rf "$WORK"
 }
 trap cleanup EXIT
@@ -40,7 +40,7 @@ cp "$DIR/main.tf" "$WORK/"
 cd "$WORK"
 
 echo "== 0. Building the second datacenter (dind) =="
-docker rm -f "$DC" >/dev/null 2>&1 || true
+docker rm -fv "$DC" >/dev/null 2>&1 || true
 docker run -d --name "$DC" --privileged -e DOCKER_TLS_CERTDIR="" \
   -p 127.0.0.1:23750:2375 -p 127.0.0.1:8092:8092 docker:27-dind >/dev/null
 ready=""
@@ -96,7 +96,7 @@ echo "  Frankfurt engine: empty (its nginx removed through the aliased line)"
 test -z "$(docker ps -q --filter name=cap08-web)"
 docker ps --format '{{.Names}}' | grep -qx "$DC"
 echo "  but $DC is still alive: hand-made, so not tofu's to demolish"
-docker rm -f "$DC" >/dev/null
+docker rm -fv "$DC" >/dev/null
 echo "  removed by hand — the symmetry is yours to close"
 echo
 
