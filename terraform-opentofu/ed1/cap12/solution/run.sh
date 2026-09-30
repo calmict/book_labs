@@ -28,7 +28,7 @@ CONSUL=cap12-consul
 WORK=$(mktemp -d)
 cleanup() {
   (cd "$WORK/mine" 2>/dev/null && "$TF" destroy -input=false -auto-approve >/dev/null 2>&1) || true
-  docker rm -f "$CONSUL" >/dev/null 2>&1 || true
+  docker rm -fv "$CONSUL" >/dev/null 2>&1 || true
   rm -rf "$WORK"
 }
 trap cleanup EXIT
@@ -37,7 +37,7 @@ mkdir -p "$WORK/mine"
 cd "$WORK/mine"
 
 echo "== 0. The noticeboard, and a world with local state =="
-docker rm -f "$CONSUL" >/dev/null 2>&1 || true
+docker rm -fv "$CONSUL" >/dev/null 2>&1 || true
 docker run -d --name "$CONSUL" -p 127.0.0.1:8500:8500 \
   hashicorp/consul:1.20 agent -dev -client=0.0.0.0 >/dev/null
 ready=""
@@ -125,7 +125,7 @@ cd "$WORK/mine"
 grep -E '2 to add' after.out >/dev/null
 echo "  destroyed from the colleague's folder — my plan sees the same empty world"
 echo "  (the notebook is one: whoever writes it, writes it for everyone)"
-docker rm -f "$CONSUL" >/dev/null
+docker rm -fv "$CONSUL" >/dev/null
 echo "  noticeboard removed"
 echo
 

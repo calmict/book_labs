@@ -32,14 +32,14 @@ cleanup() {
   (cd "$WORK/app" 2>/dev/null && "$TF" destroy -input=false -auto-approve >/dev/null 2>&1) || true
   (cd "$WORK/network" 2>/dev/null && "$TF" destroy -input=false -auto-approve >/dev/null 2>&1) || true
   (cd "$WORK/monolith" 2>/dev/null && "$TF" destroy -input=false -auto-approve >/dev/null 2>&1) || true
-  docker rm -f "$CONSUL" cap13-app >/dev/null 2>&1 || true
+  docker rm -fv "$CONSUL" cap13-app >/dev/null 2>&1 || true
   docker network rm cap13-core-net >/dev/null 2>&1 || true
   rm -rf "$WORK"
 }
 trap cleanup EXIT
 
 echo "== 0. The monolith, and its radius =="
-docker rm -f "$CONSUL" >/dev/null 2>&1 || true
+docker rm -fv "$CONSUL" >/dev/null 2>&1 || true
 docker run -d --name "$CONSUL" -p 127.0.0.1:8500:8500 \
   hashicorp/consul:1.20 agent -dev -client=0.0.0.0 >/dev/null
 ready=""
@@ -142,7 +142,7 @@ cd "$WORK/app"
 "$TF" destroy -input=false -auto-approve >/dev/null
 cd "$WORK/network"
 "$TF" destroy -input=false -auto-approve >/dev/null
-docker rm -f "$CONSUL" >/dev/null
+docker rm -fv "$CONSUL" >/dev/null
 echo "  app down, network down, noticeboard removed"
 echo
 
