@@ -47,8 +47,7 @@ Alla fine saprai:
 
 - OpenTofu (o Terraform) installato — vedi SETUP.md.
 - Docker in esecuzione. Porta libera: 8140.
-- Tutta la Parte 6, ma soprattutto il capitolo 21 (la piramide): qui la si mette
-  sul nastro.
+- Il capitolo 21, la piramide dei test: qui la si mette sul nastro.
 
 ## Consegna
 

@@ -47,7 +47,7 @@ By the end you will be able to:
 
 - OpenTofu (or Terraform) installed — see SETUP.md.
 - Docker running. Free port: 8140.
-- All of Part 6, but above all chapter 21 (the pyramid): here it goes on the belt.
+- Chapter 21, the testing pyramid: here it goes on the belt.
 
 ## Your task
 
