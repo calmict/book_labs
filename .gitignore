@@ -77,9 +77,3 @@ desktop.ini
 *.log
 *.tmp
 tmp/
-
-# --- Materiale interno della collana ---
-# Gli OUTLINE.md sono materiale di pianificazione dei manuali, non del repo
-# pubblico degli esercizi. Erano esclusi solo in .git/info/exclude, quindi
-# l'esclusione valeva su un clone soltanto: qui e' condivisa.
-/*/OUTLINE.md
